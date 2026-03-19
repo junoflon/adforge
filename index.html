@@ -112,26 +112,43 @@ select{
 .ck-row input{accent-color:var(--purple);width:12px;height:12px;cursor:pointer}
 
 /* ── SPYDER BRAND ITEMS ── */
+.spyder-group{margin-bottom:8px}
+.spyder-group-hdr{display:flex;align-items:center;gap:6px;padding:5px 8px;
+  background:var(--s3);border-radius:var(--r);cursor:pointer;user-select:none;
+  font-size:10px;font-weight:600;color:var(--text2);margin-bottom:3px;
+  border:1px solid var(--border);letter-spacing:.5px;text-transform:uppercase}
+.spyder-group-hdr:hover{border-color:var(--border2)}
+.spyder-group-hdr .sg-arrow{font-size:8px;color:var(--text3);transition:transform .2s}
+.spyder-group-hdr.collapsed .sg-arrow{transform:rotate(-90deg)}
+.spyder-group-body{display:flex;flex-direction:column;gap:3px}
+.spyder-group-body.collapsed{display:none}
+.sp-sel-all{font-size:9px;color:var(--text3);cursor:pointer;margin-left:auto;
+  padding:1px 5px;border-radius:4px;border:1px solid var(--border)}
+.sp-sel-all:hover{color:var(--purple);border-color:var(--purple)}
 .spyder-item{
-  display:flex;align-items:center;gap:8px;padding:7px 9px;
+  display:flex;align-items:center;gap:6px;padding:5px 8px;
   background:var(--s2);border:1px solid var(--border);border-radius:var(--r);
-  cursor:pointer;transition:all .13s;margin-bottom:5px;user-select:none
+  cursor:pointer;transition:all .13s;user-select:none
 }
 .spyder-item:hover{border-color:var(--border2)}
 .spyder-item.sel{background:var(--purple-dim);border-color:var(--purple)}
 .spyder-item.sel .sp-name{color:var(--purple)}
-.sp-check{width:14px;height:14px;border-radius:3px;border:1.5px solid var(--border2);
+.sp-check{width:13px;height:13px;border-radius:3px;border:1.5px solid var(--border2);
   background:var(--s3);display:flex;align-items:center;justify-content:center;
-  font-size:9px;flex-shrink:0;transition:all .13s}
+  font-size:8px;flex-shrink:0;transition:all .13s}
 .spyder-item.sel .sp-check{background:var(--purple);border-color:var(--purple);color:#fff}
-.sp-name{font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.sp-count{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);
-  background:var(--s3);padding:1px 6px;border-radius:8px;white-space:nowrap}
-.sp-live{font-family:'JetBrains Mono',monospace;font-size:9px;padding:1px 5px;
-  border-radius:6px;background:var(--green-dim);border:1px solid rgba(45,212,122,.3);
+.sp-avatar{width:18px;height:18px;border-radius:50%;object-fit:cover;flex-shrink:0;background:var(--s3)}
+.sp-name{font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sp-count{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3);
+  background:var(--s3);padding:1px 5px;border-radius:6px;white-space:nowrap}
+.sp-live{font-family:'JetBrains Mono',monospace;font-size:9px;padding:1px 4px;
+  border-radius:5px;background:var(--green-dim);border:1px solid rgba(45,212,122,.3);
   color:var(--green);white-space:nowrap}
 .spyder-loading{padding:12px 0;text-align:center;font-size:11px;color:var(--text3);
   font-family:'JetBrains Mono',monospace}
+.sp-local-warn{font-size:9px;padding:4px 8px;background:rgba(245,166,35,.1);
+  border:1px solid rgba(245,166,35,.3);color:var(--gold);border-radius:var(--r);
+  margin-bottom:5px;text-align:center}
 
 /* RUN BUTTON */
 .run-btn{
@@ -402,7 +419,8 @@ audio{width:100%;height:30px}
         <div id="m-spyder" style="display:none">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">
             <span style="font-size:11px;color:var(--text3)">내 Spyder 추적 브랜드</span>
-            <button class="btn sm" id="spyder-refresh-btn" onclick="document.getElementById('spyder-refresh-btn').dataset.force='1';loadSpyderBrands()" style="font-size:10px;padding:3px 8px">↻ 새로고침</button>
+            <button class="btn sm" id="spyder-refresh-btn" onclick="document.getElementById('spyder-refresh-btn').dataset.force='1';loadSpyderBrands()" style="font-size:10px;padding:3px 8px" title="Foreplay에서 새로 가져오기">↻</button>
+          <button class="btn sm" onclick="spyderGroupEdit()" style="font-size:10px;padding:3px 8px" title="브랜드 그룹 편집">📁</button>
           </div>
           <div id="spyder-brand-list">
             <div style="font-size:11px;color:var(--text3);padding:8px 0;text-align:center">
@@ -726,9 +744,12 @@ audio{width:100%;height:30px}
       </div>
       <!-- 학습된 컨텍스트 미리보기 -->
       <div id="b-learned-wrap" style="display:none">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-family:'JetBrains Mono',monospace;letter-spacing:1px;text-transform:uppercase">🧠 학습된 브랜드 정보</div>
-        <textarea id="b-learned" rows="4" placeholder="URL/PDF를 추가하고 학습 버튼을 눌러주세요" style="font-size:11px;line-height:1.6;color:var(--text2);resize:vertical"></textarea>
-        <div class="hint">학습 후 자동 저장됩니다. 대본 생성 시 이 내용이 활용돼요.</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div style="font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;letter-spacing:1px;text-transform:uppercase">🧠 학습된 브랜드 정보</div>
+          <select id="b-learned-ver" onchange="loadLearnedVersion(this.value)" style="font-size:10px;padding:2px 6px;background:var(--s3);border:1px solid var(--border);border-radius:var(--r);color:var(--text2)"></select>
+        </div>
+        <textarea id="b-learned" rows="5" placeholder="URL/PDF를 추가하고 학습 버튼을 눌러주세요" style="font-size:11px;line-height:1.6;color:var(--text2);resize:vertical"></textarea>
+        <div class="hint">학습 후 자동 저장됩니다. 버전이 쌓이며 이전 학습 내용도 유지돼요.</div>
       </div>
     </div>
     <div class="modal-ftr" style="justify-content:space-between">
@@ -784,7 +805,7 @@ const SB = {
   // ── 하드코딩된 Supabase 설정 (팀원 입력 불필요) ──
   _DEFAULT: {
     url: 'https://nroylubtytcslujylicw.supabase.co',
-    key: 'sb_publishable_xCZj-grOmwAoiM7HbPgW2g_vQKaoyPb'
+    key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ'
   },
   getCfg(){ 
     // 항상 기본값 사용 (localStorage 오버라이드 가능)
@@ -885,12 +906,14 @@ const DB = {
         try {
           await SB.deleteAll('brands')
           if(data.length) await SB.upsert('brands', data.map(brandToSb))
-          showSaveIndicator('Supabase 저장됨 ✓')
+          showSaveIndicator('☁️ Supabase 저장됨 ✓')
         } catch(e){
           console.error('Supabase 저장 실패:', e)
-          showSaveIndicator('로컬 저장됨 (Supabase 오류)', true)
+          showSaveIndicator('⚠️ 로컬 저장됨 — Supabase 오류. 팀원과 공유 안 됩니다', true)
         }
       }, 600)
+    } else {
+      showSaveIndicator('⚠️ 로컬에만 저장됨 — Supabase 연결 시 팀 공유 가능', true)
     }
   }
 }
@@ -1162,14 +1185,83 @@ function mockSpyderBrands(){
 function renderSpyderList(){
   const listEl=document.getElementById('spyder-brand-list')
   if(!listEl||!spyderBrands.length) return
-  listEl.innerHTML=spyderBrands.map(b=>`
-    <div class="spyder-item ${b.selected?'sel':''}" id="spb-${b.id}" onclick="toggleSpyderBrand('${b.id}')">
-      <div class="sp-check">${b.selected?'✓':''}</div>
-      <div class="sp-name">${b.name}</div>
-      ${b.liveCount?`<div class="sp-live">▶ ${b.liveCount}</div>`:''}
-      <div class="sp-count">${b.adCount}개</div>
-    </div>`).join('')
+  
+  // Supabase 미연결 시 경고
+  const warnHtml = !SB.isConnected() ? '<div class="sp-local-warn">⚠️ Supabase 미연결 — 로컬 캐시 사용 중</div>' : ''
+  
+  // 그룹화: spyderBrands의 groupName 필드 기준 (없으면 '기타')
+  const groups={}
+  spyderBrands.forEach(b=>{
+    const g=b.groupName||'📋 전체'
+    if(!groups[g]) groups[g]=[]
+    groups[g].push(b)
+  })
+  
+  const selAll=spyderBrands.length>1?`<div style="display:flex;gap:4px;margin-bottom:5px">
+    <button class="btn sm" onclick="spyderSelectAll()" style="flex:1;font-size:10px">전체 선택</button>
+    <button class="btn sm" onclick="spyderClearAll()" style="flex:1;font-size:10px">전체 해제</button>
+  </div>`:''
+  
+  const groupsHtml=Object.entries(groups).map(([gName,bList])=>{
+    const gId='sg_'+gName.replace(/[^a-z0-9]/gi,'_')
+    const allSel=bList.every(b=>b.selected)
+    const someSel=bList.some(b=>b.selected)
+    const itemsHtml=bList.map(b=>`
+      <div class="spyder-item ${b.selected?'sel':''}" id="spb-${b.id}" onclick="toggleSpyderBrand('${b.id}')">
+        <div class="sp-check">${b.selected?'✓':''}</div>
+        ${b.avatar?`<img class="sp-avatar" src="${b.avatar}" onerror="this.style.display='none'">`:''}
+        <div class="sp-name">${b.name}</div>
+        ${b.liveCount?`<div class="sp-live">▶ ${b.liveCount}</div>`:''}
+        <div class="sp-count">${b.adCount||'?'}개</div>
+      </div>`).join('')
+    
+    if(Object.keys(groups).length===1){
+      // 그룹 1개면 헤더 없이 바로 표시
+      return itemsHtml
+    }
+    return `<div class="spyder-group">
+      <div class="spyder-group-hdr" onclick="toggleSpyderGroup('${gId}')">
+        <span class="sg-arrow">▼</span>
+        <span style="flex:1">${gName}</span>
+        <span class="sp-sel-all" onclick="event.stopPropagation();spyderSelectGroup('${gId}')">${allSel?'✓ ':someSel?'- ':''}선택</span>
+        <span style="font-size:9px;color:var(--text3);margin-left:4px">${bList.length}개</span>
+      </div>
+      <div class="spyder-group-body" id="${gId}">${itemsHtml}</div>
+    </div>`
+  }).join('')
+  
+  listEl.innerHTML = warnHtml + selAll + groupsHtml
   updateSpyderInfo()
+}
+
+function toggleSpyderGroup(gId){
+  const body=document.getElementById(gId)
+  const hdr=body?.previousElementSibling
+  if(!body) return
+  body.classList.toggle('collapsed')
+  hdr?.classList.toggle('collapsed')
+}
+
+function spyderSelectGroup(gId){
+  const body=document.getElementById(gId)
+  if(!body) return
+  const ids=[...body.querySelectorAll('.spyder-item')].map(el=>el.id.replace('spb-',''))
+  const allSel=ids.every(id=>spyderBrands.find(b=>b.id===id)?.selected)
+  ids.forEach(id=>{
+    const b=spyderBrands.find(x=>x.id===id)
+    if(b) b.selected=!allSel
+  })
+  renderSpyderList()
+}
+
+function spyderSelectAll(){
+  spyderBrands.forEach(b=>b.selected=true)
+  renderSpyderList()
+}
+
+function spyderClearAll(){
+  spyderBrands.forEach(b=>b.selected=false)
+  renderSpyderList()
 }
 
 function toggleSpyderBrand(id){
@@ -1487,7 +1579,7 @@ function norm(r){
 
   return {
     id: r.id || r.adId || ('fp_'+Math.random().toString(36).slice(2,8)),
-    brand: r.brand_name || r.brandName || r.brand?.name || r.page_name || '알 수 없음',
+    brand: r.brand?.name || r.brand_name || r.brandName || r.page_name || '',
     hook: hook.trim(),
     transcript: tr,
     description: r.description || '',
@@ -1761,26 +1853,64 @@ let _pdfData = []
 
 // ── Spyder 브랜드 Supabase 캐시 ──
 async function loadSpyderCache(){
-  if(!SB.isConnected()) return null
+  // 1. Supabase에서 먼저
+  if(SB.isConnected()){
+    try {
+      const rows = await SB.getAll('spyder_cache')
+      if(rows&&rows.length){
+        const row = rows[0]
+        if(Date.now()-row.updated_at < 7*24*60*60*1000)
+          return JSON.parse(row.brands_json||'[]')
+      }
+    } catch(e){}
+  }
+  // 2. 로컬 폴백
   try {
-    const rows = await SB.getAll('spyder_cache')
-    if(!rows||!rows.length) return null
-    const row = rows[0]
-    // 7일 이내 캐시만 사용
-    if(Date.now()-row.updated_at > 7*24*60*60*1000) return null
-    return JSON.parse(row.brands_json||'[]')
-  } catch(e){ return null }
+    const local = JSON.parse(localStorage.getItem('af_spyder_cache')||'null')
+    if(local && Date.now()-local.ts < 7*24*60*60*1000) return local.brands
+  } catch(e){}
+  return null
 }
 
 async function saveSpyderCache(brands){
-  if(!SB.isConnected()) return
-  try {
-    await SB.upsert('spyder_cache', [{id:'main', brands_json:JSON.stringify(brands), updated_at:Date.now()}])
-  } catch(e){ console.warn('Spyder 캐시 저장 실패:', e.message) }
+  // groupName은 유지하면서 저장
+  const toSave = brands.map(b=>({...b, groupName:b.groupName||null}))
+  if(SB.isConnected()){
+    try {
+      await SB.upsert('spyder_cache', [{id:'main', brands_json:JSON.stringify(toSave), updated_at:Date.now()}])
+    } catch(e){ console.warn('Spyder 캐시 저장 실패:', e.message) }
+  }
+  // 로컬에도 항상 저장
+  localStorage.setItem('af_spyder_cache', JSON.stringify({ts:Date.now(), brands:toSave}))
 }
 
 
 // ── 브랜드 학습 (URL + PDF → Claude 요약 → Supabase 저장) ──
+function spyderGroupEdit(){
+  // 간단한 그룹 편집 UI - 브랜드 목록에서 그룹명 입력
+  const brand = spyderBrands[0]
+  if(!spyderBrands.length){ toast('브랜드를 먼저 로드해주세요','err'); return }
+  const modal = document.createElement('div')
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;display:flex;align-items:center;justify-content:center'
+  modal.innerHTML=`<div style="background:var(--s1);border:1px solid var(--border2);border-radius:var(--r2);padding:20px;width:400px;max-height:80vh;overflow-y:auto">
+    <div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--text)">📁 브랜드 그룹 설정</div>
+    <div style="font-size:10px;color:var(--text3);margin-bottom:10px">브랜드별 그룹명을 지정해서 폴더처럼 분류하세요</div>
+    ${spyderBrands.map(b=>`
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <div style="font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)">${b.name}</div>
+      <input type="text" value="${b.groupName||''}" placeholder="그룹명..." 
+        style="width:120px;font-size:10px;padding:3px 6px;background:var(--s3);border:1px solid var(--border);border-radius:var(--r);color:var(--text)"
+        onchange="const br=spyderBrands.find(x=>x.id==='${b.id}');if(br){br.groupName=this.value.trim()||null}">
+    </div>`).join('')}
+    <div style="display:flex;gap:6px;margin-top:14px;justify-content:flex-end">
+      <button class="btn" onclick="this.closest('div[style*=fixed]').remove()">취소</button>
+      <button class="btn pur" onclick="saveSpyderCache(spyderBrands);renderSpyderList();this.closest('div[style*=fixed]').remove();toast('그룹 설정 저장됨','ok')">저장</button>
+    </div>
+  </div>`
+  document.body.appendChild(modal)
+}
+
+
 async function learnBrand(){
   const urls=[...document.querySelectorAll('#b-urls-wrap input')].map(i=>i.value.trim()).filter(Boolean)
   const hasPdf=_pdfData.length>0
@@ -1825,22 +1955,39 @@ async function learnBrand(){
     const d=await r.json()
     const summary=d.content.map(c=>c.text||'').join('').trim()
 
-    // 3. UI 업데이트
+    // 3. 버전 스택에 추가
+    const nowTs=Date.now()
+    const verSel=document.getElementById('b-learned-ver')
+    const existStack=editBrandId?(brands.find(x=>x.id===editBrandId)?.learnedStack||[]):[]
+    // 구버전 호환
+    if(existStack.length===0){
+      const oldCtx=editBrandId?(brands.find(x=>x.id===editBrandId)?.learnedContext||''):''
+      if(oldCtx) existStack.push({ver:1,label:'v1',ts:0,text:oldCtx})
+    }
+    const newVer=existStack.length+1
+    const newEntry={ver:newVer,label:`v${newVer}`,ts:nowTs,text:summary}
+    existStack.push(newEntry)
+
+    // UI 업데이트
     document.getElementById('b-learned-wrap').style.display='block'
     document.getElementById('b-learned').value=summary
+    verSel.innerHTML=existStack.map((s,i)=>`<option value="${i}">${s.label} · ${new Date(s.ts||0).toLocaleDateString('ko')}</option>`).join('')
+    verSel.value=existStack.length-1
 
-    // 4. 현재 브랜드에 바로 저장 (editBrandId 있으면 즉시 Supabase 반영)
+    // 4. 저장
     if(editBrandId){
       const idx=brands.findIndex(x=>x.id===editBrandId)
       if(idx>-1){
-        brands[idx].learnedContext=summary
+        brands[idx].learnedContext=summary  // 최신 버전
+        brands[idx].learnedStack=existStack
         brands[idx].urls=[...document.querySelectorAll('#b-urls-wrap input')].map(i=>i.value.trim()).filter(Boolean)
         brands[idx].pdfs=_pdfData
         DB.saveBrands(brands)
-        toast('🧠 학습 완료! Supabase에 저장됐어요','ok')
+        toast(`🧠 학습 완료! ${newEntry.label} 저장됐어요`,'ok')
       }
     } else {
-      toast('🧠 학습 완료! 저장 버튼을 눌러주세요','ok')
+      window._pendingLearnedStack=existStack
+      toast(`🧠 학습 완료! (${newEntry.label}) 저장 버튼을 눌러주세요`,'ok')
     }
 
   } catch(e){
@@ -1848,6 +1995,13 @@ async function learnBrand(){
   }
   btn.disabled=false; btn.innerHTML='🧠 학습 시작'
 }
+
+function loadLearnedVersion(idx){
+  const b=editBrandId?brands.find(x=>x.id===editBrandId):null
+  const stack=b?.learnedStack||[]
+  if(stack[idx]) document.getElementById('b-learned').value=stack[idx].text||''
+}
+
 
 function addUrlField(){
   const wrap=document.getElementById('b-urls-wrap')
@@ -1889,15 +2043,22 @@ function openBrandModal(editId=null){
   ;['b-nm','b-cat','b-pain','b-usp','b-tone','b-prhb','b-ctx'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=b?b[{
     'b-nm':'name','b-cat':'category','b-pain':'painpoint','b-usp':'usp','b-tone':'tone','b-prhb':'prohibit','b-ctx':'context'
   }[id]]||'':'' })
-  // 학습 컨텍스트 표시
+  // 학습 컨텍스트 + 버전 셀렉터
   const learnedWrap=document.getElementById('b-learned-wrap')
   const learnedEl=document.getElementById('b-learned')
-  if(b?.learnedContext){
+  const verSel=document.getElementById('b-learned-ver')
+  const stack=b?.learnedStack||[]
+  if(stack.length||b?.learnedContext){
     learnedWrap.style.display='block'
-    learnedEl.value=b.learnedContext
+    // 구버전 호환: learnedContext 있으면 stack으로 변환
+    const fullStack=stack.length?stack:(b?.learnedContext?[{ver:1,label:'v1',ts:0,text:b.learnedContext}]:[])
+    verSel.innerHTML=fullStack.map((s,i)=>`<option value="${i}">${s.label||'v'+(i+1)} · ${new Date(s.ts||0).toLocaleDateString('ko')}</option>`).join('')
+    verSel.value=fullStack.length-1
+    learnedEl.value=fullStack[fullStack.length-1]?.text||''
   } else {
     learnedWrap.style.display='none'
     learnedEl.value=''
+    verSel.innerHTML=''
   }
 
   // URL 필드 초기화
@@ -1945,8 +2106,10 @@ function saveBrand(){
     context:document.getElementById('b-ctx').value.trim(),
     urls,
     pdfs:_pdfData,
-    learnedContext:document.getElementById('b-learned').value.trim()||null
+    learnedContext:document.getElementById('b-learned').value.trim()||null,
+    learnedStack:window._pendingLearnedStack||(editBrandId?brands.find(x=>x.id===editBrandId)?.learnedStack||[]:undefined)
   }
+  window._pendingLearnedStack=null
   if(editBrandId){ const idx=brands.findIndex(x=>x.id===editBrandId); brands[idx]=b } else brands.push(b)
   DB.saveBrands(brands)
   renderBrandDrop()
