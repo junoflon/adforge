@@ -459,7 +459,10 @@ audio{width:100%;height:30px}
       <!-- 자사 브랜드 -->
       <div class="sb-section">
         <div class="sb-hd">자사 브랜드 <span class="sb-hd-act" onclick="openBrandModal()">+ 추가</span></div>
-        <div class="field"><select id="sel-brand" onchange="onBrandChange()"><option value="">— 선택 —</option></select></div>
+        <div class="field" style="display:flex;gap:5px;align-items:center">
+          <select id="sel-brand" onchange="onBrandChange()" style="flex:1"><option value="">— 선택 —</option></select>
+          <button class="btn sm" id="brand-edit-btn" onclick="editCurrentBrand()" style="display:none;padding:5px 8px;flex-shrink:0" title="편집">✏️</button>
+        </div>
         <div id="brand-prev" style="display:none;margin-top:6px;background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:8px 10px;font-size:11px;color:var(--text2);line-height:1.6"></div>
       </div>
 
@@ -693,10 +696,34 @@ audio{width:100%;height:30px}
       <div class="field"><label>브랜드 톤 & 보이스</label><input type="text" id="b-tone" placeholder="예: 친근하고 솔직한, 전문적이고 신뢰감있는..."></div>
       <div class="field"><label>금지어/주의사항</label><input type="text" id="b-prhb" placeholder="예: 의학적 효능 주장 X..."></div>
       <div class="field"><label>추가 컨텍스트</label><textarea id="b-ctx" rows="2" placeholder="가격대, 주요 상품, 현재 프로모션 등"></textarea></div>
+      <div class="field">
+        <label>브랜드 URL <span style="color:var(--text3);font-weight:400;font-size:10px">(여러 개 추가 가능)</span></label>
+        <div id="b-urls-wrap" style="display:flex;flex-direction:column;gap:5px">
+          <div class="url-row" style="display:flex;gap:4px"><input type="text" placeholder="https://" style="flex:1"><button class="btn sm" onclick="this.parentElement.remove()" style="padding:4px 8px;color:var(--red);flex-shrink:0">✕</button></div>
+        </div>
+        <button class="btn sm" onclick="addUrlField()" style="margin-top:5px;width:100%;justify-content:center">+ URL 추가</button>
+      </div>
+      <div class="field">
+        <label>브랜드 문서 <span style="color:var(--text3);font-weight:400;font-size:10px">(PDF · 최대 5개)</span></label>
+        <div id="b-pdf-list" style="display:flex;flex-direction:column;gap:4px;margin-bottom:5px"></div>
+        <label style="display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;border:1px dashed var(--border2);border-radius:var(--r);cursor:pointer;font-size:11px;color:var(--text3);background:var(--s2)">
+          📄 PDF 파일 선택
+          <input type="file" id="b-pdf-input" accept=".pdf" multiple style="display:none" onchange="handlePdfUpload(this)">
+        </label>
+      </div>
+      <!-- 학습된 컨텍스트 미리보기 -->
+      <div id="b-learned-wrap" style="display:none">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-family:'JetBrains Mono',monospace;letter-spacing:1px;text-transform:uppercase">🧠 학습된 브랜드 정보</div>
+        <textarea id="b-learned" rows="4" placeholder="URL/PDF를 추가하고 학습 버튼을 눌러주세요" style="font-size:11px;line-height:1.6;color:var(--text2);resize:vertical"></textarea>
+        <div class="hint">학습 후 자동 저장됩니다. 대본 생성 시 이 내용이 활용돼요.</div>
+      </div>
     </div>
-    <div class="modal-ftr">
+    <div class="modal-ftr" style="justify-content:space-between">
       <button class="btn" onclick="closeModal('modal-brand')">취소</button>
-      <button class="btn pur" onclick="saveBrand()">저장</button>
+      <div style="display:flex;gap:6px">
+        <button class="btn acc" id="b-learn-btn" onclick="learnBrand()">🧠 학습 시작</button>
+        <button class="btn pur" onclick="saveBrand()">저장</button>
+      </div>
     </div>
   </div>
 </div>
@@ -993,6 +1020,8 @@ async function init(){
 
   renderBrandDrop()
   updateDots()
+  // Spyder 브랜드 미리 로드
+  loadSpyderBrands()
   const obs = new IntersectionObserver(entries=>{
     entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('visible') })
   },{threshold:.1})
@@ -1028,8 +1057,12 @@ async function loadSpyderBrands(){
   if(!listEl) return
 
   if(!K.fp){
-    listEl.innerHTML='<div class="spyder-loading">Foreplay API 키를 먼저 설정해주세요</div>'
-    return
+    // settings에서 키 다시 로드 시도
+    await loadSettingsFromSB()
+    if(!K.fp){
+      listEl.innerHTML='<div class="spyder-loading">Foreplay API 키를 먼저 설정해주세요</div>'
+      return
+    }
   }
 
   const btn=document.getElementById('spyder-refresh-btn')
@@ -1130,7 +1163,7 @@ function setMode(el){
   document.querySelectorAll('.mchip').forEach(c=>c.classList.toggle('on',c===el))
   ;['spyder','brand','pageid','kw'].forEach(m=>{ document.getElementById('m-'+m).style.display=m===mode?'block':'none' })
   // Spyder 탭 진입 시 자동 로드
-  if(mode==='spyder' && K.fp && spyderBrands.length===0) loadSpyderBrands()
+  if(mode==='spyder' && spyderBrands.length===0) loadSpyderBrands()
 }
 function tf(el){
   const k=el.dataset.fk
@@ -1469,7 +1502,13 @@ CTA:${anal.ctaPatterns||''}
 
 JSON만 응답:{"scripts":[{"id":1,"hook":"","body":"","cta":"","style":"","hookType":"","reason":""}]}`
 
-  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':K.cl,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:3000,messages:[{role:'user',content:prompt}]})})
+
+  // 학습된 브랜드 컨텍스트 포함 (크레딧 추가 소모 없음)
+  const learnedCtx=brand.learnedContext?'\n\n[학습된 브랜드 정보]\n'+brand.learnedContext:''
+  const fullPrompt=prompt+learnedCtx
+
+  // 텍스트만 전송 (PDF는 학습 단계에서 이미 처리됨)
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':K.cl,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:3000,messages:[{role:'user',content:fullPrompt}]})})
   if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error?.message||`Claude ${r.status}`)}
   const d=await r.json()
   return JSON.parse(d.content.map(c=>c.text||'').join('').replace(/```json|```/g,'').trim()).scripts
@@ -1559,22 +1598,191 @@ function exportTxt(){
 // ══════════════════════════════════════════════
 // BRAND CRUD
 // ══════════════════════════════════════════════
+// PDF 데이터 임시 저장
+let _pdfData = []
+
+
+// ── 브랜드 학습 (URL + PDF → Claude 요약 → Supabase 저장) ──
+async function learnBrand(){
+  const urls=[...document.querySelectorAll('#b-urls-wrap input')].map(i=>i.value.trim()).filter(Boolean)
+  const hasPdf=_pdfData.length>0
+  if(!urls.length && !hasPdf){ toast('URL이나 PDF를 먼저 추가해주세요','err'); return }
+  if(!K.cl){ toast('Claude API 키가 없어요','err'); return }
+
+  const btn=document.getElementById('b-learn-btn')
+  btn.disabled=true; btn.innerHTML='<span class="spin">◌</span> 학습 중...'
+
+  try {
+    // 1. URL 내용 fetch (N8N 프록시 통해서)
+    let urlContents=''
+    for(const url of urls.slice(0,5)){
+      try {
+        const r=await fetch('https://junoflow.app.n8n.cloud/webhook/foreplay-proxy',{
+          method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({endpoint:'__url_fetch__',params:{url},apiKey:K.fp||''})
+        })
+        // N8N 없으면 직접 시도
+        const txt=await r.text()
+        if(txt && txt.length>50) urlContents+=`\n\n[${url}]\n${txt.slice(0,3000)}`
+      } catch(e){}
+    }
+
+    // 2. Claude API로 요약 (URL 텍스트 + PDF 멀티모달)
+    const systemPrompt=`당신은 브랜드 분석 전문가입니다. 주어진 URL 내용과 PDF 문서를 분석해서 광고 대본 작성에 필요한 핵심 브랜드 정보를 추출하세요.
+
+다음 항목을 중심으로 구조화된 요약을 한국어로 작성하세요 (총 500자 이내):
+- 브랜드 핵심 가치 & 포지셔닝
+- 주요 제품/서비스 & 특징
+- 타겟 고객 & 페인포인트
+- 핵심 USP (경쟁사 대비 차별점)
+- 브랜드 톤 & 메시지 방향
+- 주요 프로모션/캠페인 포인트`
+
+    const contentParts=[]
+    // PDF 첨부
+    if(_pdfData.length) _pdfData.forEach(p=>contentParts.push({type:'document',source:{type:'base64',media_type:'application/pdf',data:p.data}}))
+    // URL 내용 텍스트
+    const userText=urlContents?`다음 URL/문서를 분석해서 브랜드 핵심 정보를 요약해주세요:\n${urlContents}`:`첨부된 PDF 문서를 분석해서 브랜드 핵심 정보를 요약해주세요.`
+    contentParts.push({type:'text',text:userText})
+
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':K.cl,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:systemPrompt,messages:[{role:'user',content:contentParts}]})
+    })
+    if(!r.ok) throw new Error('Claude API 오류')
+    const d=await r.json()
+    const summary=d.content.map(c=>c.text||'').join('').trim()
+
+    // 3. UI 업데이트
+    document.getElementById('b-learned-wrap').style.display='block'
+    document.getElementById('b-learned').value=summary
+
+    // 4. 현재 브랜드에 바로 저장 (editBrandId 있으면 즉시 Supabase 반영)
+    if(editBrandId){
+      const idx=brands.findIndex(x=>x.id===editBrandId)
+      if(idx>-1){
+        brands[idx].learnedContext=summary
+        brands[idx].urls=[...document.querySelectorAll('#b-urls-wrap input')].map(i=>i.value.trim()).filter(Boolean)
+        brands[idx].pdfs=_pdfData
+        DB.saveBrands(brands)
+        toast('🧠 학습 완료! Supabase에 저장됐어요','ok')
+      }
+    } else {
+      toast('🧠 학습 완료! 저장 버튼을 눌러주세요','ok')
+    }
+
+  } catch(e){
+    toast('학습 실패: '+e.message,'err')
+  }
+  btn.disabled=false; btn.innerHTML='🧠 학습 시작'
+}
+
+function addUrlField(){
+  const wrap=document.getElementById('b-urls-wrap')
+  const row=document.createElement('div')
+  row.className='url-row'; row.style.cssText='display:flex;gap:4px'
+  row.innerHTML='<input type="text" placeholder="https://" style="flex:1"><button class="btn sm" onclick="this.parentElement.remove()" style="padding:4px 8px;color:var(--red);flex-shrink:0">✕</button>'
+  wrap.appendChild(row)
+}
+
+function handlePdfUpload(input){
+  const list=document.getElementById('b-pdf-list')
+  Array.from(input.files).slice(0,5-_pdfData.length).forEach(file=>{
+    const reader=new FileReader()
+    reader.onload=e=>{
+      const b64=e.target.result.split(',')[1]
+      _pdfData.push({name:file.name,data:b64,type:'application/pdf'})
+      const item=document.createElement('div')
+      item.style.cssText='display:flex;align-items:center;gap:6px;padding:5px 8px;background:var(--s3);border-radius:var(--r);font-size:11px'
+      item.innerHTML=`<span style="color:var(--accent)">📄</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${file.name}</span><button class="btn sm" style="padding:2px 6px;color:var(--red)" onclick="removePdf(${_pdfData.length-1},this.parentElement)">✕</button>`
+      list.appendChild(item)
+    }
+    reader.readAsDataURL(file)
+  })
+  input.value=''
+}
+
+function removePdf(idx,el){
+  _pdfData.splice(idx,1)
+  el.remove()
+  // re-index buttons
+  document.querySelectorAll('#b-pdf-list button').forEach((btn,i)=>{ btn.setAttribute('onclick',`removePdf(${i},this.parentElement)`) })
+}
+
 function openBrandModal(editId=null){
   editBrandId=editId
+  _pdfData=[]
   document.getElementById('bm-ttl').textContent=editId?'브랜드 편집':'브랜드 추가'
   const b=editId?brands.find(x=>x.id===editId):null
   ;['b-nm','b-cat','b-pain','b-usp','b-tone','b-prhb','b-ctx'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=b?b[{
     'b-nm':'name','b-cat':'category','b-pain':'painpoint','b-usp':'usp','b-tone':'tone','b-prhb':'prohibit','b-ctx':'context'
   }[id]]||'':'' })
+  // 학습 컨텍스트 표시
+  const learnedWrap=document.getElementById('b-learned-wrap')
+  const learnedEl=document.getElementById('b-learned')
+  if(b?.learnedContext){
+    learnedWrap.style.display='block'
+    learnedEl.value=b.learnedContext
+  } else {
+    learnedWrap.style.display='none'
+    learnedEl.value=''
+  }
+
+  // URL 필드 초기화
+  const wrap=document.getElementById('b-urls-wrap')
+  const urls=b?.urls||[]
+  wrap.innerHTML=''
+  const initUrls=urls.length?urls:['']
+  initUrls.forEach(u=>{
+    const row=document.createElement('div'); row.className='url-row'; row.style.cssText='display:flex;gap:4px'
+    row.innerHTML=`<input type="text" placeholder="https://" value="${u}" style="flex:1"><button class="btn sm" onclick="this.parentElement.remove()" style="padding:4px 8px;color:var(--red);flex-shrink:0">✕</button>`
+    wrap.appendChild(row)
+  })
+  // PDF 목록 초기화
+  const pdfList=document.getElementById('b-pdf-list'); pdfList.innerHTML=''
+  if(b?.pdfs?.length){
+    _pdfData=[...b.pdfs]
+    b.pdfs.forEach((p,i)=>{
+      const item=document.createElement('div')
+      item.style.cssText='display:flex;align-items:center;gap:6px;padding:5px 8px;background:var(--s3);border-radius:var(--r);font-size:11px'
+      item.innerHTML=`<span style="color:var(--accent)">📄</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</span><button class="btn sm" style="padding:2px 6px;color:var(--red)" onclick="removePdf(${i},this.parentElement)">✕</button>`
+      pdfList.appendChild(item)
+    })
+  }
   openModal('modal-brand')
 }
+
+function editCurrentBrand(){
+  const id=document.getElementById('sel-brand').value
+  if(id) openBrandModal(id)
+}
+
 function saveBrand(){
   const nm=document.getElementById('b-nm').value.trim()
   if(!nm){ toast('브랜드명을 입력해주세요','err'); return }
-  const b={id:editBrandId||'b'+Date.now(),name:nm,category:document.getElementById('b-cat').value.trim(),painpoint:document.getElementById('b-pain').value.trim(),usp:document.getElementById('b-usp').value.trim(),tone:document.getElementById('b-tone').value.trim(),prohibit:document.getElementById('b-prhb').value.trim(),context:document.getElementById('b-ctx').value.trim()}
+  // URL 수집
+  const urls=[...document.querySelectorAll('#b-urls-wrap input')].map(i=>i.value.trim()).filter(Boolean)
+  const b={
+    id:editBrandId||'b'+Date.now(),
+    name:nm,
+    category:document.getElementById('b-cat').value.trim(),
+    painpoint:document.getElementById('b-pain').value.trim(),
+    usp:document.getElementById('b-usp').value.trim(),
+    tone:document.getElementById('b-tone').value.trim(),
+    prohibit:document.getElementById('b-prhb').value.trim(),
+    context:document.getElementById('b-ctx').value.trim(),
+    urls,
+    pdfs:_pdfData,
+    learnedContext:document.getElementById('b-learned').value.trim()||null
+  }
   if(editBrandId){ const idx=brands.findIndex(x=>x.id===editBrandId); brands[idx]=b } else brands.push(b)
   DB.saveBrands(brands)
-  renderBrandDrop(); closeModal('modal-brand'); toast(`"${nm}" 저장됨`,'ok')
+  renderBrandDrop()
+  // 드롭다운에서 해당 브랜드 선택 유지
+  document.getElementById('sel-brand').value=b.id
+  onBrandChange()
+  closeModal('modal-brand'); toast(`"${nm}" 저장됨`,'ok')
 }
 function renderBrandDrop(){
   const sel=document.getElementById('sel-brand'); const cur=sel.value
@@ -1585,9 +1793,14 @@ function renderBrandDrop(){
 function onBrandChange(){
   const b=brands.find(b=>b.id===document.getElementById('sel-brand').value)
   const prev=document.getElementById('brand-prev')
-  if(!b){ prev.style.display='none'; return }
+  const editBtn=document.getElementById('brand-edit-btn')
+  if(!b){ prev.style.display='none'; if(editBtn) editBtn.style.display='none'; return }
+  if(editBtn) editBtn.style.display='flex'
   prev.style.display='block'
-  prev.innerHTML=`<strong style="color:var(--text)">${b.name}</strong>${b.category?' · '+b.category:''}${b.painpoint?`<br><span style="color:var(--text3)">페인포인트:</span> ${b.painpoint.slice(0,55)}…`:''}`
+  const urlCount=b.urls?.filter(u=>u).length||0
+  const pdfCount=b.pdfs?.length||0
+  const learnedBadge=b.learnedContext?'<span style="color:var(--green);font-size:10px">🧠 학습완료</span>':'<span style="color:var(--text3);font-size:10px">🧠 미학습</span>'
+  prev.innerHTML=`<strong style="color:var(--text)">${b.name}</strong>${b.category?' · '+b.category:''}${b.painpoint?`<br><span style="color:var(--text3)">페인포인트:</span> ${b.painpoint.slice(0,55)}…`:''}<br>${learnedBadge}${urlCount||pdfCount?` <span style="color:var(--accent);font-size:10px">${urlCount?'🔗 '+urlCount+'개':''} ${pdfCount?'📄 '+pdfCount+'개':''}</span>`:''}`
 }
 
 // ══════════════════════════════════════════════
