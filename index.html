@@ -1038,13 +1038,14 @@ async function loadSpyderBrands(){
 
   try {
     // Foreplay API: 내 Spyder 추적 브랜드 목록
-    const r=await fetch('https://public.api.foreplay.co/spyder/brands',
-      {headers:{'Authorization':'Bearer '+K.fp,'Content-Type':'application/json'}})
+    const r=await fetch('https://junoflow.app.n8n.cloud/webhook/foreplay-proxy',
+      {method:'POST',headers:{'Content-Type':'application/json'},
+       body:JSON.stringify({endpoint:'/api/spyder/brands',params:{offset:0,limit:50},apiKey:K.fp})})
 
     if(!r.ok) throw new Error(`API ${r.status}`)
     const d=await r.json()
 
-    spyderBrands=(d.brands||d.results||d||[]).map(b=>({
+    spyderBrands=(d.data||d.brands||d.results||d||[]).map(b=>({
       id:b.id||b.brandId||('sp_'+Math.random().toString(36).slice(2,6)),
       name:b.name||b.brandName||'알 수 없음',
       pageId:b.pageId||b.facebookPageId||b.page_id||'',
@@ -1274,40 +1275,50 @@ async function apiGet(){
   if(fmts.length) p.append('formats',fmts.join(','))
   let url
 
+  // N8N 웹훅 공통 호출 함수
+  const n8nFetch = async (endpoint, params={}) => {
+    const r = await fetch('https://junoflow.app.n8n.cloud/webhook/foreplay-proxy', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({endpoint, params, apiKey: K.fp})
+    })
+    if(!r.ok) return {}
+    return r.json()
+  }
+
   // ── Spyder 모드: 선택된 브랜드들의 광고 수집 ──
   if(mode==='spyder'){
     const selected=spyderBrands.filter(b=>b.selected)
     if(!selected.length) throw new Error('Spyder에서 브랜드를 선택해주세요')
-    // 여러 브랜드 동시 수집 후 합치기
+    const params = {limit:lim, sort}
+    if(filters.has('active')) params.active = 'true'
+    if(fmts.length) params.formats = fmts.join(',')
     const results=await Promise.all(selected.map(async brand=>{
-      const bp=new URLSearchParams(p)
-      const r=await fetch(`https://public.api.foreplay.co/ads/facebook/${brand.pageId}?${bp}`,
-        {headers:{'Authorization':'Bearer '+K.fp,'Content-Type':'application/json'}})
-      if(!r.ok) return []
-      const d=await r.json()
+      const d=await n8nFetch(`/ads/facebook/${brand.pageId}`, params)
       return (d.ads||d.results||d||[]).map(a=>({...norm(a),brand:brand.name||a.brandName||a.brand?.name||'알 수 없음'}))
     }))
     return results.flat()
   }
 
+  const params = Object.fromEntries(p.entries())
   if(mode==='pageid'){
     const pid=document.getElementById('i-pid').value.trim()
     if(!pid) throw new Error('Facebook Page ID를 입력해주세요')
-    url=`https://public.api.foreplay.co/ads/facebook/${pid}?${p}`
+    const d=await n8nFetch(`/ads/facebook/${pid}`, params)
+    return (d.ads||d.results||d||[]).map(norm)
   } else if(mode==='brand'){
     const b=document.getElementById('i-brand').value.trim()
     if(!b) throw new Error('브랜드명을 입력해주세요')
-    p.append('name',b); url=`https://public.api.foreplay.co/brands/search?${p}`
+    params.name = b
+    const d=await n8nFetch('/brands/search', params)
+    return (d.ads||d.results||d||[]).map(norm)
   } else {
     const kw=document.getElementById('i-kw').value.trim(); const cat=document.getElementById('i-cat').value
     if(!kw&&!cat) throw new Error('키워드나 카테고리를 입력해주세요')
-    if(kw) p.append('keywords',kw); if(cat) p.append('category',cat)
-    url=`https://public.api.foreplay.co/ads/search?${p}`
+    if(kw) params.keywords = kw; if(cat) params.category = cat
+    const d=await n8nFetch('/ads/search', params)
+    return (d.ads||d.results||d||[]).map(norm)
   }
-  const r=await fetch(url,{headers:{'Authorization':'Bearer '+K.fp,'Content-Type':'application/json'}})
-  if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.message||`Foreplay API ${r.status}`)}
-  const d=await r.json()
-  return (d.ads||d.results||d||[]).map(norm)
 }
 
 function norm(r){
