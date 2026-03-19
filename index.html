@@ -1045,7 +1045,8 @@ async function loadSpyderBrands(){
     if(!r.ok) throw new Error(`API ${r.status}`)
     const d=await r.json()
 
-    spyderBrands=(d.data||d.brands||d.results||d||[]).map(b=>({
+    const raw=Array.isArray(d)?d[0]:d
+    spyderBrands=((raw.data)||raw.brands||raw.results||[]).map(b=>({
       id:b.id||b.brandId||('sp_'+Math.random().toString(36).slice(2,6)),
       name:b.name||b.brandName||'알 수 없음',
       pageId:b.pageId||b.facebookPageId||b.page_id||'',
