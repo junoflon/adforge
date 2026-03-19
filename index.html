@@ -378,7 +378,7 @@ audio{width:100%;height:30px}
     <div class="api-dot" onclick="openModal('modal-api')"><div class="dot" id="dot-fp"></div>Foreplay</div>
     <div class="api-dot" onclick="openModal('modal-api')"><div class="dot" id="dot-cl"></div>Claude</div>
     <div class="api-dot" onclick="openModal('modal-api')"><div class="dot" id="dot-el"></div>ElevenLabs</div>
-    <div class="api-dot" onclick="openModal('modal-sb')" id="sb-btn"><div class="dot" id="dot-sb"></div><span id="lbl-sb">Supabase</span></div>
+    <div class="api-dot" onclick="openModal('modal-sb')" id="sb-btn" style="display:none"><div class="dot" id="dot-sb"></div><span id="lbl-sb">Supabase</span></div>
   </div>
 </header>
 
@@ -741,7 +741,18 @@ audio{width:100%;height:30px}
 // SUPABASE ENGINE
 // ══════════════════════════════════════════════
 const SB = {
-  getCfg(){ try{ return JSON.parse(localStorage.getItem('af_sb_cfg')||'{}') }catch(e){ return {} } },
+  // ── 하드코딩된 Supabase 설정 (팀원 입력 불필요) ──
+  _DEFAULT: {
+    url: 'https://nroylubtytcslujylicw.supabase.co',
+    key: 'sb_publishable_xCZj-grOmwAoiM7HbPgW2g_vQKaoyPb'
+  },
+  getCfg(){ 
+    // 항상 기본값 사용 (localStorage 오버라이드 가능)
+    try{ 
+      const saved = JSON.parse(localStorage.getItem('af_sb_cfg')||'{}')
+      return (saved.url && saved.key) ? saved : this._DEFAULT
+    }catch(e){ return this._DEFAULT } 
+  },
   saveCfg(cfg){ localStorage.setItem('af_sb_cfg', JSON.stringify(cfg)) },
   clearCfg(){ localStorage.removeItem('af_sb_cfg') },
   isConnected(){ const c=this.getCfg(); return !!(c.url&&c.key) },
@@ -938,19 +949,46 @@ let editBrandId = null
 // ══════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════
+// Supabase settings 테이블에서 API 키 자동 로드
+async function loadSettingsFromSB(){
+  try {
+    const rows = await SB.getAll('settings')
+    if(!rows.length) return
+    const map = {}
+    rows.forEach(r=>{ map[r.key]=r.value })
+    // localStorage에 저장 (K 객체가 읽을 수 있도록)
+    const existing = JSON.parse(localStorage.getItem('af_keys')||'{}')
+    const merged = {
+      foreplay:  map['foreplay_api_key']  || existing.foreplay  || '',
+      claude:    map['claude_api_key']    || existing.claude    || '',
+      eleven:    map['elevenlabs_api_key']|| existing.eleven    || '',
+      voiceId:   map['elevenlabs_voice_id']|| existing.voiceId  || '21m00Tcm4TlvDq8ikWAM'
+    }
+    localStorage.setItem('af_keys', JSON.stringify(merged))
+    console.log('✅ Supabase settings에서 API 키 로드 완료')
+  } catch(e) {
+    console.warn('settings 로드 실패 (테이블 없거나 오류):', e.message)
+  }
+}
+
 async function init(){
+  updateSbDot()
+
+  // 1. Supabase settings에서 API 키 자동 로드
+  await loadSettingsFromSB()
+
+  // 2. API 키 UI 업데이트
   document.getElementById('k-fp').value = K.fp
   document.getElementById('k-cl').value = K.cl
   document.getElementById('k-el').value = K.el
   document.getElementById('k-vo').value = K.vo
 
-  // Supabase 설정 복원
+  // 3. Supabase 모달 URL/Key 자동 채우기
   const sbCfg=SB.getCfg()
   if(sbCfg.url) document.getElementById('sb-url').value=sbCfg.url
   if(sbCfg.key) document.getElementById('sb-key').value=sbCfg.key
-  updateSbDot()
 
-  // 브랜드 로드 (Supabase 우선)
+  // 4. 브랜드 로드 (Supabase 우선)
   brands = await DB.loadBrands()
 
   renderBrandDrop()
