@@ -3,2273 +3,1552 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ad Forge — 인하우스 광고 소재 자동화</title>
+<title>Ad Forge</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-
 :root{
-  --bg:#0d0f12;
-  --s1:#141618;
-  --s2:#1c1e21;
-  --s3:#242628;
-  --border:#2c2e32;
-  --border2:#383a3e;
-  --text:#e8eaed;
-  --text2:#9aa0ab;
-  --text3:#5a6070;
+  --bg:#0a0b0d;
+  --s1:#111316;
+  --s2:#181b1f;
+  --s3:#1f2227;
+  --s4:#262a30;
+  --border:#23272e;
+  --border2:#2e333b;
+  --text:#eceef2;
+  --text2:#8b93a0;
+  --text3:#4a5160;
   --accent:#4f8fff;
-  --accent-dim:rgba(79,143,255,.12);
-  --green:#34d17a;
-  --green-dim:rgba(52,209,122,.1);
+  --accent-dim:rgba(79,143,255,.1);
+  --green:#2dd47a;
+  --green-dim:rgba(45,212,122,.08);
   --red:#ff4f6a;
-  --red-dim:rgba(255,79,106,.1);
+  --red-dim:rgba(255,79,106,.08);
   --gold:#f5a623;
-  --gold-dim:rgba(245,166,35,.1);
-  --purple:#a78bfa;
-  --r:7px;
-  --r2:12px;
+  --gold-dim:rgba(245,166,35,.08);
+  --purple:#9b72fb;
+  --purple-dim:rgba(155,114,251,.1);
+  --cyan:#22d3ee;
+  --r:6px;
+  --r2:10px;
+  --r3:14px;
 }
 
-body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:13px;line-height:1.6;overflow:hidden;height:100vh}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:13px;line-height:1.6;min-height:100vh}
 
 /* ── SCROLLBAR ── */
-::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar{width:3px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 
 /* ── HEADER ── */
-header{
-  height:52px;display:flex;align-items:center;justify-content:space-between;
-  padding:0 20px;border-bottom:1px solid var(--border);
-  background:var(--s1);flex-shrink:0;
+.header{
+  position:sticky;top:0;z-index:100;
+  height:48px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;
+  background:rgba(10,11,13,.85);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
 }
-.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:18px;letter-spacing:-0.5px}
-.logo span{color:var(--accent)}
-.hdr-right{display:flex;align-items:center;gap:8px}
-.hdr-btn{
-  display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:var(--r);
-  background:var(--s2);border:1px solid var(--border);color:var(--text2);
-  font-size:12px;cursor:pointer;font-family:inherit;transition:all .15s
-}
-.hdr-btn:hover{border-color:var(--border2);color:var(--text)}
-.hdr-btn.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
-.dot{width:6px;height:6px;border-radius:50%;background:var(--border2)}
-.dot.on{background:var(--green);box-shadow:0 0 6px var(--green)}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:17px;letter-spacing:-.5px;display:flex;align-items:center;gap:10px}
+.logo-mark{color:var(--purple)}
+.logo-ver{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;padding:2px 7px;border:1px solid var(--border2);border-radius:20px}
+.hdr-r{display:flex;align-items:center;gap:6px}
+.api-dot{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text3);border:1px solid var(--border);background:var(--s1);cursor:pointer;transition:all .15s}
+.api-dot:hover{border-color:var(--border2);color:var(--text2)}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--border2);transition:all .3s}
+.dot.on{background:var(--green);box-shadow:0 0 5px var(--green)}
+.dot.warn{background:var(--gold);box-shadow:0 0 4px var(--gold)}
 
-/* ── ROOT LAYOUT ── */
-.root{display:flex;height:calc(100vh - 52px)}
+/* ── MAIN LAYOUT ── */
+.main{display:grid;grid-template-columns:280px 1fr;min-height:calc(100vh - 48px)}
 
-/* ── NAV SIDEBAR ── */
-.nav{
-  width:52px;background:var(--s1);border-right:1px solid var(--border);
-  display:flex;flex-direction:column;align-items:center;padding:12px 0;gap:4px;flex-shrink:0
+/* ── LEFT SIDEBAR (sticky) ── */
+.sidebar{
+  position:sticky;top:48px;height:calc(100vh - 48px);
+  overflow-y:auto;
+  background:var(--s1);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
 }
-.nav-btn{
-  width:36px;height:36px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;
-  cursor:pointer;color:var(--text3);transition:all .15s;font-size:18px;border:none;background:none;
-  position:relative
-}
-.nav-btn:hover{background:var(--s3);color:var(--text2)}
-.nav-btn.active{background:var(--accent-dim);color:var(--accent)}
-.nav-tooltip{
-  position:absolute;left:44px;background:var(--s3);border:1px solid var(--border2);
-  color:var(--text);font-size:11px;padding:4px 8px;border-radius:4px;white-space:nowrap;
-  pointer-events:none;opacity:0;transition:opacity .1s;z-index:50;font-family:'JetBrains Mono',monospace
-}
-.nav-btn:hover .nav-tooltip{opacity:1}
-
-/* ── PANELS ── */
-.panel{display:none;flex:1;overflow:hidden}
-.panel.active{display:flex}
-
-/* ── LEFT FORM COL ── */
-.form-col{
-  width:340px;flex-shrink:0;background:var(--s1);border-right:1px solid var(--border);
-  overflow-y:auto;display:flex;flex-direction:column
-}
-.form-block{padding:16px;border-bottom:1px solid var(--border)}
-.block-hd{
-  font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;
-  color:var(--text3);text-transform:uppercase;margin-bottom:12px;
-  display:flex;align-items:center;justify-content:space-between
-}
-.block-hd-action{font-family:'Noto Sans KR',sans-serif;letter-spacing:0;font-size:11px;color:var(--accent);cursor:pointer;text-transform:none}
-.block-hd-action:hover{text-decoration:underline}
+.sidebar-scroll{flex:1;overflow-y:auto;padding:0}
+.sb-section{padding:14px 16px;border-bottom:1px solid var(--border)}
+.sb-hd{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;margin-bottom:9px;display:flex;align-items:center;justify-content:space-between}
+.sb-hd-act{font-family:'Noto Sans KR',sans-serif;font-size:11px;color:var(--accent);cursor:pointer;letter-spacing:0;text-transform:none}
+.sb-hd-act:hover{text-decoration:underline}
 
 /* FIELDS */
-label{display:block;font-size:11px;font-weight:500;color:var(--text2);margin-bottom:4px}
-input[type=text],input[type=password],textarea,select{
+label{display:block;font-size:11px;color:var(--text2);margin-bottom:3px;font-weight:500}
+input[type=text],input[type=password],select,textarea{
   width:100%;background:var(--s2);border:1px solid var(--border);border-radius:var(--r);
-  padding:8px 11px;font-family:'Noto Sans KR',sans-serif;font-size:13px;color:var(--text);
+  padding:7px 10px;font-family:'Noto Sans KR',sans-serif;font-size:12px;color:var(--text);
   outline:none;transition:border-color .15s;appearance:none
 }
-input:focus,textarea:focus,select:focus{border-color:var(--accent)}
-input[type=password]{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px}
-textarea{resize:vertical;min-height:70px}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+input[type=password]{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px}
 select{
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%235a6070'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;cursor:pointer
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='5'%3E%3Cpath d='M0 0l4.5 5 4.5-5z' fill='%234a5160'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 9px center;padding-right:26px;cursor:pointer
 }
-.field{margin-bottom:10px}
+.field{margin-bottom:8px}
 .field:last-child{margin-bottom:0}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.hint{font-size:10px;color:var(--text3);margin-top:3px}
 
-/* TAGS */
-.tags-wrap{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
-.tag{
-  display:inline-flex;align-items:center;gap:4px;background:var(--s3);border:1px solid var(--border2);
-  border-radius:20px;padding:2px 8px 2px 10px;font-size:11px;color:var(--text2);
-  font-family:'JetBrains Mono',monospace
-}
-.tag-x{background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;line-height:1;padding:0}
-.tag-x:hover{color:var(--red)}
+/* MODE CHIPS */
+.mchips{display:flex;gap:4px;margin-bottom:9px;flex-wrap:wrap}
+.mchip{padding:3px 9px;border-radius:20px;font-size:11px;cursor:pointer;border:1px solid var(--border2);background:var(--s3);color:var(--text3);transition:all .12s;font-family:'JetBrains Mono',monospace;user-select:none}
+.mchip.on{background:rgba(155,114,251,.15);border-color:var(--purple);color:var(--purple)}
+.mchip:hover:not(.on){border-color:var(--border2);color:var(--text2)}
 
-/* RANGE */
-.range-row{display:flex;align-items:center;gap:8px}
-.rv{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);min-width:20px}
-input[type=range]{flex:1;-webkit-appearance:none;height:2px;background:var(--border2);border-radius:1px;border:none;box-shadow:none;padding:0;background:var(--s3)}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer}
+/* FILTER CHIPS */
+.fchips{display:flex;gap:4px;flex-wrap:wrap}
+.fchip{padding:3px 9px;border-radius:20px;font-size:11px;cursor:pointer;border:1px solid var(--border);background:var(--s2);color:var(--text3);transition:all .12s;font-family:'JetBrains Mono',monospace;user-select:none}
+.fchip.on{background:rgba(155,114,251,.15);border-color:var(--purple);color:var(--purple)}
 
-/* GENERATE BTN */
-.btn-gen{
-  margin:16px;background:var(--accent);color:#fff;border:none;padding:13px;
-  border-radius:var(--r);font-family:'Syne',sans-serif;font-size:16px;font-weight:700;
-  letter-spacing:0.5px;cursor:pointer;transition:all .2s;display:flex;align-items:center;
-  justify-content:center;gap:8px;width:calc(100% - 32px)
-}
-.btn-gen:hover{filter:brightness(1.15)}
-.btn-gen:disabled{background:var(--s3);color:var(--text3);cursor:not-allowed;filter:none}
+/* CHECKBOX */
+.ck-row{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);padding:4px 0;cursor:pointer}
+.ck-row input{accent-color:var(--purple);width:12px;height:12px;cursor:pointer}
 
-/* SMALL BUTTONS */
-.btn{
-  display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:var(--r);
-  font-size:12px;cursor:pointer;border:1px solid var(--border);background:var(--s2);
-  color:var(--text2);transition:all .15s;font-family:inherit
+/* ── SPYDER BRAND ITEMS ── */
+.spyder-item{
+  display:flex;align-items:center;gap:8px;padding:7px 9px;
+  background:var(--s2);border:1px solid var(--border);border-radius:var(--r);
+  cursor:pointer;transition:all .13s;margin-bottom:5px;user-select:none
 }
-.btn:hover{border-color:var(--border2);color:var(--text)}
-.btn.accent{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
-.btn.accent:hover{background:var(--accent);color:#fff}
-.btn.green{background:var(--green-dim);border-color:var(--green);color:var(--green)}
-.btn.red{background:var(--red-dim);border-color:var(--red);color:var(--red)}
-.btn.ghost{background:transparent;border-color:transparent}
-.btn.ghost:hover{background:var(--s2)}
+.spyder-item:hover{border-color:var(--border2)}
+.spyder-item.sel{background:var(--purple-dim);border-color:var(--purple)}
+.spyder-item.sel .sp-name{color:var(--purple)}
+.sp-check{width:14px;height:14px;border-radius:3px;border:1.5px solid var(--border2);
+  background:var(--s3);display:flex;align-items:center;justify-content:center;
+  font-size:9px;flex-shrink:0;transition:all .13s}
+.spyder-item.sel .sp-check{background:var(--purple);border-color:var(--purple);color:#fff}
+.sp-name{font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sp-count{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);
+  background:var(--s3);padding:1px 6px;border-radius:8px;white-space:nowrap}
+.sp-live{font-family:'JetBrains Mono',monospace;font-size:9px;padding:1px 5px;
+  border-radius:6px;background:var(--green-dim);border:1px solid rgba(45,212,122,.3);
+  color:var(--green);white-space:nowrap}
+.spyder-loading{padding:12px 0;text-align:center;font-size:11px;color:var(--text3);
+  font-family:'JetBrains Mono',monospace}
 
-/* ── COMPETITOR MULTI-SELECT ── */
-.comp-list{display:flex;flex-direction:column;gap:4px}
-.comp-item{
-  display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--r);
-  background:var(--s2);border:1px solid var(--border);cursor:pointer;transition:all .15s;
-  user-select:none
+/* RUN BUTTON */
+.run-btn{
+  margin:0;padding:12px;
+  background:linear-gradient(135deg,var(--purple),#6b44f8);
+  color:#fff;border:none;border-radius:var(--r2);
+  font-family:'Syne',sans-serif;font-size:14px;font-weight:700;
+  cursor:pointer;transition:all .2s;width:100%;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  letter-spacing:.3px;
 }
-.comp-item:hover{border-color:var(--border2)}
-.comp-item.selected{background:var(--accent-dim);border-color:var(--accent)}
-.comp-item.selected .comp-name{color:var(--accent)}
-.comp-check{
-  width:16px;height:16px;border-radius:4px;border:1.5px solid var(--border2);
-  flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;
-  background:var(--s3)
-}
-.comp-item.selected .comp-check{background:var(--accent);border-color:var(--accent);color:#fff}
-.comp-name{font-size:13px;flex:1}
-.comp-count{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);background:var(--s3);padding:1px 6px;border-radius:10px}
-.comp-all-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
-.comp-all-btn{font-size:11px;color:var(--accent);cursor:pointer;font-family:'JetBrains Mono',monospace}
-.comp-all-btn:hover{text-decoration:underline}
-
-/* ── RIGHT OUTPUT COL ── */
-.out-col{flex:1;display:flex;flex-direction:column;overflow:hidden}
-.out-tabs{
-  display:flex;align-items:center;padding:0 24px;border-bottom:1px solid var(--border);
-  background:var(--s1);flex-shrink:0;gap:2px
-}
-.tab{
-  padding:12px 16px;font-size:13px;color:var(--text3);cursor:pointer;border:none;background:none;
-  border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;font-family:inherit;
-  display:flex;align-items:center;gap:6px
-}
-.tab:hover{color:var(--text2)}
-.tab.active{color:var(--text);border-bottom-color:var(--accent)}
-.tab-badge{
-  background:var(--accent);color:#fff;border-radius:10px;padding:0 6px;font-size:10px;
-  font-family:'JetBrains Mono',monospace;min-width:18px;text-align:center
-}
-.out-body{flex:1;overflow-y:auto;padding:20px 24px}
-
-/* EMPTY */
-.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:360px;text-align:center;gap:8px}
-.empty-art{font-family:'Syne',sans-serif;font-size:72px;font-weight:800;color:var(--s3);line-height:1;margin-bottom:4px}
-.empty-ttl{font-size:14px;font-weight:600;color:var(--text2)}
-.empty-sub{font-size:12px;color:var(--text3);max-width:260px}
-
-/* ── SCRIPT CARDS ── */
-.script-grid{display:flex;flex-direction:column;gap:16px}
-.scard{
-  background:var(--s1);border:1px solid var(--border);border-radius:var(--r2);
-  overflow:hidden;animation:fadeUp .3s ease both
-}
-@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-.scard:nth-child(1){animation-delay:0s}
-.scard:nth-child(2){animation-delay:.07s}
-.scard:nth-child(3){animation-delay:.14s}
-.scard:nth-child(4){animation-delay:.21s}
-.scard:nth-child(5){animation-delay:.28s}
-
-.scard-hdr{
-  padding:10px 16px;background:var(--s2);border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between
-}
-.scard-num{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3)}
-.scard-style{font-size:11px;padding:2px 9px;border-radius:20px;background:var(--s3);color:var(--text2);border:1px solid var(--border)}
-
-.scard-body{padding:16px}
-.hook-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;margin-bottom:5px}
-.hook-txt{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:var(--text);margin-bottom:14px;line-height:1.45}
-.body-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;margin-bottom:5px}
-.body-txt{font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:14px}
-.cta-box{background:var(--s2);border:1px solid var(--border2);border-left:3px solid var(--green);border-radius:var(--r);padding:10px 14px;display:flex;align-items:center;gap:10px}
-.cta-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--green);white-space:nowrap}
-.cta-txt{font-size:13px;font-weight:600;color:var(--green)}
-.reason-txt{margin-top:10px;font-size:11px;color:var(--text3);font-style:italic;padding-left:10px;border-left:2px solid var(--border)}
-.scard-foot{padding:10px 16px;border-top:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap}
+.run-btn:hover{filter:brightness(1.12);transform:translateY(-1px)}
+.run-btn:disabled{background:var(--s3);color:var(--text3);cursor:not-allowed;filter:none;transform:none}
+.run-footer{padding:14px 16px;border-top:1px solid var(--border);background:var(--s1);flex-shrink:0}
 
 /* PROGRESS */
-.prog-wrap{background:var(--s1);border:1px solid var(--border);border-radius:var(--r2);padding:20px;margin-bottom:16px}
-.prog-ttl{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:14px}
-.prog-step{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px}
-.prog-step:last-child{border:none}
-.pi{width:18px;text-align:center;flex-shrink:0}
-.pl{flex:1;color:var(--text2)}
-.ps{font-family:'JetBrains Mono',monospace;font-size:10px}
-.ps.run{color:var(--gold)}.ps.done{color:var(--green)}.ps.err{color:var(--red)}.ps.wait{color:var(--text3)}
+.prog-wrap{margin-top:10px;display:none}
+.prog-steps{display:flex;flex-direction:column;gap:3px;margin-bottom:6px}
+.pstep{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3);padding:1px 0}
+.pstep .si{width:13px;text-align:center;font-size:10px;flex-shrink:0;font-family:'JetBrains Mono',monospace}
+.pstep.run{color:var(--gold)}.pstep.done{color:var(--green)}.pstep.err{color:var(--red)}
+.pbar-wrap{background:var(--s3);border-radius:2px;height:2px;overflow:hidden}
+.pbar{height:100%;border-radius:2px;width:0;transition:width .4s ease;background:linear-gradient(90deg,var(--purple),var(--cyan))}
 
-/* TTS */
-.tts-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;margin-bottom:12px;animation:fadeUp .25s ease}
-.tts-hdr{padding:10px 16px;background:var(--s2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.tts-body{padding:14px 16px}
-.tts-hook{font-family:'Syne',sans-serif;font-size:14px;color:var(--text2);margin-bottom:10px;font-style:italic}
-audio{width:100%;height:32px}
+/* ── RIGHT: PIPELINE ── */
+.pipeline{padding:0 32px 60px;overflow-y:auto}
 
-/* ═══════════════════ LIBRARY PANEL ═══════════════════ */
-.lib-panel{flex:1;display:flex;overflow:hidden}
-.lib-sidebar{width:220px;background:var(--s1);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
-.lib-section-title{padding:14px 16px 8px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--text3);text-transform:uppercase}
-.lib-item{
-  padding:8px 16px;display:flex;align-items:center;gap:8px;cursor:pointer;
-  transition:background .12s;border-radius:0;font-size:13px;color:var(--text2)
+/* STAGE */
+.stage{margin-bottom:0;opacity:0;transform:translateY(20px);transition:opacity .5s ease,transform .5s ease}
+.stage.visible{opacity:1;transform:none}
+.stage.locked{opacity:.3;pointer-events:none}
+
+/* STAGE CONNECTOR */
+.connector{display:flex;flex-direction:column;align-items:center;padding:6px 0;gap:3px}
+.conn-line{width:1px;height:24px;background:linear-gradient(to bottom,var(--border2),transparent);margin:0 auto}
+.conn-dot{width:6px;height:6px;border-radius:50%;background:var(--border2)}
+.conn-dot.active{background:var(--purple);box-shadow:0 0 6px var(--purple)}
+
+/* STAGE HEADER */
+.stage-hd{
+  display:flex;align-items:center;gap:14px;
+  padding:18px 22px;
+  background:var(--s1);
+  border:1px solid var(--border);
+  border-radius:var(--r3) var(--r3) 0 0;
+  border-bottom:none;
 }
-.lib-item:hover{background:var(--s2);color:var(--text)}
-.lib-item.active{background:var(--s2);color:var(--text);border-right:2px solid var(--accent)}
-.lib-item-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.lib-add-btn{
-  margin:8px 12px;padding:8px;border-radius:var(--r);border:1px dashed var(--border2);
-  background:none;color:var(--text3);font-size:12px;cursor:pointer;font-family:inherit;
-  transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px
+.stage-num{
+  width:32px;height:32px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-size:12px;font-weight:800;
+  background:var(--s3);border:1px solid var(--border2);color:var(--text3);
+  flex-shrink:0;transition:all .3s
 }
-.lib-add-btn:hover{border-color:var(--accent);color:var(--accent)}
+.stage.active .stage-num{background:linear-gradient(135deg,var(--purple),#6b44f8);border-color:var(--purple);color:#fff;box-shadow:0 0 12px rgba(155,114,251,.4)}
+.stage.done .stage-num{background:var(--green-dim);border-color:var(--green);color:var(--green)}
+.stage-info{flex:1}
+.stage-ttl{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
+.stage-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.stage-status{font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 8px;border-radius:10px}
+.stage-status.wait{background:var(--s3);color:var(--text3);border:1px solid var(--border2)}
+.stage-status.run{background:var(--gold-dim);color:var(--gold);border:1px solid rgba(245,166,35,.3)}
+.stage-status.done{background:var(--green-dim);color:var(--green);border:1px solid rgba(45,212,122,.3)}
 
-.lib-main{flex:1;overflow-y:auto;padding:20px 24px}
-.lib-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;gap:12px}
-.lib-ttl{font-family:'Syne',sans-serif;font-size:20px;font-weight:800}
-.lib-sub{font-size:12px;color:var(--text3);margin-top:3px}
-
-/* HOOK ENTRY */
-.hook-entry{
-  background:var(--s1);border:1px solid var(--border);border-radius:var(--r2);
-  margin-bottom:12px;animation:fadeUp .25s ease
+/* STAGE BODY */
+.stage-body{
+  background:var(--s1);
+  border:1px solid var(--border);
+  border-top:none;
+  border-radius:0 0 var(--r3) var(--r3);
+  overflow:hidden;
 }
-.he-hdr{padding:10px 14px;background:var(--s2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
-.he-num{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3)}
-.he-tag{font-size:11px;padding:2px 8px;border-radius:10px;background:var(--s3);color:var(--text3);border:1px solid var(--border)}
-.he-body{padding:12px 14px;display:flex;flex-direction:column;gap:6px}
-.he-hook{font-weight:600;color:var(--text);line-height:1.5}
-.he-script{font-size:12px;color:var(--text2);line-height:1.65;white-space:pre-wrap}
-.he-foot{padding:8px 14px;border-top:1px solid var(--border);display:flex;gap:6px}
 
-/* BRAND CARD */
-.brand-card{
-  background:var(--s1);border:1px solid var(--border);border-radius:var(--r2);
-  margin-bottom:12px;overflow:hidden
+/* ── AD GRID ── */
+.ad-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;padding:18px}
+.ad-card{background:var(--s2);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;cursor:pointer;transition:all .15s;position:relative}
+.ad-card:hover{border-color:var(--border2);transform:translateY(-1px)}
+.ad-card.sel{border-color:var(--accent);background:rgba(79,143,255,.06)}
+.ad-thumb{height:88px;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:24px;position:relative;overflow:hidden}
+.ad-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.thumb-emoji{position:relative;z-index:1}
+.ad-live{position:absolute;top:5px;right:5px;padding:2px 6px;border-radius:8px;font-size:9px;font-family:'JetBrains Mono',monospace}
+.ad-live.on{background:rgba(45,212,122,.9);color:#000}
+.ad-live.off{background:rgba(74,81,96,.8);color:var(--text2)}
+.sel-check{position:absolute;top:5px;left:5px;width:16px;height:16px;border-radius:50%;background:var(--accent);color:#fff;font-size:9px;display:none;align-items:center;justify-content:center;font-weight:700;z-index:2}
+.ad-card.sel .sel-check{display:flex}
+.ad-info{padding:8px 9px}
+.ad-brand{font-size:9px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:3px;display:flex;align-items:center;gap:4px}
+.ad-hook{font-size:11px;font-weight:600;line-height:1.4;margin-bottom:5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ad-tags{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:4px}
+.atag{font-size:9px;padding:1px 5px;border-radius:6px;font-family:'JetBrains Mono',monospace;border:1px solid}
+.atag.plat{color:var(--purple);border-color:var(--purple);background:var(--purple-dim)}
+.atag.tone{color:var(--gold);border-color:var(--gold);background:var(--gold-dim)}
+.ad-tr{font-size:10px;color:var(--text3);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;border-left:2px solid var(--border2);padding-left:6px}
+
+/* AD GRID FOOTER */
+.grid-footer{padding:12px 18px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;background:var(--s2)}
+.gf-count{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text3);flex:1}
+.gf-count span{color:var(--accent)}
+
+/* ── REPORT ── */
+.report-wrap{padding:20px 22px;display:flex;flex-direction:column;gap:12px}
+.report-banner{
+  background:linear-gradient(135deg,rgba(155,114,251,.15),rgba(34,211,238,.08));
+  border:1px solid rgba(155,114,251,.25);
+  border-radius:var(--r2);padding:14px 16px
 }
-.bc-hdr{padding:12px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border)}
-.bc-color{width:32px;height:32px;border-radius:8px;flex-shrink:0}
-.bc-name{font-family:'Syne',sans-serif;font-size:16px;font-weight:700}
-.bc-cat{font-size:11px;color:var(--text3);margin-top:1px}
-.bc-body{padding:14px 16px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.bc-field-label{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);letter-spacing:1px;margin-bottom:3px;text-transform:uppercase}
-.bc-field-val{font-size:12px;color:var(--text2);line-height:1.6}
-.bc-foot{padding:10px 16px;border-top:1px solid var(--border);display:flex;gap:6px}
+.rb-label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--purple);text-transform:uppercase;margin-bottom:4px}
+.rb-ttl{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;margin-bottom:6px}
+.rb-sum{font-size:12px;color:var(--text2);line-height:1.7}
 
-/* ═══ MODAL ═══ */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.rsec{background:var(--s2);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden}
+.rsec-hd{padding:10px 14px;background:var(--s3);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:7px}
+.rsec-icon{font-size:12px}
+.rsec-ttl{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase}
+.rsec-badge{margin-left:auto;font-size:10px;padding:2px 7px;border-radius:10px;font-family:'JetBrains Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim)}
+.rsec-body{padding:12px 14px}
+
+.top-hook{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)}
+.top-hook:last-child{border:none;padding-bottom:0}
+.th-rank{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--purple);width:18px;flex-shrink:0;padding-top:2px}
+.th-hook{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--text);line-height:1.4;margin-bottom:3px}
+.th-reason{font-size:10px;color:var(--text3);font-style:italic}
+
+.hp-item{background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:9px 11px;margin-bottom:6px}
+.hp-item:last-child{margin-bottom:0}
+.hp-type{font-size:9px;padding:2px 7px;border-radius:10px;font-family:'JetBrains Mono',monospace;border:1px solid var(--gold);color:var(--gold);background:var(--gold-dim);display:inline-block;margin-bottom:4px}
+.hp-ex{font-size:12px;font-weight:600;color:var(--text);line-height:1.4;margin-bottom:2px}
+.hp-freq{font-size:10px;color:var(--text3)}
+
+.ibox{background:rgba(79,143,255,.06);border:1px solid rgba(79,143,255,.15);border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--text2);line-height:1.75}
+
+/* ── SCRIPTS ── */
+.scripts-wrap{padding:18px 22px;display:flex;flex-direction:column;gap:14px}
+.scard{background:var(--s2);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;animation:slideIn .35s ease both}
+@keyframes slideIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.scard:nth-child(1){animation-delay:0s}
+.scard:nth-child(2){animation-delay:.08s}
+.scard:nth-child(3){animation-delay:.16s}
+.scard:nth-child(4){animation-delay:.24s}
+.scard:nth-child(5){animation-delay:.32s}
+.scard-hdr{padding:9px 14px;background:var(--s3);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.scard-num{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3)}
+.scard-style{font-size:10px;padding:2px 8px;border-radius:10px;background:var(--s4);color:var(--text2);border:1px solid var(--border2)}
+.scard-fp{font-size:10px;padding:2px 7px;border-radius:10px;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);font-family:'JetBrains Mono',monospace}
+.scard-body{padding:14px}
+.slbl{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
+.slbl.h{color:var(--accent)}.slbl.b{color:var(--text3)}.slbl.c{color:var(--green)}
+.s-hook{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--text);margin-bottom:12px;line-height:1.45}
+.s-body{font-size:12px;color:var(--text2);line-height:1.75;margin-bottom:12px}
+.s-cta{background:var(--s3);border:1px solid var(--border2);border-left:3px solid var(--green);border-radius:var(--r);padding:9px 12px;display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.s-cta-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--green);white-space:nowrap}
+.s-cta-txt{font-size:12px;font-weight:600;color:var(--green)}
+.s-reason{font-size:10px;color:var(--text3);font-style:italic;padding-left:9px;border-left:2px solid var(--border2)}
+.scard-foot{padding:8px 14px;border-top:1px solid var(--border);display:flex;gap:6px}
+
+/* ── TTS SECTION ── */
+.tts-wrap{padding:18px 22px;display:flex;flex-direction:column;gap:10px}
+.tts-card{background:var(--s2);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;animation:slideIn .3s ease}
+.tts-hdr{padding:9px 14px;background:var(--s3);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.tts-body{padding:12px 14px}
+.tts-hook{font-family:'Syne',sans-serif;font-size:13px;color:var(--text2);margin-bottom:8px;font-style:italic}
+audio{width:100%;height:30px}
+
+/* ── VIDEO STAGE ── */
+.video-tools{padding:18px 22px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.vtool{
+  background:var(--s2);border:1px solid var(--border);border-radius:var(--r2);
+  padding:16px;cursor:pointer;transition:all .2s;text-decoration:none;
+  display:flex;flex-direction:column;gap:8px
+}
+.vtool:hover{border-color:var(--border2);transform:translateY(-2px);background:var(--s3)}
+.vtool-icon{font-size:22px}
+.vtool-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--text)}
+.vtool-desc{font-size:11px;color:var(--text3);line-height:1.5}
+.vtool-badge{font-size:9px;padding:2px 7px;border-radius:10px;font-family:'JetBrains Mono',monospace;align-self:flex-start}
+.vtool-badge.hot{background:var(--red-dim);border:1px solid rgba(255,79,106,.3);color:var(--red)}
+.vtool-badge.ai{background:var(--accent-dim);border:1px solid rgba(79,143,255,.3);color:var(--accent)}
+.vtool-badge.rec{background:var(--green-dim);border:1px solid rgba(45,212,122,.3);color:var(--green)}
+.vtool-badge.new{background:var(--purple-dim);border:1px solid rgba(155,114,251,.3);color:var(--purple)}
+
+.script-export{padding:14px 22px;border-top:1px solid var(--border);background:var(--s2)}
+.export-label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;margin-bottom:10px}
+.export-btns{display:flex;gap:8px;flex-wrap:wrap}
+
+/* ── BTNS ── */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:var(--r);font-size:11px;cursor:pointer;border:1px solid var(--border);background:var(--s2);color:var(--text2);transition:all .15s;font-family:inherit}
+.btn:hover{border-color:var(--border2);color:var(--text)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.acc{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+.btn.acc:hover{background:var(--accent);color:#fff}
+.btn.grn{background:var(--green-dim);border-color:var(--green);color:var(--green)}
+.btn.grn:hover{background:var(--green);color:#fff}
+.btn.pur{background:var(--purple-dim);border-color:var(--purple);color:var(--purple)}
+.btn.pur:hover{background:var(--purple);color:#fff}
+.btn.red{background:var(--red-dim);border-color:var(--red);color:var(--red)}
+.btn.sm{padding:4px 9px;font-size:10px}
+
+/* ── EMPTY ── */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px;text-align:center;gap:6px;padding:32px;color:var(--text3)}
+.empty-icon{font-size:36px;margin-bottom:4px}
+.empty-ttl{font-size:13px;font-weight:600;color:var(--text2)}
+.empty-sub{font-size:11px;line-height:1.6;max-width:260px}
+
+/* ── MODAL ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:300;display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
 .overlay.open{display:flex}
-.modal{background:var(--s1);border:1px solid var(--border2);border-radius:var(--r2);width:500px;max-width:94vw;max-height:90vh;display:flex;flex-direction:column;animation:fadeUp .2s ease}
-.modal-wide{width:640px}
-.modal-hdr{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-.modal-ttl{font-family:'Syne',sans-serif;font-size:17px;font-weight:700}
-.modal-x{background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;padding:0;line-height:1}
+.modal{background:var(--s1);border:1px solid var(--border2);border-radius:var(--r3);width:460px;max-width:94vw;max-height:88vh;display:flex;flex-direction:column;animation:slideIn .2s ease}
+.modal-hdr{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.modal-ttl{font-family:'Syne',sans-serif;font-size:15px;font-weight:700}
+.modal-x{background:none;border:none;color:var(--text3);font-size:17px;cursor:pointer;padding:0;line-height:1}
 .modal-x:hover{color:var(--text)}
-.modal-body{padding:20px;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
-.modal-ftr{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0}
+.modal-body{padding:18px 20px;overflow-y:auto;display:flex;flex-direction:column;gap:11px}
+.modal-ftr{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:7px;flex-shrink:0}
 
-.color-grid{display:flex;gap:8px;flex-wrap:wrap}
-.color-opt{width:28px;height:28px;border-radius:8px;cursor:pointer;border:2px solid transparent;transition:all .15s}
-.color-opt.sel{border-color:var(--text)}
+/* NOTICE */
+.notice{padding:9px 11px;border-radius:var(--r);font-size:11px;display:flex;gap:7px;line-height:1.6}
+.notice.pur{background:var(--purple-dim);border:1px solid rgba(155,114,251,.25);color:var(--purple)}
 
-/* TOAST */
-.toast{position:fixed;bottom:20px;right:20px;background:var(--s2);border:1px solid var(--border2);color:var(--text);padding:10px 16px;border-radius:var(--r);font-size:12px;z-index:400;animation:fadeUp .2s ease;max-width:300px;font-family:'JetBrains Mono',monospace}
+/* MISC */
+.divider{height:1px;background:var(--border);margin:4px 0}
+.toast{position:fixed;bottom:20px;right:24px;background:var(--s2);border:1px solid var(--border2);color:var(--text);padding:9px 15px;border-radius:var(--r2);font-size:12px;z-index:500;animation:slideIn .2s ease;max-width:280px;font-family:'JetBrains Mono',monospace}
 .toast.ok{border-color:var(--green);color:var(--green)}
 .toast.err{border-color:var(--red);color:var(--red)}
 
-/* SPIN */
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @keyframes spin{to{transform:rotate(360deg)}}
 .spin{display:inline-block;animation:spin .7s linear infinite}
 
-/* DIVIDER */
-.divider{height:1px;background:var(--border);margin:4px 0}
-
-/* NOTICE */
-.notice{background:var(--gold-dim);border:1px solid rgba(245,166,35,.25);border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--gold);display:flex;gap:8px}
-
-.fw{width:100%}
-
-/* ── REF TABS (훅/대본/영상) ── */
-.ref-tab-btn{
-  padding:10px 14px;font-size:12px;color:var(--text3);cursor:pointer;border:none;background:none;
-  border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;font-family:inherit;
-  display:flex;align-items:center;gap:5px
-}
-.ref-tab-btn:hover{color:var(--text2)}
-.ref-tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
-
-/* ENTRY TYPE BADGES */
-.etype{
-  font-size:10px;padding:2px 7px;border-radius:10px;font-family:'JetBrains Mono',monospace;
-  border:1px solid;white-space:nowrap
-}
-.etype-hook{color:var(--accent);border-color:var(--accent);background:var(--accent-dim)}
-.etype-script{color:var(--gold);border-color:var(--gold);background:var(--gold-dim)}
-.etype-video{color:var(--purple);border-color:var(--purple);background:rgba(167,139,250,.1)}
-
-/* URL ANALYZE BOX */
-.url-analyze-box{
-  background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:12px
-}
-.url-box-title{
-  font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;
-  color:var(--accent);text-transform:uppercase;margin-bottom:8px
-}
-.url-box-sub{
-  font-family:'Noto Sans KR',sans-serif;letter-spacing:0;text-transform:none;
-  font-size:11px;color:var(--text3)
-}
-.url-chip{
-  display:flex;align-items:center;gap:6px;padding:6px 10px;
-  background:var(--s3);border:1px solid var(--border);border-radius:var(--r);
-  font-size:11px;font-family:'JetBrains Mono',monospace
-}
-.url-chip-icon{font-size:14px;flex-shrink:0}
-.url-chip-text{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)}
-.url-chip-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;line-height:1;padding:0;flex-shrink:0}
-.url-chip-del:hover{color:var(--red)}
-.url-chip-badge{font-size:10px;padding:1px 6px;border-radius:10px;border:1px solid var(--border);color:var(--text3);white-space:nowrap;flex-shrink:0}
-.url-chip-badge.ok{color:var(--green);border-color:var(--green);background:var(--green-dim)}
-.url-chip-badge.analyzing{color:var(--gold);border-color:var(--gold)}
-
-/* COMP MODAL ENTRY ROWS */
-.entry-row{
-  display:grid;gap:6px;padding:10px;background:var(--s2);
-  border:1px solid var(--border);border-radius:var(--r);margin-bottom:6px
-}
-.entry-del{
-  width:26px;height:26px;border-radius:var(--r);background:var(--red-dim);border:1px solid var(--red);
-  color:var(--red);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;
-  flex-shrink:0;align-self:flex-start;margin-top:2px
-}
-.entry-del:hover{background:var(--red);color:#fff}
-.entry-sub{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px}
-.entry-row-top{display:flex;gap:6px;align-items:flex-start}
-.entry-row-top textarea,.entry-row-top input{flex:1}
-
-/* VIDEO ENTRY */
-.video-link{
-  display:flex;align-items:center;gap:8px;padding:8px 10px;
-  background:var(--s3);border-radius:var(--r);font-size:12px;
-  color:var(--text2);text-decoration:none;transition:all .15s;
-  border:1px solid var(--border)
-}
-.video-link:hover{border-color:var(--purple);color:var(--purple)}
-.video-thumb{
-  width:60px;height:34px;border-radius:4px;background:var(--border);
-  display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px
-}
+/* PIPELINE TOP PADDING */
+.pipeline-inner{padding:28px 0 60px}
+.stage+.stage{margin-top:4px}
 </style>
 </head>
 <body>
 
 <!-- HEADER -->
-<header>
-  <div class="logo">Ad <span>Forge</span></div>
-  <div class="hdr-right">
-    <button class="hdr-btn" id="hdr-api" onclick="openModal('modal-api')">
-      <div class="dot" id="dot-claude"></div> Claude
-    </button>
-    <button class="hdr-btn" id="hdr-eleven" onclick="openModal('modal-api')">
-      <div class="dot" id="dot-eleven"></div> ElevenLabs
-    </button>
-    <button class="hdr-btn" onclick="openModal('modal-api')" title="Supabase 연결 설정">
-      <div class="dot" id="dot-gs"></div> <span id="lbl-gs">Supabase</span>
-    </button>
+<header class="header">
+  <div class="logo">
+    Ad <span class="logo-mark">Forge</span>
+    <span class="logo-ver">⚡ Foreplay</span>
+  </div>
+  <div class="hdr-r">
+    <div class="api-dot" onclick="openModal('modal-api')"><div class="dot" id="dot-fp"></div>Foreplay</div>
+    <div class="api-dot" onclick="openModal('modal-api')"><div class="dot" id="dot-cl"></div>Claude</div>
+    <div class="api-dot" onclick="openModal('modal-api')"><div class="dot" id="dot-el"></div>ElevenLabs</div>
+    <div class="api-dot" onclick="openModal('modal-sb')" id="sb-btn"><div class="dot" id="dot-sb"></div><span id="lbl-sb">Supabase</span></div>
   </div>
 </header>
 
-<div class="root">
+<div class="main">
 
-  <!-- NAV -->
-  <nav class="nav">
-    <button class="nav-btn active" id="nav-gen" onclick="showPanel('gen',this)">
-      ✦<div class="nav-tooltip">대본 생성</div>
-    </button>
-    <button class="nav-btn" id="nav-comp" onclick="showPanel('comp',this)">
-      🏢<div class="nav-tooltip">경쟁사 라이브러리</div>
-    </button>
-    <button class="nav-btn" id="nav-brand" onclick="showPanel('brand',this)">
-      🎨<div class="nav-tooltip">브랜드 라이브러리</div>
-    </button>
-  </nav>
+  <!-- ══ LEFT SIDEBAR (고정) ══ -->
+  <aside class="sidebar">
+    <div class="sidebar-scroll">
 
-  <!-- ══════════ PANEL: 대본 생성 ══════════ -->
-  <div class="panel active" id="panel-gen">
+      <!-- 검색 -->
+      <div class="sb-section">
+        <div class="sb-hd">검색 방식</div>
+        <div class="mchips" style="flex-wrap:wrap">
+          <div class="mchip" data-m="spyder" onclick="setMode(this)" style="border-color:rgba(155,114,251,.4);color:var(--purple)">⚡ Spyder</div>
+          <div class="mchip on" data-m="brand" onclick="setMode(this)">🏢 브랜드</div>
+          <div class="mchip" data-m="pageid" onclick="setMode(this)">📘 ID</div>
+          <div class="mchip" data-m="kw" onclick="setMode(this)">🔍 키워드</div>
+        </div>
 
-    <!-- LEFT FORM -->
-    <div class="form-col">
+        <!-- Spyder 모드 -->
+        <div id="m-spyder" style="display:none">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">
+            <span style="font-size:11px;color:var(--text3)">내 Spyder 추적 브랜드</span>
+            <button class="btn sm" id="spyder-refresh-btn" onclick="loadSpyderBrands()" style="font-size:10px;padding:3px 8px">↻ 새로고침</button>
+          </div>
+          <div id="spyder-brand-list">
+            <div style="font-size:11px;color:var(--text3);padding:8px 0;text-align:center">
+              API 키를 입력하면 목록을 불러옵니다
+            </div>
+          </div>
+          <div id="spyder-selected-info" style="display:none;margin-top:8px;padding:7px 9px;background:var(--purple-dim);border:1px solid rgba(155,114,251,.3);border-radius:var(--r);font-size:11px;color:var(--purple);font-family:'JetBrains Mono',monospace"></div>
+          <div style="margin-top:7px;font-size:10px;color:var(--text3);line-height:1.5">
+            Spyder에 추적 등록된 브랜드의<br>전체 광고 이력을 가져옵니다
+          </div>
+        </div>
 
-      <!-- 브랜드 선택 -->
-      <div class="form-block">
-        <div class="block-hd">브랜드 선택
-          <span class="block-hd-action" onclick="showPanel('brand',document.getElementById('nav-brand'))">+ 추가</span>
+        <div id="m-brand"><div class="field"><input type="text" id="i-brand" placeholder="예: 올리브영, 마켓컬리..." onkeydown="if(event.key==='Enter')go()"></div></div>
+        <div id="m-pageid" style="display:none"><div class="field"><input type="text" id="i-pid" placeholder="Facebook Page ID" onkeydown="if(event.key==='Enter')go()"><div class="hint">FB 페이지 URL 숫자 ID</div></div></div>
+        <div id="m-kw" style="display:none">
+          <div class="field"><input type="text" id="i-kw" placeholder="키워드" onkeydown="if(event.key==='Enter')go()"></div>
+          <div class="field"><select id="i-cat"><option value="">전체 카테고리</option><option>뷰티/스킨케어</option><option>다이어트/건강</option><option>패션/의류</option><option>식품/음료</option><option>육아/유아</option><option>반려동물</option><option>가전/전자기기</option></select></div>
+        </div>
+      </div>
+
+      <!-- 필터 -->
+      <div class="sb-section">
+        <div class="sb-hd">필터</div>
+        <div class="field">
+          <label>상태</label>
+          <div class="fchips">
+            <div class="fchip on" data-fk="active" onclick="tf(this)">🟢 활성</div>
+            <div class="fchip" data-fk="all" onclick="tf(this)">전체</div>
+          </div>
         </div>
         <div class="field">
-          <select id="sel-brand" onchange="onBrandChange()">
-            <option value="">— 브랜드 선택 —</option>
-          </select>
+          <label>포맷</label>
+          <div class="fchips">
+            <div class="fchip on" data-fk="video" onclick="tf(this)">🎬 영상</div>
+            <div class="fchip on" data-fk="image" onclick="tf(this)">🖼 이미지</div>
+          </div>
         </div>
-        <div id="brand-preview" style="display:none;background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:10px;font-size:12px;color:var(--text2);line-height:1.6"></div>
-      </div>
-
-      <!-- 경쟁사 선택 -->
-      <div class="form-block">
-        <div class="block-hd">경쟁사 레퍼런스
-          <span class="block-hd-action" onclick="showPanel('comp',document.getElementById('nav-comp'))">+ 추가</span>
-        </div>
-        <div class="comp-all-row">
-          <span style="font-size:11px;color:var(--text3)">선택된 훅을 레퍼런스로 사용</span>
-          <span class="comp-all-btn" onclick="toggleAllComp()">전체 선택</span>
-        </div>
-        <div class="comp-list" id="comp-list">
-          <div style="font-size:12px;color:var(--text3);padding:8px 0">경쟁사 라이브러리에서 추가해주세요</div>
-        </div>
-      </div>
-
-      <!-- 타겟 오디언스 -->
-      <div class="form-block">
-        <div class="block-hd">타겟 오디언스</div>
         <div class="row2">
-          <div class="field">
-            <label>연령대</label>
-            <select id="age">
-              <option>20대 초반</option><option>20대 후반</option>
-              <option selected>30대</option><option>40대</option><option>50대+</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>성별</label>
-            <select id="gender">
-              <option>전체</option><option>여성</option><option>남성</option>
-            </select>
-          </div>
-        </div>
-        <div class="field">
-          <label>관심사 (Enter 추가)</label>
-          <input type="text" id="tag-inp" placeholder="예: 다이어트, 피부관리..." onkeydown="addTag(event)">
-          <div class="tags-wrap" id="tags"></div>
-        </div>
-        <div class="field">
-          <label>추가 페인포인트 (선택)</label>
-          <textarea id="extra-pain" rows="2" placeholder="브랜드 기본 페인포인트 외 추가 사항..."></textarea>
+          <div class="field"><label>수량</label><select id="i-lim"><option value="20">20개</option><option value="50" selected>50개</option><option value="100">100개</option></select></div>
+          <div class="field"><label>정렬</label><select id="i-sort"><option value="active_days">활성기간</option><option value="recent">최신순</option></select></div>
         </div>
       </div>
 
-      <!-- 생성 설정 -->
-      <div class="form-block">
-        <div class="block-hd">생성 설정</div>
+      <!-- 분석 옵션 -->
+      <div class="sb-section">
+        <div class="sb-hd">분석 옵션</div>
+        <label class="ck-row"><input type="checkbox" id="o-hook" checked> 훅 패턴 분류</label>
+        <label class="ck-row"><input type="checkbox" id="o-tone" checked> 감성 톤 분석</label>
+        <label class="ck-row"><input type="checkbox" id="o-struct" checked> 영상 구조 패턴</label>
+        <label class="ck-row"><input type="checkbox" id="o-cta" checked> CTA 전략</label>
+        <label class="ck-row"><input type="checkbox" id="o-insight" checked> 전략 인사이트</label>
+      </div>
+
+      <!-- 자사 브랜드 -->
+      <div class="sb-section">
+        <div class="sb-hd">자사 브랜드 <span class="sb-hd-act" onclick="openBrandModal()">+ 추가</span></div>
+        <div class="field"><select id="sel-brand" onchange="onBrandChange()"><option value="">— 선택 —</option></select></div>
+        <div id="brand-prev" style="display:none;margin-top:6px;background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:8px 10px;font-size:11px;color:var(--text2);line-height:1.6"></div>
+      </div>
+
+      <!-- 대본 설정 -->
+      <div class="sb-section">
+        <div class="sb-hd">대본 설정</div>
         <div class="field">
-          <label>대본 수 <span id="cnt-v" style="color:var(--accent);font-family:'JetBrains Mono',monospace">3</span>개</label>
-          <div class="range-row">
-            <span style="color:var(--text3)">1</span>
-            <input type="range" id="cnt" min="1" max="5" value="3" oninput="document.getElementById('cnt-v').textContent=this.value">
-            <span style="color:var(--text3)">5</span>
-          </div>
+          <label>대본 수 <span id="cnt-v" style="color:var(--purple);font-family:'JetBrains Mono',monospace">3</span></label>
+          <input type="range" id="i-cnt" min="1" max="5" value="3" oninput="document.getElementById('cnt-v').textContent=this.value" style="-webkit-appearance:none;height:2px;background:var(--s4);border-radius:1px;border:none;width:100%;outline:none;cursor:pointer">
         </div>
-        <div class="field">
-          <label>광고 유형</label>
-          <select id="ad-type">
-            <option>퍼포먼스 광고 (전환 최적화)</option>
-            <option>UGC 스타일 (자연스러운 후기형)</option>
-            <option>브랜딩 광고 (인지도/감성)</option>
-            <option>리타겟팅 광고 (재구매 유도)</option>
+        <div class="field"><label>광고 유형</label>
+          <select id="i-adtype">
+            <option>퍼포먼스 광고 (전환 최적화)</option><option>UGC 스타일 (자연스러운 후기형)</option>
+            <option>브랜딩 광고 (인지도/감성)</option><option>리타겟팅 광고 (재구매 유도)</option>
           </select>
         </div>
-        <div class="field">
-          <label>톤 & 무드</label>
-          <select id="tone">
-            <option>공감형 (페인포인트 → 해결)</option>
-            <option>충격형 (반전/놀라운 사실)</option>
-            <option>호기심형 (궁금증 유발)</option>
-            <option>사회적 증거형 (후기 중심)</option>
-            <option>긴박형 (한정/마감 강조)</option>
+        <div class="field"><label>톤 & 무드</label>
+          <select id="i-tone">
+            <option>공감형 (페인포인트 → 해결)</option><option>충격형 (반전/놀라운 사실)</option>
+            <option>호기심형 (궁금증 유발)</option><option>사회적 증거형 (후기 중심)</option><option>긴박형 (한정/마감 강조)</option>
           </select>
         </div>
       </div>
 
-      <button class="btn-gen" id="btn-gen" onclick="runGen()">
-        <span id="btn-txt">✦ 대본 생성</span>
+    </div><!-- /sidebar-scroll -->
+
+    <!-- RUN -->
+    <div class="run-footer">
+      <button class="run-btn" id="run-btn" onclick="go()">
+        <span id="run-txt">⚡ 수집 → 분석 → 대본 생성</span>
       </button>
-    </div>
-
-    <!-- RIGHT OUTPUT -->
-    <div class="out-col">
-      <div class="out-tabs">
-        <button class="tab active" onclick="switchTab('scripts',this)">대본 & 훅 <span class="tab-badge" id="scripts-badge" style="display:none">0</span></button>
-        <button class="tab" onclick="switchTab('tts',this)">TTS 음성</button>
-      </div>
-      <div class="out-body">
-        <div id="pane-scripts">
-          <div class="empty" id="empty-gen">
-            <div class="empty-art">HOOK</div>
-            <div class="empty-ttl">브랜드 & 경쟁사를 선택하세요</div>
-            <div class="empty-sub">저장된 브랜드와 경쟁사 레퍼런스를 불러와<br>대본을 자동 생성합니다</div>
-          </div>
-          <div id="prog-area"></div>
-          <div class="script-grid" id="scripts-out"></div>
-        </div>
-        <div id="pane-tts" style="display:none">
-          <div class="empty" id="empty-tts">
-            <div class="empty-art">🎙</div>
-            <div class="empty-ttl">아직 생성된 음성이 없어요</div>
-            <div class="empty-sub">대본 카드에서 TTS 버튼을 눌러주세요</div>
-          </div>
-          <div id="tts-out"></div>
-        </div>
+      <div class="prog-wrap" id="prog-wrap">
+        <div class="prog-steps" id="prog-steps"></div>
+        <div class="pbar-wrap"><div class="pbar" id="prog-bar"></div></div>
       </div>
     </div>
-  </div>
+  </aside>
 
-  <!-- ══════════ PANEL: 경쟁사 라이브러리 ══════════ -->
-  <div class="panel" id="panel-comp">
-    <div class="lib-panel">
-      <div class="lib-sidebar">
-        <div class="lib-section-title">경쟁사</div>
-        <div id="comp-sidebar-list"></div>
-        <button class="lib-add-btn" onclick="openAddComp()">+ 경쟁사 추가</button>
-      </div>
-      <div class="lib-main">
-        <div id="comp-main-content">
-          <div class="empty" style="min-height:300px">
-            <div class="empty-art">🏢</div>
-            <div class="empty-ttl">경쟁사를 선택하세요</div>
-            <div class="empty-sub">좌측에서 경쟁사를 선택하거나 새로 추가하세요</div>
+  <!-- ══ RIGHT: PIPELINE ══ -->
+  <main class="pipeline">
+    <div class="pipeline-inner">
+
+      <!-- STAGE 1: 수집 -->
+      <div class="stage active" id="s1">
+        <div class="stage-hd">
+          <div class="stage-num">01</div>
+          <div class="stage-info">
+            <div class="stage-ttl">광고 수집 <span class="stage-status wait" id="st1">대기</span></div>
+            <div class="stage-sub">Foreplay에서 경쟁사 광고 자동 수집</div>
+          </div>
+        </div>
+        <div class="stage-body">
+          <div class="empty-state" id="e1">
+            <div class="empty-icon">⚡</div>
+            <div class="empty-ttl">좌측에서 수집을 시작하세요</div>
+            <div class="empty-sub">브랜드명 / Page ID / 키워드로 검색<br>API 키 없어도 Mock 데이터로 테스트 가능</div>
+          </div>
+          <div id="ad-grid" class="ad-grid" style="display:none"></div>
+          <div class="grid-footer" id="grid-footer" style="display:none">
+            <div class="gf-count">수집 <span id="ad-cnt">0</span>개 · <span id="sel-cnt" style="color:var(--purple)">0개 선택</span></div>
+            <button class="btn sm" onclick="selAll()">전체 선택</button>
+            <button class="btn sm" onclick="clrSel()">해제</button>
           </div>
         </div>
       </div>
-    </div>
-  </div>
 
-  <!-- ══════════ PANEL: 브랜드 라이브러리 ══════════ -->
-  <div class="panel" id="panel-brand">
-    <div class="lib-panel">
-      <div class="lib-sidebar">
-        <div class="lib-section-title">브랜드</div>
-        <div id="brand-sidebar-list"></div>
-        <button class="lib-add-btn" onclick="openAddBrand()">+ 브랜드 추가</button>
+      <!-- CONNECTOR -->
+      <div class="connector"><div class="conn-line"></div><div class="conn-dot" id="conn1"></div><div class="conn-line"></div></div>
+
+      <!-- STAGE 2: 분석 -->
+      <div class="stage locked" id="s2">
+        <div class="stage-hd">
+          <div class="stage-num">02</div>
+          <div class="stage-info">
+            <div class="stage-ttl">경쟁사 분석 <span class="stage-status wait" id="st2">대기</span></div>
+            <div class="stage-sub">Claude AI가 훅 패턴·톤·구조·인사이트 분석</div>
+          </div>
+        </div>
+        <div class="stage-body">
+          <div class="empty-state" id="e2">
+            <div class="empty-icon">📊</div>
+            <div class="empty-ttl">수집 완료 후 자동 분석</div>
+            <div class="empty-sub">Claude API가 경쟁사 광고를 분석해<br>훅 패턴, 감성 톤, 전략 인사이트를 추출합니다</div>
+          </div>
+          <div id="report-out" class="report-wrap" style="display:none"></div>
+        </div>
       </div>
-      <div class="lib-main">
-        <div id="brand-main-content">
-          <div class="empty" style="min-height:300px">
-            <div class="empty-art">🎨</div>
-            <div class="empty-ttl">브랜드를 선택하세요</div>
-            <div class="empty-sub">좌측에서 브랜드를 선택하거나 새로 추가하세요</div>
+
+      <!-- CONNECTOR -->
+      <div class="connector"><div class="conn-line"></div><div class="conn-dot" id="conn2"></div><div class="conn-line"></div></div>
+
+      <!-- STAGE 3: 대본 -->
+      <div class="stage locked" id="s3">
+        <div class="stage-hd">
+          <div class="stage-num">03</div>
+          <div class="stage-info">
+            <div class="stage-ttl">대본 생성 <span class="stage-status wait" id="st3">대기</span></div>
+            <div class="stage-sub">경쟁사 인사이트 기반 자사 맞춤 대본</div>
+          </div>
+          <button class="btn pur sm" id="regen-btn" onclick="onlyGen()" style="display:none">↻ 재생성</button>
+        </div>
+        <div class="stage-body">
+          <div class="empty-state" id="e3">
+            <div class="empty-icon">✦</div>
+            <div class="empty-ttl">분석 완료 후 자동 생성</div>
+            <div class="empty-sub">좌측에서 브랜드를 선택하면<br>경쟁사 분석 기반 대본이 생성됩니다</div>
+          </div>
+          <div id="scripts-out" class="scripts-wrap" style="display:none"></div>
+        </div>
+      </div>
+
+      <!-- CONNECTOR -->
+      <div class="connector"><div class="conn-line"></div><div class="conn-dot" id="conn3"></div><div class="conn-line"></div></div>
+
+      <!-- STAGE 4: TTS -->
+      <div class="stage locked" id="s4">
+        <div class="stage-hd">
+          <div class="stage-num">04</div>
+          <div class="stage-info">
+            <div class="stage-ttl">TTS 음성 <span class="stage-status wait" id="st4">대기</span></div>
+            <div class="stage-sub">ElevenLabs로 광고 보이스오버 생성</div>
+          </div>
+        </div>
+        <div class="stage-body">
+          <div class="empty-state" id="e4">
+            <div class="empty-icon">🎙</div>
+            <div class="empty-ttl">대본 카드에서 TTS 버튼을 누르세요</div>
+            <div class="empty-sub">각 대본의 🎙 TTS 버튼을 누르면<br>ElevenLabs로 음성이 생성됩니다</div>
+          </div>
+          <div id="tts-out" class="tts-wrap" style="display:none"></div>
+        </div>
+      </div>
+
+      <!-- CONNECTOR -->
+      <div class="connector"><div class="conn-line"></div><div class="conn-dot" id="conn4"></div><div class="conn-line"></div></div>
+
+      <!-- STAGE 5: 영상 제작 -->
+      <div class="stage locked" id="s5">
+        <div class="stage-hd">
+          <div class="stage-num">05</div>
+          <div class="stage-info">
+            <div class="stage-ttl">영상 제작 <span class="stage-status wait" id="st5">대기</span></div>
+            <div class="stage-sub">대본 + 음성을 영상 제작 툴로 내보내기</div>
+          </div>
+        </div>
+        <div class="stage-body">
+          <div id="video-tools-wrap">
+            <div class="video-tools">
+              <a class="vtool" href="https://app.heygen.com" target="_blank" rel="noopener">
+                <div class="vtool-icon">👤</div>
+                <div class="vtool-badge ai">AI 아바타</div>
+                <div class="vtool-name">HeyGen</div>
+                <div class="vtool-desc">AI 아바타가 대본을 읽는 UGC·광고 영상 제작</div>
+              </a>
+              <a class="vtool" href="https://app.runway.ml" target="_blank" rel="noopener">
+                <div class="vtool-icon">🎬</div>
+                <div class="vtool-badge hot">영상 생성 AI</div>
+                <div class="vtool-name">Runway</div>
+                <div class="vtool-desc">텍스트·이미지 → 영상 생성. 고퀄 AI 영상 제작</div>
+              </a>
+              <a class="vtool" href="https://www.capcut.com" target="_blank" rel="noopener">
+                <div class="vtool-icon">✂️</div>
+                <div class="vtool-badge rec">추천</div>
+                <div class="vtool-name">CapCut</div>
+                <div class="vtool-desc">자막 자동 생성·템플릿으로 빠른 광고 편집</div>
+              </a>
+              <a class="vtool" href="https://www.creatify.ai" target="_blank" rel="noopener">
+                <div class="vtool-icon">⚡</div>
+                <div class="vtool-badge new">NEW</div>
+                <div class="vtool-name">Creatify</div>
+                <div class="vtool-desc">URL → 자동 광고 영상. 제품 페이지만 있으면 완성</div>
+              </a>
+              <a class="vtool" href="https://pictory.ai" target="_blank" rel="noopener">
+                <div class="vtool-icon">🖼</div>
+                <div class="vtool-badge ai">AI 편집</div>
+                <div class="vtool-name">Pictory</div>
+                <div class="vtool-desc">대본 텍스트를 자동으로 영상 슬라이드쇼로 변환</div>
+              </a>
+              <a class="vtool" href="https://www.invideo.io" target="_blank" rel="noopener">
+                <div class="vtool-icon">📽</div>
+                <div class="vtool-badge rec">추천</div>
+                <div class="vtool-name">InVideo AI</div>
+                <div class="vtool-desc">대본 붙여넣기 → 광고 영상 자동 완성</div>
+              </a>
+            </div>
+            <div class="script-export">
+              <div class="export-label">대본 내보내기</div>
+              <div class="export-btns">
+                <button class="btn sm acc" onclick="exportAll()">📋 전체 대본 복사</button>
+                <button class="btn sm" onclick="exportTxt()">⬇ TXT 다운로드</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  </div>
 
-</div><!-- /root -->
+    </div><!-- /pipeline-inner -->
+  </main>
+</div>
 
-<!-- ════ MODAL: API 키 ════ -->
-<div class="overlay" id="modal-api" onclick="closeOnOverlay(event,'modal-api')">
+<!-- ── MODAL: API 설정 ── -->
+<div class="overlay" id="modal-api" onclick="if(event.target===this)closeModal('modal-api')">
   <div class="modal">
-    <div class="modal-hdr">
-      <div class="modal-ttl">API 키 설정</div>
-      <button class="modal-x" onclick="closeModal('modal-api')">✕</button>
-    </div>
+    <div class="modal-hdr"><div class="modal-ttl">API 키 설정</div><button class="modal-x" onclick="closeModal('modal-api')">✕</button></div>
     <div class="modal-body">
-      <div class="field"><label>Anthropic (Claude) API 키</label><input type="password" id="key-claude" placeholder="sk-ant-api03-..."></div>
-      <div class="field"><label>ElevenLabs API 키</label><input type="password" id="key-eleven" placeholder="xi-api-..."></div>
-      <div class="field"><label>ElevenLabs Voice ID</label><input type="text" id="voice-id" value="21m00Tcm4TlvDq8ikWAM"><div style="font-size:11px;color:var(--text3);margin-top:3px">한국어 보이스 ID를 ElevenLabs에서 확인하세요</div></div>
-
-      <!-- Supabase 설정 -->
-      <div style="border-top:1px solid var(--border);margin-top:4px;padding-top:14px">
-        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;margin-bottom:12px">🗄 Supabase 연결</div>
-        <div class="field">
-          <label>Project URL</label>
-          <input type="text" id="sb-url" placeholder="https://xxxx.supabase.co">
-          <div style="font-size:11px;color:var(--text3);margin-top:3px">Supabase → Settings → API Keys → Project URL</div>
-        </div>
-        <div class="field">
-          <label>Publishable Key (anon)</label>
-          <input type="password" id="sb-key" placeholder="sb_publishable_...">
-          <div style="font-size:11px;color:var(--text3);margin-top:3px">Settings → API Keys → Publishable key</div>
-        </div>
-        <button class="btn accent" id="gs-test-btn" onclick="testSbConnection()" style="width:100%">연결 테스트</button>
-        <div id="gs-test-result" style="display:none;margin-top:8px;font-size:11px;font-family:'JetBrains Mono',monospace;line-height:1.6"></div>
-      </div>
+      <div class="notice pur">⚡ Foreplay 키 없으면 Mock 데이터로 전체 흐름 테스트 가능</div>
+      <div class="field"><label>Foreplay API 키</label><input type="password" id="k-fp" placeholder="fp_..."><div class="hint">foreplay.co → Dashboard → API → Generate Key</div></div>
+      <div class="divider"></div>
+      <div class="field"><label>Anthropic (Claude) API 키</label><input type="password" id="k-cl" placeholder="sk-ant-api03-..."></div>
+      <div class="field"><label>ElevenLabs API 키</label><input type="password" id="k-el" placeholder="xi-api-..."></div>
+      <div class="field"><label>Voice ID</label><input type="text" id="k-vo" value="21m00Tcm4TlvDq8ikWAM"></div>
     </div>
     <div class="modal-ftr">
       <button class="btn" onclick="closeModal('modal-api')">취소</button>
-      <button class="btn accent" onclick="saveKeys()">저장</button>
+      <button class="btn pur" onclick="saveKeys()">저장</button>
     </div>
   </div>
 </div>
 
-<!-- ════ MODAL: 경쟁사 추가 ════ -->
-<div class="overlay" id="modal-add-comp" onclick="closeOnOverlay(event,'modal-add-comp')">
-  <div class="modal" style="width:700px;max-width:96vw">
-    <div class="modal-hdr">
-      <div class="modal-ttl" id="comp-modal-ttl">경쟁사 추가</div>
-      <button class="modal-x" onclick="closeModal('modal-add-comp')">✕</button>
-    </div>
-
-    <!-- 기본 정보 -->
-    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:10px">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="field" style="margin:0"><label>경쟁사 이름 <span style="color:var(--accent)">*</span></label><input type="text" id="comp-name-inp" placeholder="예: 올리브영, 마켓컬리..."></div>
-        <div class="field" style="margin:0"><label>카테고리</label><input type="text" id="comp-cat-inp" placeholder="예: 뷰티, 식품커머스, 패션..."></div>
-      </div>
-      <!-- URL 분석 -->
-      <div class="url-analyze-box">
-        <div class="url-box-title">🔗 URL 자동 분석 <span class="url-box-sub">(홈페이지, 쿠팡, 스마트스토어 등 여러 URL 가능)</span></div>
-        <div id="comp-url-list" style="display:flex;flex-direction:column;gap:5px;margin-bottom:7px"></div>
-        <div style="display:flex;gap:6px">
-          <input type="text" id="comp-url-new" placeholder="https://... 입력 후 Enter" style="flex:1;font-size:12px" onkeydown="if(event.key===&apos;Enter&apos;)addCompUrl()">
-          <button class="btn" onclick="addCompUrl()" style="white-space:nowrap">+ URL 추가</button>
-          <button class="btn accent" id="comp-analyze-btn" onclick="analyzeCompUrls()" style="white-space:nowrap">✦ AI 분석</button>
-        </div>
-        <div id="comp-analyze-status" style="display:none;margin-top:8px;font-size:11px;font-family:&apos;JetBrains Mono&apos;,monospace;color:var(--text3)"></div>
-      </div>
-    </div>
-
-    <!-- 섹션 탭 -->
-    <div style="display:flex;border-bottom:1px solid var(--border);padding:0 20px;gap:2px;background:var(--s2)">
-      <button class="ref-tab-btn active" id="ctab-hook" onclick="switchCompTab('hook')">🎯 훅 텍스트</button>
-      <button class="ref-tab-btn" id="ctab-script" onclick="switchCompTab('script')">📝 대본 전문</button>
-      <button class="ref-tab-btn" id="ctab-video" onclick="switchCompTab('video')">🎬 영상 레퍼런스</button>
-    </div>
-
-    <div class="modal-body" style="min-height:300px;max-height:52vh;overflow-y:auto">
-
-      <!-- 훅 섹션 -->
-      <div id="ctab-pane-hook">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:10px;padding:2px 0">
-          한 줄에 훅 하나씩 입력하세요. 빈 줄로 항목을 구분합니다.
-        </div>
-        <div id="comp-hook-entries"></div>
-        <button class="lib-add-btn" style="width:100%;margin:0;margin-top:6px" onclick="addCompHookRow()">+ 훅 추가</button>
-      </div>
-
-      <!-- 대본 섹션 -->
-      <div id="ctab-pane-script" style="display:none">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:10px;padding:2px 0">
-          전체 광고 대본을 항목별로 추가하세요.
-        </div>
-        <div id="comp-script-entries"></div>
-        <button class="lib-add-btn" style="width:100%;margin:0;margin-top:6px" onclick="addCompScriptRow()">+ 대본 추가</button>
-      </div>
-
-      <!-- 영상 섹션 -->
-      <div id="ctab-pane-video" style="display:none">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:10px;padding:2px 0">
-          레퍼런스 영상 URL과 어디가 좋았는지 메모를 남겨주세요.
-        </div>
-        <div id="comp-video-entries"></div>
-        <button class="lib-add-btn" style="width:100%;margin:0;margin-top:6px" onclick="addCompVideoRow()">+ 영상 추가</button>
-      </div>
-
-    </div>
-
-    <div class="modal-ftr">
-      <div style="font-size:11px;color:var(--text3);flex:1">탭을 이동해도 입력 내용이 유지됩니다</div>
-      <button class="btn" onclick="closeModal('modal-add-comp')">취소</button>
-      <button class="btn accent" onclick="saveComp()">저장</button>
-    </div>
-  </div>
-</div>
-
-<!-- ════ MODAL: 레퍼런스 항목 추가 (3탭) ════ -->
-<div class="overlay" id="modal-add-hook" onclick="closeOnOverlay(event,'modal-add-hook')">
-  <div class="modal modal-wide">
-    <div class="modal-hdr">
-      <div class="modal-ttl" id="hook-modal-ttl">레퍼런스 추가</div>
-      <button class="modal-x" onclick="closeModal('modal-add-hook')">✕</button>
-    </div>
-
-    <!-- 탭 헤더 -->
-    <div style="display:flex;border-bottom:1px solid var(--border);padding:0 20px;gap:2px;flex-shrink:0">
-      <button class="ref-tab-btn active" id="rtab-hook" onclick="switchRefTab('hook')">🎯 훅 텍스트</button>
-      <button class="ref-tab-btn" id="rtab-script" onclick="switchRefTab('script')">📝 대본 전문</button>
-      <button class="ref-tab-btn" id="rtab-video" onclick="switchRefTab('video')">🎬 영상 레퍼런스</button>
-    </div>
-
-    <div class="modal-body" style="min-height:260px">
-
-      <!-- TAB: 훅 -->
-      <div id="rtab-pane-hook">
-        <div class="field">
-          <label>훅 문구 <span style="color:var(--accent)">*</span></label>
-          <textarea id="hook-inp" rows="3" placeholder="첫 3초 안에 스크롤을 멈추게 하는 오프닝&#10;예: 이거 보고 바로 결제했어요"></textarea>
-        </div>
-        <div class="field">
-          <label>CTA (선택)</label>
-          <input type="text" id="cta-inp" placeholder="예: 지금 첫 구매 30% 할인 받아보세요">
-        </div>
-        <div class="row2">
-          <div class="field">
-            <label>태그</label>
-            <input type="text" id="hook-tag-inp" placeholder="예: 공감형, 충격형, 호기심형">
-          </div>
-          <div class="field">
-            <label>플랫폼</label>
-            <select id="hook-platform-inp">
-              <option value="">전체</option>
-              <option>인스타그램 릴스</option>
-              <option>틱톡</option>
-              <option>유튜브 쇼츠</option>
-              <option>페이스북</option>
-              <option>유튜브</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <!-- TAB: 대본 -->
-      <div id="rtab-pane-script" style="display:none">
-        <div class="field">
-          <label>훅 (대본 시작 문구)</label>
-          <textarea id="script-hook-inp" rows="2" placeholder="대본의 오프닝 훅"></textarea>
-        </div>
-        <div class="field">
-          <label>본문 대본 <span style="color:var(--accent)">*</span></label>
-          <textarea id="script-inp" rows="6" placeholder="전체 광고 대본&#10;&#10;페인포인트 공감 → 제품 소개 → 신뢰/증거 → CTA 흐름으로 작성"></textarea>
-        </div>
-        <div class="row2">
-          <div class="field">
-            <label>광고 유형</label>
-            <select id="script-type-inp">
-              <option value="">기타</option>
-              <option>퍼포먼스</option>
-              <option>UGC</option>
-              <option>브랜딩</option>
-              <option>리타겟팅</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>태그</label>
-            <input type="text" id="script-tag-inp" placeholder="예: 후기형, 스토리텔링">
-          </div>
-        </div>
-      </div>
-
-      <!-- TAB: 영상 레퍼런스 -->
-      <div id="rtab-pane-video" style="display:none">
-        <div class="field">
-          <label>영상 URL <span style="color:var(--accent)">*</span></label>
-          <input type="text" id="video-url-inp" placeholder="https://www.youtube.com/watch?v=... 또는 TikTok, Instagram Reels URL">
-        </div>
-        <div id="video-preview-wrap" style="margin-bottom:10px;display:none">
-          <div style="aspect-ratio:16/9;background:var(--s3);border-radius:var(--r);overflow:hidden;border:1px solid var(--border)">
-            <iframe id="video-preview-frame" width="100%" height="100%" frameborder="0" allowfullscreen style="display:block"></iframe>
-          </div>
-        </div>
-        <div class="field">
-          <label>영상 제목 / 설명</label>
-          <input type="text" id="video-title-inp" placeholder="예: 올리브영 UGC 후기 광고 - 30s 버전">
-        </div>
-        <div class="field">
-          <label>레퍼런스 포인트 (어디가 좋았나?)</label>
-          <textarea id="video-note-inp" rows="3" placeholder="예: 첫 3초 훅이 강렬함. 제품 before/after 전환이 자연스러움. CTA 타이밍이 적절.&#10;&#10;Claude가 이 포인트를 참고해서 대본을 생성합니다."></textarea>
-        </div>
-        <div class="row2">
-          <div class="field">
-            <label>플랫폼</label>
-            <select id="video-platform-inp">
-              <option value="">전체</option>
-              <option>인스타그램 릴스</option>
-              <option>틱톡</option>
-              <option>유튜브 쇼츠</option>
-              <option>페이스북</option>
-              <option>유튜브</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>영상 길이</label>
-            <select id="video-len-inp">
-              <option value="">미설정</option>
-              <option>15초 이하</option>
-              <option>15-30초</option>
-              <option>30-60초</option>
-              <option>1분 이상</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-    </div><!-- /modal-body -->
-
-    <div class="modal-ftr">
-      <button class="btn" onclick="closeModal('modal-add-hook')">취소</button>
-      <button class="btn accent" onclick="saveHookEntry()">추가</button>
-    </div>
-  </div>
-</div>
-
-<!-- ════ MODAL: 브랜드 추가 ════ -->
-<div class="overlay" id="modal-add-brand" onclick="closeOnOverlay(event,'modal-add-brand')">
-  <div class="modal modal-wide">
-    <div class="modal-hdr">
-      <div class="modal-ttl" id="brand-modal-ttl">브랜드 추가</div>
-      <button class="modal-x" onclick="closeModal('modal-add-brand')">✕</button>
-    </div>
+<!-- ── MODAL: 브랜드 추가 ── -->
+<div class="overlay" id="modal-brand" onclick="if(event.target===this)closeModal('modal-brand')">
+  <div class="modal" style="width:500px">
+    <div class="modal-hdr"><div class="modal-ttl" id="bm-ttl">브랜드 추가</div><button class="modal-x" onclick="closeModal('modal-brand')">✕</button></div>
     <div class="modal-body">
       <div class="row2">
-        <div class="field"><label>브랜드명</label><input type="text" id="brand-name-inp" placeholder="예: 마이올리브"></div>
-        <div class="field"><label>카테고리</label><input type="text" id="brand-cat-inp" placeholder="예: 뷰티, 식품, 패션..."></div>
+        <div class="field"><label>브랜드명 *</label><input type="text" id="b-nm" placeholder="예: 마이올리브"></div>
+        <div class="field"><label>카테고리</label><input type="text" id="b-cat" placeholder="예: 뷰티"></div>
       </div>
-
-      <!-- URL 자동 분석 -->
-      <div class="url-analyze-box">
-        <div class="url-box-title">🔗 URL 자동 분석 <span class="url-box-sub">(홈페이지, 쿠팡, 스마트스토어 등 여러 URL 추가 가능)</span></div>
-        <div id="brand-url-list" style="display:flex;flex-direction:column;gap:5px;margin-bottom:7px"></div>
-        <div style="display:flex;gap:6px">
-          <input type="text" id="brand-url-new" placeholder="https://... 입력 후 Enter" style="flex:1;font-size:12px" onkeydown="if(event.key==='Enter')addBrandUrl()">
-          <button class="btn" onclick="addBrandUrl()" style="white-space:nowrap">+ URL 추가</button>
-          <button class="btn accent" id="brand-analyze-btn" onclick="analyzeBrandUrls()" style="white-space:nowrap">✦ AI 분석</button>
-        </div>
-        <div id="brand-analyze-status" style="display:none;margin-top:8px;font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text3)"></div>
-      </div>
-      <div class="field">
-        <label>브랜드 컬러</label>
-        <div class="color-grid" id="color-grid">
-          <div class="color-opt sel" style="background:#4f8fff" data-c="#4f8fff" onclick="selColor(this)"></div>
-          <div class="color-opt" style="background:#34d17a" data-c="#34d17a" onclick="selColor(this)"></div>
-          <div class="color-opt" style="background:#ff4f6a" data-c="#ff4f6a" onclick="selColor(this)"></div>
-          <div class="color-opt" style="background:#f5a623" data-c="#f5a623" onclick="selColor(this)"></div>
-          <div class="color-opt" style="background:#a78bfa" data-c="#a78bfa" onclick="selColor(this)"></div>
-          <div class="color-opt" style="background:#34c8d1" data-c="#34c8d1" onclick="selColor(this)"></div>
-          <div class="color-opt" style="background:#ff8c42" data-c="#ff8c42" onclick="selColor(this)"></div>
-          <div class="color-opt" style="background:#e879b0" data-c="#e879b0" onclick="selColor(this)"></div>
-        </div>
-      </div>
-      <div class="field"><label>핵심 페인포인트</label><textarea id="brand-pain-inp" rows="3" placeholder="이 브랜드 타겟의 핵심 고민&#10;예: 바빠서 운동할 시간이 없고, 살이 쪄도 뭘 먹어야 할지 모르겠어요"></textarea></div>
-      <div class="field"><label>USP (핵심 차별점)</label><textarea id="brand-usp-inp" rows="3" placeholder="경쟁사 대비 우리만의 강점&#10;예: 10분 운동으로 3주 안에 변화. 트레이너 1:1 맞춤 피드백 포함"></textarea></div>
-      <div class="field"><label>브랜드 톤 & 보이스</label><input type="text" id="brand-tone-inp" placeholder="예: 친근하고 솔직한, 전문적이고 신뢰감있는, 트렌디하고 활기찬..."></div>
-      <div class="field"><label>금지어/주의사항 (선택)</label><input type="text" id="brand-prohibit-inp" placeholder="예: 다이어트 표현 금지, 의학적 효능 주장 X..."></div>
-      <div class="field"><label>추가 컨텍스트 (선택)</label><textarea id="brand-ctx-inp" rows="3" placeholder="가격대, 주요 SKU, 현재 프로모션 등 Claude에게 알려줄 내용"></textarea></div>
+      <div class="field"><label>핵심 페인포인트</label><textarea id="b-pain" rows="2" placeholder="타겟 고객의 핵심 고민"></textarea></div>
+      <div class="field"><label>USP (핵심 차별점)</label><textarea id="b-usp" rows="2" placeholder="경쟁사 대비 우리만의 강점"></textarea></div>
+      <div class="field"><label>브랜드 톤 & 보이스</label><input type="text" id="b-tone" placeholder="예: 친근하고 솔직한, 전문적이고 신뢰감있는..."></div>
+      <div class="field"><label>금지어/주의사항</label><input type="text" id="b-prhb" placeholder="예: 의학적 효능 주장 X..."></div>
+      <div class="field"><label>추가 컨텍스트</label><textarea id="b-ctx" rows="2" placeholder="가격대, 주요 상품, 현재 프로모션 등"></textarea></div>
     </div>
     <div class="modal-ftr">
-      <button class="btn" onclick="closeModal('modal-add-brand')">취소</button>
-      <button class="btn accent" onclick="saveBrand()">저장</button>
+      <button class="btn" onclick="closeModal('modal-brand')">취소</button>
+      <button class="btn pur" onclick="saveBrand()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: Supabase 연결 ── -->
+<div class="overlay" id="modal-sb" onclick="if(event.target===this)closeModal('modal-sb')">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-ttl">🗄 Supabase 연결</div>
+      <button class="modal-x" onclick="closeModal('modal-sb')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="notice pur">브랜드 데이터를 온라인에 저장해 팀원과 공유할 수 있어요</div>
+      <div class="field">
+        <label>Project URL</label>
+        <input type="text" id="sb-url" placeholder="https://xxxx.supabase.co">
+        <div class="hint">Supabase → Settings → API Keys → Project URL</div>
+      </div>
+      <div class="field">
+        <label>Publishable Key (anon)</label>
+        <input type="password" id="sb-key" placeholder="eyJ...">
+        <div class="hint">Settings → API Keys → Publishable key</div>
+      </div>
+      <button class="btn pur" id="sb-test-btn" onclick="testSb()" style="width:100%;justify-content:center;padding:9px">연결 테스트</button>
+      <div id="sb-test-result" style="display:none;font-size:11px;font-family:'JetBrains Mono',monospace;padding:9px 11px;border-radius:var(--r);line-height:1.6"></div>
+      <div class="divider"></div>
+      <div style="font-size:11px;color:var(--text3);line-height:1.7">
+        연결 해제 시 로컬 모드로 동작합니다.<br>
+        <span style="color:var(--gold)">⚠ API 키(Claude/ElevenLabs)는 보안상 Supabase에 저장되지 않아요.</span>
+      </div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn" onclick="disconnectSb()">연결 해제</button>
+      <button class="btn" onclick="closeModal('modal-sb')">취소</button>
+      <button class="btn pur" onclick="saveSb()">저장</button>
     </div>
   </div>
 </div>
 
 <script>
 // ══════════════════════════════════════════════
-// STATE & STORAGE
+// SUPABASE ENGINE
 // ══════════════════════════════════════════════
-
-// ── Supabase DB Layer ──
 const SB = {
-  getCfg(){ return JSON.parse(localStorage.getItem('af_sb_cfg')||'{}') },
+  getCfg(){ try{ return JSON.parse(localStorage.getItem('af_sb_cfg')||'{}') }catch(e){ return {} } },
   saveCfg(cfg){ localStorage.setItem('af_sb_cfg', JSON.stringify(cfg)) },
-  isConfigured(){ const c=this.getCfg(); return !!(c.url&&c.key) },
+  clearCfg(){ localStorage.removeItem('af_sb_cfg') },
+  isConnected(){ const c=this.getCfg(); return !!(c.url&&c.key) },
 
-  async req(method, path, body=null){
+  async _fetch(path, opts={}){
     const c=this.getCfg()
-    const opts={method,headers:{'Content-Type':'application/json','apikey':c.key,'Authorization':'Bearer '+c.key}}
-    if(body) opts.body=JSON.stringify(body)
-    const res=await fetch(c.url+'/rest/v1'+path,opts)
-    if(!res.ok){ const e=await res.json().catch(()=>({})); throw new Error(e.message||e.hint||'Supabase 오류 '+res.status) }
-    return res.status===204?null:await res.json()
+    if(!c.url||!c.key) throw new Error('Supabase 미연결')
+    const res=await fetch(c.url+'/rest/v1'+path,{
+      ...opts,
+      headers:{
+        'apikey':c.key,
+        'Authorization':'Bearer '+c.key,
+        'Content-Type':'application/json',
+        'Prefer': opts.prefer||'return=representation',
+        ...(opts.headers||{})
+      }
+    })
+    if(!res.ok){
+      const e=await res.json().catch(()=>({}))
+      throw new Error(e.message||e.hint||`Supabase 오류 ${res.status}`)
+    }
+    const txt=await res.text()
+    return txt ? JSON.parse(txt) : []
   },
 
-  async getAll(table){ return await this.req('GET',`/${table}?select=*`)||[] },
+  async getAll(table){
+    return this._fetch(`/${table}?select=*&order=created_at.asc`)
+  },
 
   async upsert(table, rows){
     if(!rows.length) return
-    await this.req('POST',`/${table}?on_conflict=id`,rows)
+    return this._fetch(`/${table}`, {
+      method:'POST', prefer:'resolution=merge-duplicates,return=minimal',
+      body: JSON.stringify(Array.isArray(rows)?rows:[rows])
+    })
   },
 
-  async deleteAll(table){ await this.req('DELETE',`/${table}?id=neq.___none___`) },
+  async delete(table, id){
+    return this._fetch(`/${table}?id=eq.${id}`, { method:'DELETE', prefer:'return=minimal' })
+  },
 
-  async replaceAll(table, rows){
-    await this.deleteAll(table)
-    if(rows.length) await this.upsert(table, rows)
+  async deleteAll(table){
+    return this._fetch(`/${table}?id=neq.null_impossible_value`, { method:'DELETE', prefer:'return=minimal' })
+      .catch(()=> this._fetch(`/${table}?created_at=gte.1970-01-01`, { method:'DELETE', prefer:'return=minimal' }))
   },
 
   async test(){
-    const c=this.getCfg()
-    const res=await fetch(c.url+'/rest/v1/brands?select=id&limit=1',
-      {headers:{'apikey':c.key,'Authorization':'Bearer '+c.key}})
-    if(!res.ok) throw new Error('연결 실패: 테이블이 없거나 키가 잘못됐어요')
+    const res=await this._fetch('/brands?select=id&limit=1')
     return true
   }
 }
 
-// row 변환 헬퍼 (snake_case ↔ camelCase)
-function sbToBrand(r){ return {id:r.id,name:r.name,category:r.category||'',painpoint:r.painpoint||'',
-  usp:r.usp||'',tone:r.tone||'',prohibit:r.prohibit||'',context:r.context||'',color:r.color||'#4f8fff',
-  urls:r.urls||[],analysisData:r.analysis_data||null,lastAnalyzedAt:r.last_analyzed_at||''} }
-function brandToSb(b){ return {id:b.id,name:b.name,category:b.category||'',painpoint:b.painpoint||'',
-  usp:b.usp||'',tone:b.tone||'',prohibit:b.prohibit||'',context:b.context||'',color:b.color||'#4f8fff',
-  urls:b.urls||[],analysis_data:b.analysisData||null,last_analyzed_at:b.lastAnalyzedAt||''} }
-function sbToComp(r){ return {id:r.id,name:r.name,category:r.category||'',entries:r.entries||[],
-  urls:r.urls||[],analysisData:r.analysis_data||null,lastAnalyzedAt:r.last_analyzed_at||'',rawText:r.raw_text||''} }
-function compToSb(c){ return {id:c.id,name:c.name,category:c.category||'',entries:c.entries||[],
-  urls:c.urls||[],analysis_data:c.analysisData||null,last_analyzed_at:c.lastAnalyzedAt||'',raw_text:c.rawText||''} }
-
-const DB = {
-  _cache:null, _saveTimer:null,
-
-  async loadAll(){
-    const keys=JSON.parse(localStorage.getItem('af_keys')||'{}')
-    if(SB.isConfigured()){
-      try {
-        const [brands,competitors]=await Promise.all([SB.getAll('brands'),SB.getAll('competitors')])
-        const b=brands.map(sbToBrand), c=competitors.map(sbToComp)
-        this._cache={keys,brands:b,competitors:c}
-        localStorage.setItem('af_brands',JSON.stringify(b))
-        localStorage.setItem('af_competitors',JSON.stringify(c))
-        setDbStatus('connected'); return this._cache
-      } catch(e){ console.warn('Supabase 로드 실패:',e.message); setDbStatus('error',e.message) }
-    }
-    this._cache={keys,brands:JSON.parse(localStorage.getItem('af_brands')||'[]'),competitors:JSON.parse(localStorage.getItem('af_competitors')||'[]')}
-    if(!SB.isConfigured()) setDbStatus('local')
-    return this._cache
-  },
-
-  save(key,val){
-    if(!this._cache) this._cache={}
-    this._cache[key]=val
-    if(key==='keys'){ localStorage.setItem('af_keys',JSON.stringify(val)); return }
-    localStorage.setItem('af_'+key,JSON.stringify(val))
-    if(SB.isConfigured()){ clearTimeout(this._saveTimer); this._saveTimer=setTimeout(()=>this._flush(),800) }
-  },
-
-  async _flush(){
-    if(!this._cache) return
-    try {
-      await Promise.all([
-        SB.replaceAll('brands',      (this._cache.brands||[]).map(brandToSb)),
-        SB.replaceAll('competitors', (this._cache.competitors||[]).map(compToSb)),
-      ])
-      setDbStatus('connected'); showSaveIndicator('Supabase 저장됨 \u2713')
-    } catch(e){ console.error('Supabase 저장 실패:',e); setDbStatus('error',e.message); showSaveIndicator('로컬 저장됨 (Supabase 확인 필요)',true) }
-  },
-
-  async forceSave(){ clearTimeout(this._saveTimer); await this._flush() }
+// row 변환 헬퍼
+function sbToBrand(r){
+  return {id:r.id,name:r.name,category:r.category||'',painpoint:r.painpoint||'',
+    usp:r.usp||'',tone:r.tone||'',prohibit:r.prohibit||'',context:r.context||'',
+    color:r.color||'#9b72fb'}
+}
+function brandToSb(b){
+  return {id:b.id,name:b.name,category:b.category||'',painpoint:b.painpoint||'',
+    usp:b.usp||'',tone:b.tone||'',prohibit:b.prohibit||'',context:b.context||'',
+    color:b.color||'#9b72fb'}
 }
 
-function setDbStatus(status,msg=''){
-  const dot=document.getElementById('dot-gs'), lbl=document.getElementById('lbl-gs')
-  if(!dot||!lbl) return
-  dot.classList.toggle('on',status==='connected')
-  if(status==='error'){ dot.style.background='var(--red)'; dot.style.boxShadow='0 0 6px var(--red)'; lbl.textContent='DB 오류' }
-  else if(status==='local'){ dot.style.background='var(--gold)'; dot.style.boxShadow='none'; lbl.textContent='로컬 모드' }
-  else { dot.style.background=''; dot.style.boxShadow=''; lbl.textContent='Supabase' }
-  if(msg) console.warn('[Supabase]',msg)
+// DB 헬퍼 — localStorage + Supabase 동기화
+const DB = {
+  _saveTimer: null,
+
+  async loadBrands(){
+    if(SB.isConnected()){
+      try {
+        const rows=await SB.getAll('brands')
+        const data=rows.map(sbToBrand)
+        localStorage.setItem('af_brands', JSON.stringify(data))
+        return data
+      } catch(e){ console.warn('Supabase 로드 실패, 로컬 사용:', e.message) }
+    }
+    return JSON.parse(localStorage.getItem('af_brands')||'[]')
+  },
+
+  saveBrands(data){
+    localStorage.setItem('af_brands', JSON.stringify(data))
+    if(SB.isConnected()){
+      clearTimeout(this._saveTimer)
+      this._saveTimer=setTimeout(async ()=>{
+        try {
+          await SB.deleteAll('brands')
+          if(data.length) await SB.upsert('brands', data.map(brandToSb))
+          showSaveIndicator('Supabase 저장됨 ✓')
+        } catch(e){
+          console.error('Supabase 저장 실패:', e)
+          showSaveIndicator('로컬 저장됨 (Supabase 오류)', true)
+        }
+      }, 600)
+    }
+  }
 }
 
 let _siTimer
-function showSaveIndicator(msg,warn=false){
-  let el=document.getElementById('save-indicator')
-  if(!el){ el=document.createElement('div'); el.id='save-indicator'
-    el.style.cssText='position:fixed;bottom:60px;right:20px;font-size:11px;font-family:"JetBrains Mono",monospace;padding:5px 10px;border-radius:4px;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none'
-    document.body.appendChild(el) }
-  el.textContent=msg; el.style.background=warn?'var(--gold-dim)':'var(--green-dim)'
-  el.style.color=warn?'var(--gold)':'var(--green)'; el.style.border=`1px solid ${warn?'var(--gold)':'var(--green)'}`
-  el.style.opacity='1'; clearTimeout(_siTimer); _siTimer=setTimeout(()=>{ el.style.opacity='0' },2500)
-}
-
-let ST={keys:{},competitors:[],brands:[]}
-let selectedComps=[],selectedBrandId=null,activeLibComp=null,activeLibBrand=null
-let editingCompId=null,editingBrandId=null,currentHookCompId=null
-let scripts=[],tags=[],brandColor='#4f8fff'
-
-async function init(){
-  showSaveIndicator('데이터 로딩 중...')
-  ST=await DB.loadAll()
-  if(ST.keys.claude)  document.getElementById('key-claude').value=ST.keys.claude
-  if(ST.keys.eleven)  document.getElementById('key-eleven').value=ST.keys.eleven
-  if(ST.keys.voiceId) document.getElementById('voice-id').value=ST.keys.voiceId
-  const sbCfg=SB.getCfg()
-  if(sbCfg.url) document.getElementById('sb-url').value=sbCfg.url
-  if(sbCfg.key) document.getElementById('sb-key').value=sbCfg.key
-  updateDots(); renderCompSidebar(); renderBrandSidebar(); renderGenCompList(); renderBrandDropdown()
-}
-init()
-
-// ══════════════════════════════════════════════
-// PANEL NAVIGATION
-// ══════════════════════════════════════════════
-function showPanel(name, btn){
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'))
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'))
-  document.getElementById('panel-'+name).classList.add('active')
-  btn.classList.add('active')
-}
-
-// ══════════════════════════════════════════════
-// API KEYS
-// ══════════════════════════════════════════════
-function saveKeys(){
-  ST.keys = {
-    claude:  document.getElementById('key-claude').value.trim(),
-    eleven:  document.getElementById('key-eleven').value.trim(),
-    voiceId: document.getElementById('voice-id').value.trim() || '21m00Tcm4TlvDq8ikWAM'
+function showSaveIndicator(msg, warn=false){
+  let el=document.getElementById('save-ind')
+  if(!el){
+    el=document.createElement('div'); el.id='save-ind'
+    el.style.cssText='position:fixed;bottom:58px;right:24px;font-size:10px;font-family:"JetBrains Mono",monospace;padding:4px 10px;border-radius:var(--r);z-index:400;opacity:0;transition:opacity .3s;pointer-events:none'
+    document.body.appendChild(el)
   }
-  DB.save('keys', ST.keys)
-  const url = document.getElementById('sb-url').value.trim()
-  const key = document.getElementById('sb-key').value.trim()
-  if(url && key) SB.saveCfg({ url, key })
-  updateDots()
-  closeModal('modal-api')
-  toast('설정 저장됨 ✓', 'ok')
+  el.textContent=msg
+  el.style.background=warn?'var(--gold-dim)':'var(--green-dim)'
+  el.style.color=warn?'var(--gold)':'var(--green)'
+  el.style.border=`1px solid ${warn?'var(--gold)':'var(--green)'}`
+  el.style.opacity='1'
+  clearTimeout(_siTimer)
+  _siTimer=setTimeout(()=>{ el.style.opacity='0' }, 2500)
 }
 
-async function testSbConnection(){
-  const url = document.getElementById('sb-url').value.trim()
-  const key = document.getElementById('sb-key').value.trim()
+function updateSbDot(){
+  const dot=document.getElementById('dot-sb')
+  const lbl=document.getElementById('lbl-sb')
+  if(!dot) return
+  if(SB.isConnected()){
+    dot.className='dot on'
+    if(lbl) lbl.textContent='Supabase'
+  } else {
+    dot.className='dot warn'
+    if(lbl) lbl.textContent='Supabase'
+  }
+}
+
+async function testSb(){
+  const url=document.getElementById('sb-url').value.trim()
+  const key=document.getElementById('sb-key').value.trim()
   if(!url||!key){ toast('URL과 키를 모두 입력해주세요','err'); return }
-  const btn    = document.getElementById('gs-test-btn')
-  const result = document.getElementById('gs-test-result')
+  const btn=document.getElementById('sb-test-btn')
+  const res=document.getElementById('sb-test-result')
   btn.disabled=true; btn.innerHTML='<span class="spin">◌</span> 연결 중...'
-  result.style.display='none'
+  res.style.display='none'
   SB.saveCfg({url,key})
   try {
     await SB.test()
-    result.style.display='block'; result.style.color='var(--green)'
-    result.innerHTML='✓ 연결 성공!<br>brands, competitors 테이블이 확인됐어요.<br>저장 버튼을 눌러 확정해주세요.'
-    setDbStatus('connected')
+    res.style.display='block'
+    res.style.background='var(--green-dim)'; res.style.border='1px solid rgba(45,212,122,.3)'; res.style.color='var(--green)'
+    res.innerHTML='✓ 연결 성공!<br>brands 테이블이 확인됐어요. 저장 버튼을 눌러 확정하세요.'
+    updateSbDot()
   } catch(e){
-    result.style.display='block'; result.style.color='var(--red)'
-    result.innerHTML='✗ '+e.message+'<br><span style="color:var(--text3)">URL과 키를 다시 확인해주세요</span>'
-    setDbStatus('error',e.message)
+    res.style.display='block'
+    res.style.background='var(--red-dim)'; res.style.border='1px solid rgba(255,79,106,.3)'; res.style.color='var(--red)'
+    res.innerHTML=`✗ ${e.message}<br><span style="color:var(--text3)">URL과 키를 다시 확인해주세요</span>`
   }
-  btn.disabled=false; btn.innerHTML='연결 테스트'
+  btn.disabled=false; btn.textContent='연결 테스트'
 }
+
+function saveSb(){
+  const url=document.getElementById('sb-url').value.trim()
+  const key=document.getElementById('sb-key').value.trim()
+  if(!url||!key){ toast('URL과 키를 입력해주세요','err'); return }
+  SB.saveCfg({url,key})
+  updateSbDot()
+  closeModal('modal-sb')
+  toast('Supabase 연결 저장됨 ✓','ok')
+  // 브랜드 다시 로드
+  DB.loadBrands().then(data=>{ brands=data; renderBrandDrop() })
+}
+
+function disconnectSb(){
+  SB.clearCfg()
+  updateSbDot()
+  closeModal('modal-sb')
+  toast('Supabase 연결 해제됨')
+}
+
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+const K = {
+  get fp() { return _k().foreplay||'' },
+  get cl() { return _k().claude||'' },
+  get el() { return _k().eleven||'' },
+  get vo() { return _k().voiceId||'21m00Tcm4TlvDq8ikWAM' },
+  save(fp,cl,el,vo){ localStorage.setItem('af_keys',JSON.stringify({foreplay:fp,claude:cl,eleven:el,voiceId:vo||'21m00Tcm4TlvDq8ikWAM'})) }
+}
+function _k(){ try{return JSON.parse(localStorage.getItem('af_keys')||'{}')}catch(e){return {}} }
+
+let brands      = JSON.parse(localStorage.getItem('af_brands')||'[]')
+let competitors = JSON.parse(localStorage.getItem('af_competitors')||'[]')
+let mode        = 'brand'
+let filters     = new Set(['active','video','image'])
+let ads         = []
+let sel         = new Set()
+let analysis    = null
+let scripts     = []
+let ttsScripts  = []
+let editBrandId = null
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+async function init(){
+  document.getElementById('k-fp').value = K.fp
+  document.getElementById('k-cl').value = K.cl
+  document.getElementById('k-el').value = K.el
+  document.getElementById('k-vo').value = K.vo
+
+  // Supabase 설정 복원
+  const sbCfg=SB.getCfg()
+  if(sbCfg.url) document.getElementById('sb-url').value=sbCfg.url
+  if(sbCfg.key) document.getElementById('sb-key').value=sbCfg.key
+  updateSbDot()
+
+  // 브랜드 로드 (Supabase 우선)
+  brands = await DB.loadBrands()
+
+  renderBrandDrop()
+  updateDots()
+  const obs = new IntersectionObserver(entries=>{
+    entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('visible') })
+  },{threshold:.1})
+  document.querySelectorAll('.stage').forEach(s=>obs.observe(s))
+}
+init()
+
 function updateDots(){
-  setDot('dot-claude', ST.keys.claude?.startsWith('sk-ant'))
-  setDot('dot-eleven', ST.keys.eleven?.length > 10)
+  sd('dot-fp', K.fp.length>4)
+  sd('dot-cl', K.cl.startsWith('sk-ant'))
+  sd('dot-el', K.el.length>10)
 }
-function setDot(id, on){ document.getElementById(id).classList.toggle('on', !!on) }
-
-// ══════════════════════════════════════════════
-// MODALS
-// ══════════════════════════════════════════════
-function openModal(id){ document.getElementById(id).classList.add('open') }
-function closeModal(id){ document.getElementById(id).classList.remove('open') }
-function closeOnOverlay(e, id){ if(e.target===document.getElementById(id)) closeModal(id) }
-
-// ══════════════════════════════════════════════
-// COMPETITORS
-// ══════════════════════════════════════════════
-// comp modal tab state
-let currentCompTab = 'hook'
-// temp entry arrays while modal is open
-let tempHooks = [], tempScripts = [], tempVideos = []
-
-function switchCompTab(tab){
-  currentCompTab = tab
-  ;['hook','script','video'].forEach(t=>{
-    document.getElementById('ctab-'+t).classList.toggle('active', t===tab)
-    document.getElementById('ctab-pane-'+t).style.display = t===tab?'block':'none'
-  })
+function sd(id,on){ document.getElementById(id)?.classList.toggle('on',!!on) }
+function saveKeys(){
+  K.save(
+    document.getElementById('k-fp').value.trim(),
+    document.getElementById('k-cl').value.trim(),
+    document.getElementById('k-el').value.trim(),
+    document.getElementById('k-vo').value.trim()
+  )
+  updateDots(); closeModal('modal-api'); toast('설정 저장됨 ✓','ok')
 }
+function openModal(id){ document.getElementById(id)?.classList.add('open') }
+function closeModal(id){ document.getElementById(id)?.classList.remove('open') }
 
-function openAddComp(editId=null){
-  editingCompId = editId
-  currentCompTab = 'hook'
-  switchCompTab('hook')
+// ══════════════════════════════════════════════
+// SPYDER — 내 추적 브랜드 관리
+// ══════════════════════════════════════════════
+let spyderBrands = []   // [{id, name, pageId, adCount, liveCount, selected}]
 
-  if(editId){
-    const c = ST.competitors.find(c=>c.id===editId)
-    document.getElementById('comp-modal-ttl').textContent = '경쟁사 편집'
-    document.getElementById('comp-name-inp').value = c.name
-    document.getElementById('comp-cat-inp').value = c.category||''
-    // Load existing entries into temp arrays
-    const entries = c.entries || []
-    tempHooks   = entries.filter(e=>e.type==='hook').map(e=>({...e}))
-    tempScripts = entries.filter(e=>e.type==='script').map(e=>({...e}))
-    tempVideos  = entries.filter(e=>e.type==='video').map(e=>({...e}))
-  } else {
-    document.getElementById('comp-modal-ttl').textContent = '경쟁사 추가'
-    document.getElementById('comp-name-inp').value = ''
-    document.getElementById('comp-cat-inp').value = ''
-    tempHooks = []; tempScripts = []; tempVideos = []
+async function loadSpyderBrands(){
+  const listEl=document.getElementById('spyder-brand-list')
+  if(!listEl) return
+
+  if(!K.fp){
+    listEl.innerHTML='<div class="spyder-loading">Foreplay API 키를 먼저 설정해주세요</div>'
+    return
   }
-  renderCompHookRows()
-  renderCompScriptRows()
-  renderCompVideoRows()
-  openModal('modal-add-comp')
+
+  const btn=document.getElementById('spyder-refresh-btn')
+  if(btn){ btn.disabled=true; btn.innerHTML='<span class="spin">◌</span>' }
+  listEl.innerHTML='<div class="spyder-loading"><span class="spin">◌</span> Spyder 브랜드 불러오는 중...</div>'
+
+  try {
+    // Foreplay API: 내 Spyder 추적 브랜드 목록
+    const r=await fetch('https://public.api.foreplay.co/spyder/brands',
+      {headers:{'Authorization':'Bearer '+K.fp,'Content-Type':'application/json'}})
+
+    if(!r.ok) throw new Error(`API ${r.status}`)
+    const d=await r.json()
+
+    spyderBrands=(d.brands||d.results||d||[]).map(b=>({
+      id:b.id||b.brandId||('sp_'+Math.random().toString(36).slice(2,6)),
+      name:b.name||b.brandName||'알 수 없음',
+      pageId:b.pageId||b.facebookPageId||b.page_id||'',
+      adCount:b.adCount||b.total_ads||0,
+      liveCount:b.liveCount||b.active_ads||0,
+      selected:false
+    }))
+
+    if(!spyderBrands.length){
+      listEl.innerHTML='<div class="spyder-loading">Spyder 추적 브랜드가 없어요<br><span style="color:var(--text3)">foreplay.co에서 먼저 브랜드를 추적 등록하세요</span></div>'
+      return
+    }
+    renderSpyderList()
+    toast(`Spyder 브랜드 ${spyderBrands.length}개 로드됨`,'ok')
+
+  } catch(e){
+    // API 실패 시 Mock 브랜드 목록으로 대체
+    spyderBrands = mockSpyderBrands()
+    renderSpyderList()
+    const listNote=document.createElement('div')
+    listNote.style.cssText='font-size:10px;color:var(--gold);margin-top:5px;padding:5px 7px;background:var(--gold-dim);border-radius:var(--r);border:1px solid rgba(245,166,35,.2)'
+    listNote.textContent='⚠ Mock 데이터 — 실제 API 연결 시 Spyder 브랜드 표시'
+    document.getElementById('spyder-brand-list')?.appendChild(listNote)
+  }
+
+  if(btn){ btn.disabled=false; btn.innerHTML='↻ 새로고침' }
 }
 
-// ─── HOOK ROWS ───
-function renderCompHookRows(){
-  const el = document.getElementById('comp-hook-entries')
-  if(!tempHooks.length){ el.innerHTML=''; return }
-  el.innerHTML = tempHooks.map((h,i)=>`
-    <div class="entry-row">
-      <div class="entry-row-top">
-        <textarea rows="2" placeholder="첫 3초를 잡는 훅 문구" oninput="tempHooks[${i}].hook=this.value">${h.hook||''}</textarea>
-        <button class="entry-del" onclick="removeCompHook(${i})">✕</button>
-      </div>
-      <div class="entry-sub">
-        <input type="text" placeholder="CTA (선택)" value="${h.cta||''}" oninput="tempHooks[${i}].cta=this.value">
-        <input type="text" placeholder="태그 (예: 공감형)" value="${h.tag||''}" oninput="tempHooks[${i}].tag=this.value">
-      </div>
-    </div>`).join('')
-}
-function addCompHookRow(){
-  tempHooks.push({id:'e'+Date.now()+Math.random(), type:'hook', hook:'', cta:'', tag:''})
-  renderCompHookRows()
-  // focus last textarea
-  setTimeout(()=>{ const rows=document.querySelectorAll('#comp-hook-entries textarea'); rows[rows.length-1]?.focus() },50)
-}
-function removeCompHook(i){ tempHooks.splice(i,1); renderCompHookRows() }
-
-// ─── SCRIPT ROWS ───
-function renderCompScriptRows(){
-  const el = document.getElementById('comp-script-entries')
-  if(!tempScripts.length){ el.innerHTML=''; return }
-  el.innerHTML = tempScripts.map((s,i)=>`
-    <div class="entry-row">
-      <div class="entry-row-top">
-        <input type="text" placeholder="오프닝 훅 (선택)" value="${s.hook||''}" oninput="tempScripts[${i}].hook=this.value">
-        <button class="entry-del" onclick="removeCompScript(${i})">✕</button>
-      </div>
-      <textarea rows="4" placeholder="전체 대본 내용 *" style="margin-top:6px" oninput="tempScripts[${i}].body=this.value">${s.body||''}</textarea>
-      <div class="entry-sub" style="margin-top:4px">
-        <select oninput="tempScripts[${i}].scriptType=this.value">
-          <option value="">광고 유형</option>
-          ${['퍼포먼스','UGC','브랜딩','리타겟팅'].map(t=>`<option ${s.scriptType===t?'selected':''}>${t}</option>`).join('')}
-        </select>
-        <input type="text" placeholder="태그" value="${s.tag||''}" oninput="tempScripts[${i}].tag=this.value">
-      </div>
-    </div>`).join('')
-}
-function addCompScriptRow(){
-  tempScripts.push({id:'e'+Date.now()+Math.random(), type:'script', hook:'', body:'', scriptType:'', tag:''})
-  renderCompScriptRows()
-  setTimeout(()=>{ const rows=document.querySelectorAll('#comp-script-entries textarea'); rows[rows.length-1]?.focus() },50)
-}
-function removeCompScript(i){ tempScripts.splice(i,1); renderCompScriptRows() }
-
-// ─── VIDEO ROWS ───
-function renderCompVideoRows(){
-  const el = document.getElementById('comp-video-entries')
-  if(!tempVideos.length){ el.innerHTML=''; return }
-  el.innerHTML = tempVideos.map((v,i)=>`
-    <div class="entry-row">
-      <div class="entry-row-top">
-        <input type="text" placeholder="영상 URL *" value="${v.url||''}" oninput="tempVideos[${i}].url=this.value">
-        <button class="entry-del" onclick="removeCompVideo(${i})">✕</button>
-      </div>
-      <input type="text" placeholder="영상 제목 / 설명" value="${v.title||''}" oninput="tempVideos[${i}].title=this.value" style="margin-top:6px">
-      <textarea rows="2" placeholder="레퍼런스 포인트 — 어디가 좋았나? (Claude가 참고)" style="margin-top:6px" oninput="tempVideos[${i}].note=this.value">${v.note||''}</textarea>
-      <div class="entry-sub" style="margin-top:4px">
-        <select oninput="tempVideos[${i}].platform=this.value">
-          <option value="">플랫폼</option>
-          ${['인스타그램 릴스','틱톡','유튜브 쇼츠','페이스북','유튜브'].map(t=>`<option ${v.platform===t?'selected':''}>${t}</option>`).join('')}
-        </select>
-        <select oninput="tempVideos[${i}].duration=this.value">
-          <option value="">영상 길이</option>
-          ${['15초 이하','15-30초','30-60초','1분 이상'].map(t=>`<option ${v.duration===t?'selected':''}>${t}</option>`).join('')}
-        </select>
-      </div>
-    </div>`).join('')
-}
-function addCompVideoRow(){
-  tempVideos.push({id:'e'+Date.now()+Math.random(), type:'video', url:'', title:'', note:'', platform:'', duration:''})
-  renderCompVideoRows()
-  setTimeout(()=>{ const rows=document.querySelectorAll('#comp-video-entries input[type=text]'); rows[rows.length-1]?.focus() },50)
-}
-function removeCompVideo(i){ tempVideos.splice(i,1); renderCompVideoRows() }
-
-function saveComp(){
-  const name = document.getElementById('comp-name-inp').value.trim()
-  if(!name){ toast('이름을 입력해주세요','err'); return }
-  const cat = document.getElementById('comp-cat-inp').value.trim()
-
-  // Collect all entries, filter empty ones
-  const entries = [
-    ...tempHooks.filter(h=>h.hook?.trim()),
-    ...tempScripts.filter(s=>s.body?.trim()),
-    ...tempVideos.filter(v=>v.url?.trim()),
+function mockSpyderBrands(){
+  return [
+    {id:'sp1',name:'올리브영',pageId:'123456789',adCount:342,liveCount:28,selected:false},
+    {id:'sp2',name:'마켓컬리',pageId:'234567890',adCount:218,liveCount:15,selected:false},
+    {id:'sp3',name:'무신사',pageId:'345678901',adCount:189,liveCount:22,selected:false},
+    {id:'sp4',name:'오늘의집',pageId:'456789012',adCount:156,liveCount:11,selected:false},
+    {id:'sp5',name:'쿠팡이츠',pageId:'567890123',adCount:298,liveCount:34,selected:false},
   ]
-
-  if(editingCompId){
-    const idx = ST.competitors.findIndex(c=>c.id===editingCompId)
-    ST.competitors[idx] = {...ST.competitors[idx], name, category:cat, entries, rawText:''}
-  } else {
-    ST.competitors.push({ id:'c'+Date.now(), name, category:cat, entries, rawText:'' })
-  }
-  DB.save('competitors', ST.competitors)
-  closeModal('modal-add-comp')
-  renderCompSidebar()
-  renderGenCompList()
-  const total = entries.length
-  toast(`"${name}" 저장됨 · ${total}건`,'ok')
-  if(activeLibComp===editingCompId) showCompDetail(editingCompId)
-  else if(!editingCompId) showCompDetail(ST.competitors[ST.competitors.length-1].id)
 }
 
-function renderCompSidebar(){
-  const el = document.getElementById('comp-sidebar-list')
-  if(!ST.competitors.length){
-    el.innerHTML = '<div style="padding:8px 16px;font-size:12px;color:var(--text3)">아직 없어요</div>'
-    return
-  }
-  el.innerHTML = ST.competitors.map(c=>`
-    <div class="lib-item ${activeLibComp===c.id?'active':''}" onclick="showCompDetail('${c.id}')">
-      <div style="width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0"></div>
-      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.name}</span>
-      <span style="font-size:10px;color:var(--text3)">${countHooks(c)}</span>
+function renderSpyderList(){
+  const listEl=document.getElementById('spyder-brand-list')
+  if(!listEl||!spyderBrands.length) return
+  listEl.innerHTML=spyderBrands.map(b=>`
+    <div class="spyder-item ${b.selected?'sel':''}" id="spb-${b.id}" onclick="toggleSpyderBrand('${b.id}')">
+      <div class="sp-check">${b.selected?'✓':''}</div>
+      <div class="sp-name">${b.name}</div>
+      ${b.liveCount?`<div class="sp-live">▶ ${b.liveCount}</div>`:''}
+      <div class="sp-count">${b.adCount}개</div>
     </div>`).join('')
+  updateSpyderInfo()
 }
 
-function countHooks(c){
-  const entries = c.entries || []
-  if(!entries.length && c.rawText) return Math.max(1, c.rawText.split(/\n{2,}/).filter(s=>s.trim()).length) + '건'
-  return entries.length + '건'
+function toggleSpyderBrand(id){
+  const brand=spyderBrands.find(b=>b.id===id)
+  if(!brand) return
+  brand.selected=!brand.selected
+  const item=document.getElementById('spb-'+id)
+  if(item){
+    item.classList.toggle('sel',brand.selected)
+    item.querySelector('.sp-check').textContent=brand.selected?'✓':''
+  }
+  updateSpyderInfo()
 }
 
-function showCompDetail(id){
-  activeLibComp = id
-  renderCompSidebar()
-  const c = ST.competitors.find(c=>c.id===id)
-  if(!c) return
+function updateSpyderInfo(){
+  const sel=spyderBrands.filter(b=>b.selected)
+  const info=document.getElementById('spyder-selected-info')
+  if(!info) return
+  if(!sel.length){ info.style.display='none'; return }
+  const totalAds=sel.reduce((s,b)=>s+b.adCount,0)
+  const liveAds=sel.reduce((s,b)=>s+b.liveCount,0)
+  info.style.display='block'
+  info.innerHTML=`✓ ${sel.map(b=>b.name).join(', ')}<br>광고 ${totalAds}개 · 활성 ${liveAds}개`
+}
 
-  // Migrate legacy rawText → entries on first view
-  if((!c.entries || !c.entries.length) && c.rawText){
-    const parsed = parseRawHooks(c.rawText)
-    c.entries = parsed.map(p=>({type:'hook', hook:p.hook, body:p.body, cta:p.cta, tag:p.tag, id:'e'+Date.now()+Math.random()}))
-    const idx = ST.competitors.findIndex(x=>x.id===id)
-    ST.competitors[idx].entries = c.entries
-    DB.save('competitors', ST.competitors)
+
+// ══════════════════════════════════════════════
+// MODE / FILTER
+// ══════════════════════════════════════════════
+function setMode(el){
+  mode=el.dataset.m
+  document.querySelectorAll('.mchip').forEach(c=>c.classList.toggle('on',c===el))
+  ;['spyder','brand','pageid','kw'].forEach(m=>{ document.getElementById('m-'+m).style.display=m===mode?'block':'none' })
+  // Spyder 탭 진입 시 자동 로드
+  if(mode==='spyder' && K.fp && spyderBrands.length===0) loadSpyderBrands()
+}
+function tf(el){
+  const k=el.dataset.fk
+  if(k==='all'){ document.querySelectorAll('[data-fk="active"],[data-fk="all"]').forEach(c=>c.classList.remove('on')); el.classList.add('on'); filters.delete('active') }
+  else if(k==='active'){ document.querySelectorAll('[data-fk="active"],[data-fk="all"]').forEach(c=>c.classList.remove('on')); el.classList.add('on'); filters.add('active') }
+  else{ el.classList.toggle('on'); if(el.classList.contains('on')) filters.add(k); else filters.delete(k) }
+}
+
+// ══════════════════════════════════════════════
+// STAGE HELPERS
+// ══════════════════════════════════════════════
+function stageSet(n,state){
+  const labels={wait:'대기',run:'실행 중',done:'완료',err:'오류'}
+  const colors={wait:'wait',run:'run',done:'done',err:'err'}
+  const st=document.getElementById('st'+n)
+  if(st){ st.className='stage-status '+colors[state]; st.textContent=labels[state] }
+  const s=document.getElementById('s'+n)
+  if(s){
+    s.classList.remove('active','done','locked')
+    if(state==='run') s.classList.add('active')
+    else if(state==='done') s.classList.add('done')
+    else if(state==='wait') s.classList.add('locked')
+  }
+  const conn=document.getElementById('conn'+(n-1))
+  if(conn&&state==='done') conn.classList.add('active')
+}
+function unlock(n){ const s=document.getElementById('s'+n); if(s) s.classList.remove('locked') }
+function scrollTo(n){ const s=document.getElementById('s'+n); if(s) s.scrollIntoView({behavior:'smooth',block:'start'}) }
+
+// ══════════════════════════════════════════════
+// PROGRESS
+// ══════════════════════════════════════════════
+function pstep(id,label,state){
+  const steps=document.getElementById('prog-steps'); if(!steps) return
+  let el=document.getElementById('pp-'+id)
+  if(!el){ el=document.createElement('div'); el.id='pp-'+id; el.className='pstep'; el.innerHTML=`<span class="si">○</span><span>${label}</span>`; steps.appendChild(el) }
+  el.className='pstep '+state
+  el.querySelector('.si').textContent={wait:'○',run:'◌',done:'✓',err:'✗'}[state]||'○'
+  el.querySelector('.si').style.animation=state==='run'?'spin .7s linear infinite':'none'
+  el.querySelector('span:last-child').textContent=label
+}
+function pbar(p){ const b=document.getElementById('prog-bar'); if(b) b.style.width=p+'%' }
+
+// ══════════════════════════════════════════════
+// MAIN GO
+// ══════════════════════════════════════════════
+async function go(){
+  const btn=document.getElementById('run-btn')
+  const btxt=document.getElementById('run-txt')
+  const pw=document.getElementById('prog-wrap')
+  btn.disabled=true; btxt.innerHTML='<span class="spin">◌</span> 실행 중...'
+  pw.style.display='block'; document.getElementById('prog-steps').innerHTML=''; pbar(0)
+
+  ads=[]; sel.clear(); analysis=null; scripts=[]; ttsScripts=[]
+  document.getElementById('ad-grid').style.display='none'
+  document.getElementById('grid-footer').style.display='none'
+  document.getElementById('e1').style.display='flex'
+  document.getElementById('report-out').style.display='none'
+  document.getElementById('e2').style.display='flex'
+  document.getElementById('scripts-out').style.display='none'
+  document.getElementById('e3').style.display='flex'
+  document.getElementById('tts-out').style.display='none'
+  document.getElementById('e4').style.display='flex'
+  document.getElementById('regen-btn').style.display='none'
+  ;[2,3,4,5].forEach(n=>stageSet(n,'wait'))
+
+  try {
+    // ── 1. 수집 ──
+    stageSet(1,'run'); scrollTo(1)
+    pstep('c1',K.fp?'Foreplay API 연결':'Mock 모드 준비','run'); pbar(8); await sleep(300)
+    pstep('c1','✓ 준비 완료','done'); pbar(15)
+    pstep('c2',`광고 수집 중`,'run'); pbar(20)
+    ads = K.fp ? await apiGet() : (await sleep(900), mockGet())
+    pstep('c2',`✓ ${ads.length}개 수집`,'done'); pbar(35)
+    renderGrid(); stageSet(1,'done'); unlock(2)
+    saveLib(ads); await sleep(150)
+
+    // ── 2. 분석 ──
+    if(!K.cl) throw new Error('Claude API 키가 없어요 — 헤더의 API 설정에서 추가해주세요')
+    stageSet(2,'run'); scrollTo(2)
+    pstep('a1','Claude AI 경쟁사 분석 중','run'); pbar(40)
+    analysis = await doAnalysis(ads)
+    pstep('a1','✓ 분석 완료','done'); pbar(65)
+    renderReport(analysis,ads); stageSet(2,'done'); unlock(3); await sleep(150)
+
+    // ── 3. 대본 ──
+    const brandId=document.getElementById('sel-brand').value
+    if(!brandId){
+      pstep('g0','브랜드 미선택 — 분석까지 완료','done'); pbar(100)
+      stageSet(3,'wait'); unlock(3)
+      toast('수집·분석 완료! 좌측에서 브랜드 선택 후 재실행하면 대본이 생성됩니다','ok')
+      scrollTo(3)
+      throw new Error('SKIP')
+    }
+    stageSet(3,'run'); scrollTo(3)
+    pstep('g1','경쟁사 인사이트 기반 대본 작성','run'); pbar(70)
+    const brand=brands.find(b=>b.id===brandId)
+    scripts = await doGen(brand, analysis)
+    ttsScripts = scripts
+    pstep('g1',`✓ ${scripts.length}개 대본 완성`,'done'); pbar(88)
+    renderScripts(scripts); stageSet(3,'done'); document.getElementById('regen-btn').style.display='flex'; unlock(4); unlock(5)
+
+    pstep('g2','TTS·영상제작 준비 완료','done'); pbar(100)
+    stageSet(4,'run'); stageSet(5,'run')
+    await sleep(300); stageSet(4,'done'); stageSet(5,'done')
+    scrollTo(3)
+    toast(`⚡ 완료! 광고 ${ads.length}개 수집 → 대본 ${scripts.length}개 생성`,'ok')
+
+  } catch(e){
+    if(e.message!=='SKIP'){ pstep('err','오류: '+e.message,'err'); toast(e.message,'err'); console.error(e) }
+  }
+  btn.disabled=false; btxt.textContent='⚡ 수집 → 분석 → 대본 생성'
+}
+
+// ── 대본만 재생성 ──
+async function onlyGen(){
+  if(!analysis){ toast('먼저 전체 실행을 눌러 수집·분석을 완료해주세요','err'); return }
+  const brandId=document.getElementById('sel-brand').value
+  if(!brandId){ toast('좌측에서 브랜드를 선택해주세요','err'); return }
+  const brand=brands.find(b=>b.id===brandId)
+  const btn=document.getElementById('run-btn'); const btxt=document.getElementById('run-txt')
+  btn.disabled=true; btxt.innerHTML='<span class="spin">◌</span> 대본 재생성 중...'
+  stageSet(3,'run')
+  try {
+    scripts = await doGen(brand, analysis)
+    ttsScripts = scripts
+    renderScripts(scripts); stageSet(3,'done')
+    toast(`✦ ${scripts.length}개 대본 재생성 완료`,'ok')
+    scrollTo(3)
+  } catch(e){ toast('생성 실패: '+e.message,'err') }
+  btn.disabled=false; btxt.textContent='⚡ 수집 → 분석 → 대본 생성'
+}
+
+// ══════════════════════════════════════════════
+// API / MOCK
+// ══════════════════════════════════════════════
+async function apiGet(){
+  const lim=parseInt(document.getElementById('i-lim').value)
+  const sort=document.getElementById('i-sort').value
+  const p=new URLSearchParams({limit:lim,sort})
+  if(filters.has('active')) p.append('active','true')
+  const fmts=['video','image'].filter(f=>filters.has(f))
+  if(fmts.length) p.append('formats',fmts.join(','))
+  let url
+
+  // ── Spyder 모드: 선택된 브랜드들의 광고 수집 ──
+  if(mode==='spyder'){
+    const selected=spyderBrands.filter(b=>b.selected)
+    if(!selected.length) throw new Error('Spyder에서 브랜드를 선택해주세요')
+    // 여러 브랜드 동시 수집 후 합치기
+    const results=await Promise.all(selected.map(async brand=>{
+      const bp=new URLSearchParams(p)
+      const r=await fetch(`https://public.api.foreplay.co/ads/facebook/${brand.pageId}?${bp}`,
+        {headers:{'Authorization':'Bearer '+K.fp,'Content-Type':'application/json'}})
+      if(!r.ok) return []
+      const d=await r.json()
+      return (d.ads||d.results||d||[]).map(a=>({...norm(a),brand:brand.name||a.brandName||a.brand?.name||'알 수 없음'}))
+    }))
+    return results.flat()
   }
 
-  const entries = c.entries || []
-  const hookEntries = entries.filter(e=>e.type==='hook')
-  const scriptEntries = entries.filter(e=>e.type==='script')
-  const videoEntries = entries.filter(e=>e.type==='video')
-
-  document.getElementById('comp-main-content').innerHTML = `
-    <div class="lib-hdr">
-      <div>
-        <div class="lib-ttl">${c.name}</div>
-        <div class="lib-sub">${c.category||'카테고리 미설정'} · 훅 ${hookEntries.length} · 대본 ${scriptEntries.length} · 영상 ${videoEntries.length}${c.lastAnalyzedAt ? ` · <span style="color:var(--green);font-size:11px">✦ 분석됨 ${c.lastAnalyzedAt}</span>` : ''}</div>
-      </div>
-      <div style="display:flex;gap:8px;flex-shrink:0">
-        <button class="btn accent" onclick="openAddHook('${id}')">+ 레퍼런스 추가</button>
-        <button class="btn" onclick="openAddComp('${id}')">✏ 편집</button>
-        <button class="btn red" onclick="deleteComp('${id}')">삭제</button>
-      </div>
-    </div>
-
-    ${entries.length===0?`<div class="empty" style="min-height:200px"><div class="empty-ttl">레퍼런스가 없어요</div><div class="empty-sub">훅, 대본, 영상 레퍼런스를 추가해보세요</div></div>`:''}
-
-    ${hookEntries.length ? `
-      <div style="margin-bottom:8px">
-        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;margin-bottom:8px">🎯 훅 텍스트 (${hookEntries.length})</div>
-        ${hookEntries.map((e,i)=>`
-          <div class="hook-entry">
-            <div class="he-hdr">
-              <div class="he-num">#${i+1}</div>
-              <div class="etype etype-hook">훅</div>
-              ${e.tag?`<div class="he-tag">${e.tag}</div>`:''}
-              ${e.platform?`<div class="he-tag">${e.platform}</div>`:''}
-              <button class="btn red" style="margin-left:auto;padding:2px 8px;font-size:11px" onclick="deleteEntry('${id}','${e.id}')">✕</button>
-            </div>
-            <div class="he-body">
-              <div class="he-hook">🎯 ${e.hook}</div>
-              ${e.cta?`<div style="margin-top:4px;font-size:12px;color:var(--green)">👉 ${e.cta}</div>`:''}
-            </div>
-          </div>`).join('')}
-      </div>` : ''}
-
-    ${scriptEntries.length ? `
-      <div style="margin-bottom:8px">
-        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;margin-bottom:8px">📝 대본 전문 (${scriptEntries.length})</div>
-        ${scriptEntries.map((e,i)=>`
-          <div class="hook-entry">
-            <div class="he-hdr">
-              <div class="he-num">#${i+1}</div>
-              <div class="etype etype-script">대본</div>
-              ${e.scriptType?`<div class="he-tag">${e.scriptType}</div>`:''}
-              ${e.tag?`<div class="he-tag">${e.tag}</div>`:''}
-              <button class="btn red" style="margin-left:auto;padding:2px 8px;font-size:11px" onclick="deleteEntry('${id}','${e.id}')">✕</button>
-            </div>
-            <div class="he-body">
-              ${e.hook?`<div class="he-hook">🎯 ${e.hook}</div>`:''}
-              ${e.body?`<div class="he-script">${e.body}</div>`:''}
-            </div>
-          </div>`).join('')}
-      </div>` : ''}
-
-    ${videoEntries.length ? `
-      <div style="margin-bottom:8px">
-        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;margin-bottom:8px">🎬 영상 레퍼런스 (${videoEntries.length})</div>
-        ${videoEntries.map((e,i)=>`
-          <div class="hook-entry">
-            <div class="he-hdr">
-              <div class="he-num">#${i+1}</div>
-              <div class="etype etype-video">영상</div>
-              ${e.platform?`<div class="he-tag">${e.platform}</div>`:''}
-              ${e.duration?`<div class="he-tag">${e.duration}</div>`:''}
-              <button class="btn red" style="margin-left:auto;padding:2px 8px;font-size:11px" onclick="deleteEntry('${id}','${e.id}')">✕</button>
-            </div>
-            <div class="he-body">
-              ${e.title?`<div class="he-hook" style="font-size:13px">${e.title}</div>`:''}
-              <a class="video-link" href="${e.url}" target="_blank" rel="noopener">
-                <div class="video-thumb">▶</div>
-                <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${e.url}</div>
-              </a>
-              ${e.note?`<div class="he-script" style="margin-top:8px;color:var(--text3)">💡 ${e.note}</div>`:''}
-            </div>
-          </div>`).join('')}
-      </div>` : ''}
-  `
+  if(mode==='pageid'){
+    const pid=document.getElementById('i-pid').value.trim()
+    if(!pid) throw new Error('Facebook Page ID를 입력해주세요')
+    url=`https://public.api.foreplay.co/ads/facebook/${pid}?${p}`
+  } else if(mode==='brand'){
+    const b=document.getElementById('i-brand').value.trim()
+    if(!b) throw new Error('브랜드명을 입력해주세요')
+    p.append('name',b); url=`https://public.api.foreplay.co/brands/search?${p}`
+  } else {
+    const kw=document.getElementById('i-kw').value.trim(); const cat=document.getElementById('i-cat').value
+    if(!kw&&!cat) throw new Error('키워드나 카테고리를 입력해주세요')
+    if(kw) p.append('keywords',kw); if(cat) p.append('category',cat)
+    url=`https://public.api.foreplay.co/ads/search?${p}`
+  }
+  const r=await fetch(url,{headers:{'Authorization':'Bearer '+K.fp,'Content-Type':'application/json'}})
+  if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.message||`Foreplay API ${r.status}`)}
+  const d=await r.json()
+  return (d.ads||d.results||d||[]).map(norm)
 }
 
-function parseRawHooks(raw){
-  if(!raw) return []
-  const blocks = raw.split(/\n{2,}/).filter(b=>b.trim())
-  return blocks.map(block=>{
-    const lines = block.trim().split('\n')
-    let hook='', body='', cta='', tag=''
-    lines.forEach(l=>{
-      if(/^\[훅\]/i.test(l)) hook=l.replace(/^\[훅\]\s*/i,'')
-      else if(/^\[대본\]/i.test(l)) body=l.replace(/^\[대본\]\s*/i,'')
-      else if(/^\[cta\]/i.test(l)) cta=l.replace(/^\[cta\]\s*/i,'')
-      else if(/^\[태그\]/i.test(l)) tag=l.replace(/^\[태그\]\s*/i,'')
-      else { if(!hook) hook=l; else body+=(body?'\n':'')+l }
+function norm(r){
+  const tr=r.transcript||r.transcription||r.body||''
+  return {id:r.id||r.adId||('fp_'+Math.random().toString(36).slice(2,8)),brand:r.brandName||r.brand?.name||r.page_name||'알 수 없음',hook:r.hook||tr.split(/[.!?\n]/)[0].slice(0,80)||'',transcript:tr,tone:r.emotionalTone||r.tone||'',platform:(r.platforms||[r.platform]||['facebook'])[0]||'facebook',format:r.format||(r.videoUrl?'video':'image'),isActive:r.isActive??r.active??true,activeDays:r.activeDays||r.active_days||0,videoUrl:r.videoUrl||r.video_url||'',landingUrl:r.landingUrl||r.landing_page||'',cta:r.cta||r.callToAction||'',thumb:r.thumbnailUrl||r.thumbnail||''}
+}
+
+function mockGet(){
+  const bn=mode==='spyder'
+    ? (spyderBrands.filter(b=>b.selected).map(b=>b.name).join(', ')||'Spyder 브랜드')
+    : (mode==='brand'&&document.getElementById('i-brand').value.trim())||'샘플브랜드'
+  const HK=['이거 보고 바로 결제했어요 🔥','피부과 원장이 알려준 진짜 방법','다이어트 10번 실패하고 드디어 찾은 것','이걸 모르면 운동해도 살 안 빠져요','매일 아침 이것만 했더니 변했어요','30대부터 피부가 달라지는 이유','첫 주에 2kg 빠졌어요 (진짜 후기)','전 이게 사기인 줄 알았어요','대기업 직원들이 몰래 쓰는 이유','솔직히 이건 써보기 전엔 몰랐어요','이 가격에 이 퀄리티면 안 살 이유 없죠','3개월 쓰고 인생템 됐어요']
+  const TN=['공감형','충격형','호기심형','사회적 증거형','긴박형']
+  const PL=['facebook','instagram','tiktok','facebook','instagram']
+  const CT=['지금 바로 구매하기','한정 특가 확인하기','무료 체험 신청하기','첫 구매 30% 할인']
+  const EM=['🎬','📱','✨','💪','🌿','🔥','💄','🛒','⭐','🎯']
+  const lim=parseInt(document.getElementById('i-lim').value)
+  return Array.from({length:Math.min(lim,HK.length*2)},(_,i)=>{const h=HK[i%HK.length];return{id:'m'+i,brand:bn,hook:h,transcript:h+'\n\n저도 처음엔 반신반의했어요. 근데 직접 써보니까 확실히 달랐어요. 3주 만에 주변에서 다 알아봤고, 지금은 가족한테도 추천하고 있어요.',tone:TN[i%5],platform:PL[i%5],format:i%4===0?'image':'video',isActive:i%5!==4,activeDays:Math.floor(Math.random()*90)+3,videoUrl:'',landingUrl:'https://example.com',cta:CT[i%4],thumb:'',_e:EM[i%10]}})
+}
+
+// ══════════════════════════════════════════════
+// RENDER GRID
+// ══════════════════════════════════════════════
+const PI={facebook:'📘',instagram:'📷',tiktok:'🎵',youtube:'▶'}
+function renderGrid(){
+  const grid=document.getElementById('ad-grid')
+  document.getElementById('e1').style.display='none'
+  grid.style.display='grid'
+  document.getElementById('grid-footer').style.display='flex'
+  grid.innerHTML=ads.map((ad,i)=>`
+    <div id="c-${ad.id}" class="ad-card ${sel.has(ad.id)?'sel':''}" style="animation-delay:${Math.min(i*.035,.5)}s" onclick="tog('${ad.id}')">
+      <div class="ad-thumb">
+        ${ad.thumb?`<img src="${ad.thumb}" onerror="this.remove()" loading="lazy">`:''}
+        <span class="thumb-emoji">${ad._e||'🎬'}</span>
+        <div class="ad-live ${ad.isActive?'on':'off'}">${ad.isActive?'▶ 활성':'● 종료'}</div>
+        <div class="sel-check">✓</div>
+      </div>
+      <div class="ad-info">
+        <div class="ad-brand">${PI[ad.platform]||'📱'} ${ad.brand}${ad.activeDays?` · ${ad.activeDays}일`:''}</div>
+        <div class="ad-hook">${ad.hook||'(훅 없음)'}</div>
+        <div class="ad-tags">
+          <div class="atag plat">${ad.platform}</div>
+          ${ad.tone?`<div class="atag tone">${ad.tone}</div>`:''}
+        </div>
+        ${ad.transcript?`<div class="ad-tr">${ad.transcript}</div>`:''}
+      </div>
+    </div>`).join('')
+  document.getElementById('ad-cnt').textContent=ads.length
+  updSel()
+}
+function tog(id){
+  if(sel.has(id)) sel.delete(id); else sel.add(id)
+  const c=document.getElementById('c-'+id)
+  if(c){ c.classList.toggle('sel',sel.has(id)); const ck=c.querySelector('.sel-check'); if(ck) ck.style.display=sel.has(id)?'flex':'none' }
+  updSel()
+}
+function selAll(){ ads.forEach(a=>sel.add(a.id)); document.querySelectorAll('.ad-card').forEach(c=>{c.classList.add('sel');const ck=c.querySelector('.sel-check');if(ck)ck.style.display='flex'}); updSel() }
+function clrSel(){ sel.clear(); document.querySelectorAll('.ad-card').forEach(c=>{c.classList.remove('sel');const ck=c.querySelector('.sel-check');if(ck)ck.style.display='none'}); updSel() }
+function updSel(){ document.getElementById('sel-cnt').textContent=sel.size+'개 선택' }
+
+function saveLib(ads){
+  const byBrand={}
+  ads.forEach(a=>{if(!byBrand[a.brand])byBrand[a.brand]=[];byBrand[a.brand].push(a)})
+  Object.entries(byBrand).forEach(([bn,bas])=>{
+    let c=competitors.find(x=>x.name===bn)
+    if(!c){c={id:'c'+Date.now()+Math.random().toString(36).slice(2,5),name:bn,category:'',entries:[],urls:[],rawText:''};competitors.push(c)}
+    bas.forEach(a=>{
+      const ts=Date.now()+Math.random()
+      const tag=[a.tone,a.isActive?'활성':'',a.activeDays?a.activeDays+'일':'','⚡FP'].filter(s=>s.trim()).join('·')
+      if(a.hook) c.entries.push({id:'e'+ts+'h',type:'hook',hook:a.hook,cta:a.cta||'',tag,platform:a.platform})
+      if(a.transcript&&a.transcript!==a.hook) c.entries.push({id:'e'+ts+'s',type:'script',hook:a.hook||'',body:a.transcript,scriptType:'',tag})
     })
-    return {hook, body, cta, tag}
+    localStorage.setItem('af_competitors',JSON.stringify(competitors))
   })
-}
-
-// ── REF TAB SWITCHING ──
-let currentRefTab = 'hook'
-function switchRefTab(tab){
-  currentRefTab = tab
-  ;['hook','script','video'].forEach(t=>{
-    document.getElementById('rtab-'+t).classList.toggle('active', t===tab)
-    document.getElementById('rtab-pane-'+t).style.display = t===tab?'block':'none'
-  })
-}
-
-function openAddHook(compId){
-  currentHookCompId = compId
-  currentRefTab = 'hook'
-  switchRefTab('hook')
-  // Clear all fields
-  ;['hook-inp','cta-inp','hook-tag-inp','script-hook-inp','script-inp','script-tag-inp',
-    'video-url-inp','video-title-inp','video-note-inp'].forEach(id=>{
-    const el = document.getElementById(id)
-    if(el) el.value=''
-  })
-  document.getElementById('hook-platform-inp').value = ''
-  document.getElementById('script-type-inp').value = ''
-  document.getElementById('video-platform-inp').value = ''
-  document.getElementById('video-len-inp').value = ''
-  document.getElementById('video-preview-wrap').style.display = 'none'
-  document.getElementById('hook-modal-ttl').textContent = '레퍼런스 추가'
-  openModal('modal-add-hook')
-}
-
-// Live YouTube preview
-document.addEventListener('DOMContentLoaded', ()=>{
-  document.getElementById('video-url-inp')?.addEventListener('input', function(){
-    const url = this.value.trim()
-    const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
-    const wrap = document.getElementById('video-preview-wrap')
-    const frame = document.getElementById('video-preview-frame')
-    if(yt){
-      frame.src = `https://www.youtube.com/embed/${yt[1]}`
-      wrap.style.display = 'block'
-    } else {
-      wrap.style.display = 'none'
-      frame.src = ''
-    }
-  })
-})
-
-function saveHookEntry(){
-  const idx = ST.competitors.findIndex(c=>c.id===currentHookCompId)
-  if(idx<0) return
-  if(!ST.competitors[idx].entries) ST.competitors[idx].entries = []
-
-  let entry = null
-
-  if(currentRefTab === 'hook'){
-    const hook = document.getElementById('hook-inp').value.trim()
-    if(!hook){ toast('훅 문구를 입력해주세요','err'); return }
-    entry = {
-      id:'e'+Date.now(),
-      type:'hook',
-      hook,
-      cta: document.getElementById('cta-inp').value.trim(),
-      tag: document.getElementById('hook-tag-inp').value.trim(),
-      platform: document.getElementById('hook-platform-inp').value,
-    }
-  } else if(currentRefTab === 'script'){
-    const body = document.getElementById('script-inp').value.trim()
-    if(!body){ toast('대본 내용을 입력해주세요','err'); return }
-    entry = {
-      id:'e'+Date.now(),
-      type:'script',
-      hook: document.getElementById('script-hook-inp').value.trim(),
-      body,
-      scriptType: document.getElementById('script-type-inp').value,
-      tag: document.getElementById('script-tag-inp').value.trim(),
-    }
-  } else if(currentRefTab === 'video'){
-    const url = document.getElementById('video-url-inp').value.trim()
-    if(!url){ toast('영상 URL을 입력해주세요','err'); return }
-    entry = {
-      id:'e'+Date.now(),
-      type:'video',
-      url,
-      title: document.getElementById('video-title-inp').value.trim(),
-      note: document.getElementById('video-note-inp').value.trim(),
-      platform: document.getElementById('video-platform-inp').value,
-      duration: document.getElementById('video-len-inp').value,
-    }
-  }
-
-  if(!entry) return
-  ST.competitors[idx].entries.push(entry)
-  DB.save('competitors', ST.competitors)
-  closeModal('modal-add-hook')
-  showCompDetail(currentHookCompId)
-  renderGenCompList()
-  const typeLabel = {hook:'훅', script:'대본', video:'영상 레퍼런스'}[entry.type]
-  toast(`${typeLabel} 추가됨 ✓`,'ok')
-}
-
-function deleteEntry(compId, entryId){
-  const idx = ST.competitors.findIndex(c=>c.id===compId)
-  if(idx<0) return
-  ST.competitors[idx].entries = (ST.competitors[idx].entries||[]).filter(e=>e.id!==entryId)
-  DB.save('competitors', ST.competitors)
-  showCompDetail(compId)
-  renderGenCompList()
-  toast('삭제됨')
-}
-
-function deleteComp(id){
-  if(!confirm('정말 삭제할까요?')) return
-  ST.competitors = ST.competitors.filter(c=>c.id!==id)
-  DB.save('competitors', ST.competitors)
-  activeLibComp = null
-  renderCompSidebar()
-  renderGenCompList()
-  document.getElementById('comp-main-content').innerHTML = `<div class="empty" style="min-height:300px"><div class="empty-art">🏢</div><div class="empty-ttl">경쟁사를 선택하세요</div></div>`
-  toast('삭제됨')
 }
 
 // ══════════════════════════════════════════════
-// BRANDS
+// ANALYSIS
 // ══════════════════════════════════════════════
-function openAddBrand(editId=null){
-  editingBrandId = editId
-  brandColor = '#4f8fff'
-  document.querySelectorAll('.color-opt').forEach(o=>{ o.classList.toggle('sel', o.dataset.c===brandColor) })
+async function doAnalysis(ads){
+  const sample=ads.slice(0,25)
+  const data=sample.map((a,i)=>[`[${i+1}]브랜드:${a.brand}`,`훅:"${a.hook}"`,a.transcript?`스크립트:"${a.transcript.slice(0,150)}"`:null,a.tone?`톤:${a.tone}`:null,a.isActive?`활성${a.activeDays}일`:'종료',a.cta?`CTA:"${a.cta}"`:null].filter(Boolean).join('|')).join('\n')
+  const opts={hook:document.getElementById('o-hook').checked,tone:document.getElementById('o-tone').checked,struct:document.getElementById('o-struct').checked,cta:document.getElementById('o-cta').checked,insight:document.getElementById('o-insight').checked}
+  const secs=[]
+  if(opts.hook) secs.push('hookPatterns: [{type,example,frequency}] 훅 패턴 유형 분류')
+  if(opts.tone) secs.push('toneAnalysis: 감성 톤 분포 (문자열)')
+  if(opts.struct) secs.push('structureInsight: 영상 구조 패턴 (문자열)')
+  if(opts.cta) secs.push('ctaPatterns: CTA 전략 (문자열)')
+  if(opts.insight) secs.push('strategicInsight: [문자열 3-5개] 전략 인사이트')
+  secs.push('topHooks: [{hook,reason}] TOP5')
+  secs.push('summary: 전체 요약 2-3문장')
 
-  if(editId){
-    const b = ST.brands.find(b=>b.id===editId)
-    document.getElementById('brand-modal-ttl').textContent = '브랜드 편집'
-    document.getElementById('brand-name-inp').value = b.name
-    document.getElementById('brand-cat-inp').value = b.category||''
-    document.getElementById('brand-pain-inp').value = b.painpoint||''
-    document.getElementById('brand-usp-inp').value = b.usp||''
-    document.getElementById('brand-tone-inp').value = b.tone||''
-    document.getElementById('brand-prohibit-inp').value = b.prohibit||''
-    document.getElementById('brand-ctx-inp').value = b.context||''
-    brandColor = b.color||'#4f8fff'
-    document.querySelectorAll('.color-opt').forEach(o=>{ o.classList.toggle('sel', o.dataset.c===brandColor) })
-  } else {
-    document.getElementById('brand-modal-ttl').textContent = '브랜드 추가'
-    ;['brand-name-inp','brand-cat-inp','brand-pain-inp','brand-usp-inp','brand-tone-inp','brand-prohibit-inp','brand-ctx-inp'].forEach(id=>document.getElementById(id).value='')
-  }
-  openModal('modal-add-brand')
+  const prompt=`광고 크리에이티브 전략가로서 아래 ${sample.length}개 광고를 분석하고 JSON으로 응답하세요.\n\n${data}\n\n분석항목:\n${secs.join('\n')}\n\nJSON만 응답:{"hookPatterns":[],"toneAnalysis":"","structureInsight":"","ctaPatterns":"","strategicInsight":[],"topHooks":[],"summary":""}`
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':K.cl,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,messages:[{role:'user',content:prompt}]})})
+  if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error?.message||`Claude ${r.status}`)}
+  const d=await r.json()
+  return JSON.parse(d.content.map(c=>c.text||'').join('').replace(/```json|```/g,'').trim())
 }
 
-function selColor(el){
-  brandColor = el.dataset.c
-  document.querySelectorAll('.color-opt').forEach(o=>o.classList.toggle('sel', o===el))
-}
-
-function saveBrand(){
-  const name = document.getElementById('brand-name-inp').value.trim()
-  if(!name){ toast('브랜드명을 입력해주세요','err'); return }
-  const b = {
-    id: editingBrandId || 'b'+Date.now(),
-    name,
-    category: document.getElementById('brand-cat-inp').value.trim(),
-    painpoint: document.getElementById('brand-pain-inp').value.trim(),
-    usp: document.getElementById('brand-usp-inp').value.trim(),
-    tone: document.getElementById('brand-tone-inp').value.trim(),
-    prohibit: document.getElementById('brand-prohibit-inp').value.trim(),
-    context: document.getElementById('brand-ctx-inp').value.trim(),
-    color: brandColor,
-    urls: (window.__pendingBrandUrls || brandUrls).map(({url,label})=>({url,label})),
-    analysisData:   window.__pendingAnalysis?.result   || (editingBrandId ? ST.brands.find(b=>b.id===editingBrandId)?.analysisData   : null),
-    lastAnalyzedAt: window.__pendingAnalysis?.analyzedAt || (editingBrandId ? ST.brands.find(b=>b.id===editingBrandId)?.lastAnalyzedAt : null),
-  }
-  window.__pendingBrandUrls = null
-  window.__pendingAnalysis  = null
-  if(editingBrandId){
-    const idx = ST.brands.findIndex(br=>br.id===editingBrandId)
-    ST.brands[idx] = b
-  } else {
-    ST.brands.push(b)
-  }
-  DB.save('brands', ST.brands)
-  closeModal('modal-add-brand')
-  renderBrandSidebar()
-  renderBrandDropdown()
-  if(activeLibBrand) showBrandDetail(activeLibBrand)
-  toast(`"${name}" 저장됨`,'ok')
-}
-
-function renderBrandSidebar(){
-  const el = document.getElementById('brand-sidebar-list')
-  if(!ST.brands.length){
-    el.innerHTML = '<div style="padding:8px 16px;font-size:12px;color:var(--text3)">아직 없어요</div>'
-    return
-  }
-  el.innerHTML = ST.brands.map(b=>`
-    <div class="lib-item ${activeLibBrand===b.id?'active':''}" onclick="showBrandDetail('${b.id}')">
-      <div style="width:8px;height:8px;border-radius:50%;background:${b.color||'var(--accent)'};flex-shrink:0"></div>
-      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.name}</span>
-    </div>`).join('')
-}
-
-function showBrandDetail(id){
-  activeLibBrand = id
-  renderBrandSidebar()
-  const b = ST.brands.find(b=>b.id===id)
-  if(!b) return
-  document.getElementById('brand-main-content').innerHTML = `
-    <div class="lib-hdr">
-      <div>
-        <div class="lib-ttl">${b.name}</div>
-        <div class="lib-sub">${b.category||'카테고리 미설정'}${b.lastAnalyzedAt ? ` · <span style="color:var(--green);font-size:11px">✦ 분석됨 ${b.lastAnalyzedAt}</span>` : ''}</div>
-      </div>
-      <div style="display:flex;gap:8px">
-        <button class="btn" onclick="openAddBrand('${b.id}')">✏ 편집</button>
-        <button class="btn red" onclick="deleteBrand('${b.id}')">삭제</button>
-      </div>
+function renderReport(r,ads){
+  document.getElementById('e2').style.display='none'
+  const bn=ads[0]?.brand||'경쟁사'
+  const now=new Date().toLocaleString('ko-KR',{month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'})
+  const out=document.getElementById('report-out')
+  out.style.display='flex'
+  out.innerHTML=`
+    <div class="report-banner">
+      <div class="rb-label">⚡ Foreplay 경쟁사 분석 · ${now}</div>
+      <div class="rb-ttl">${bn} 광고 분석 — ${ads.length}개</div>
+      <div class="rb-sum">${r.summary||''}</div>
     </div>
-    <div class="brand-card">
-      <div class="bc-hdr">
-        <div class="bc-color" style="background:${b.color||'var(--accent)'}"></div>
-        <div><div class="bc-name">${b.name}</div><div class="bc-cat">${b.category||''}</div></div>
-      </div>
-      <div class="bc-body">
-        ${field('핵심 페인포인트', b.painpoint)}
-        ${field('USP / 차별점', b.usp)}
-        ${field('톤 & 보이스', b.tone)}
-        ${field('금지어 / 주의', b.prohibit||'없음')}
-      </div>
-      ${b.context?`<div style="padding:12px 16px;border-top:1px solid var(--border)"><div class="bc-field-label">추가 컨텍스트</div><div class="bc-field-val">${b.context}</div></div>`:''}
-      ${b.urls?.length?`
-        <div style="padding:12px 16px;border-top:1px solid var(--border)">
-          <div class="bc-field-label">🔗 연결된 URL</div>
-          <div style="display:flex;flex-direction:column;gap:4px;margin-top:6px">
-            ${b.urls.map(u=>`
-              <a href="${u.url}" target="_blank" rel="noopener" class="video-link" style="text-decoration:none">
-                <div class="video-thumb" style="width:28px;height:28px">${urlIcon(u.url)}</div>
-                <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;font-size:11px">${u.url}</div>
-              </a>`).join('')}
-          </div>
-        </div>`:''}
-    </div>`
-}
-
-function field(label, val){
-  return val?`<div><div class="bc-field-label">${label}</div><div class="bc-field-val">${val}</div></div>`:''
-}
-
-function deleteBrand(id){
-  if(!confirm('정말 삭제할까요?')) return
-  ST.brands = ST.brands.filter(b=>b.id!==id)
-  DB.save('brands', ST.brands)
-  activeLibBrand = null
-  renderBrandSidebar()
-  renderBrandDropdown()
-  document.getElementById('brand-main-content').innerHTML = `<div class="empty" style="min-height:300px"><div class="empty-art">🎨</div><div class="empty-ttl">브랜드를 선택하세요</div></div>`
-  toast('삭제됨')
-}
-
-function renderBrandDropdown(){
-  const sel = document.getElementById('sel-brand')
-  const cur = sel.value
-  sel.innerHTML = '<option value="">— 브랜드 선택 —</option>'
-  ST.brands.forEach(b=>{
-    const o = document.createElement('option')
-    o.value = b.id; o.textContent = b.name
-    sel.appendChild(o)
-  })
-  if(cur) sel.value = cur
-}
-
-function onBrandChange(){
-  const id = document.getElementById('sel-brand').value
-  selectedBrandId = id
-  const b = ST.brands.find(b=>b.id===id)
-  const prev = document.getElementById('brand-preview')
-  if(!b){ prev.style.display='none'; return }
-  prev.style.display = 'block'
-  prev.innerHTML = `
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-      <div style="width:10px;height:10px;border-radius:50%;background:${b.color}"></div>
-      <strong style="color:var(--text)">${b.name}</strong>
-      <span style="color:var(--text3)">${b.category||''}</span>
-    </div>
-    ${b.painpoint?`<div><span style="color:var(--text3)">페인포인트:</span> ${b.painpoint.substring(0,80)}${b.painpoint.length>80?'…':''}</div>`:''}
-    ${b.usp?`<div><span style="color:var(--text3)">USP:</span> ${b.usp.substring(0,80)}${b.usp.length>80?'…':''}</div>`:''}`
-}
-
-// ══════════════════════════════════════════════
-// COMPETITOR MULTI-SELECT (생성 패널)
-// ══════════════════════════════════════════════
-function renderGenCompList(){
-  const el = document.getElementById('comp-list')
-  if(!ST.competitors.length){
-    el.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:4px 0">경쟁사 라이브러리에서 추가해주세요</div>'
-    return
-  }
-  el.innerHTML = ST.competitors.map(c=>`
-    <div class="comp-item ${selectedComps.includes(c.id)?'selected':''}" onclick="toggleComp('${c.id}')">
-      <div class="comp-check">${selectedComps.includes(c.id)?'✓':''}</div>
-      <div class="comp-name">${c.name}</div>
-      <div class="comp-count">${countHooks(c)}</div>
-    </div>`).join('')
-}
-
-function toggleComp(id){
-  if(selectedComps.includes(id)) selectedComps = selectedComps.filter(i=>i!==id)
-  else selectedComps.push(id)
-  renderGenCompList()
-}
-
-function toggleAllComp(){
-  const allIds = ST.competitors.map(c=>c.id)
-  if(selectedComps.length===allIds.length) selectedComps=[]
-  else selectedComps=[...allIds]
-  renderGenCompList()
-}
-
-// ══════════════════════════════════════════════
-// TAGS
-// ══════════════════════════════════════════════
-function addTag(e){
-  if(e.key!=='Enter') return
-  const inp=document.getElementById('tag-inp'), v=inp.value.trim()
-  if(!v||tags.includes(v)){inp.value='';return}
-  tags.push(v); inp.value=''
-  renderTags()
-}
-function removeTag(v){ tags=tags.filter(t=>t!==v); renderTags() }
-function renderTags(){
-  document.getElementById('tags').innerHTML=tags.map(t=>`<div class="tag">${t}<button class="tag-x" onclick="removeTag('${t}')">×</button></div>`).join('')
-}
-
-// ══════════════════════════════════════════════
-// TABS
-// ══════════════════════════════════════════════
-function switchTab(name, btn){
-  document.querySelectorAll('.out-tabs .tab').forEach(b=>b.classList.remove('active'))
-  btn.classList.add('active')
-  document.getElementById('pane-scripts').style.display = name==='scripts'?'block':'none'
-  document.getElementById('pane-tts').style.display = name==='tts'?'block':'none'
+    ${r.topHooks?.length?`<div class="rsec"><div class="rsec-hd"><span class="rsec-icon">🎯</span><span class="rsec-ttl">Top Hooks</span><span class="rsec-badge">TOP ${r.topHooks.length}</span></div><div class="rsec-body">${r.topHooks.map((h,i)=>`<div class="top-hook"><div class="th-rank">#${i+1}</div><div><div class="th-hook">"${h.hook||h}"</div>${h.reason?`<div class="th-reason">💡 ${h.reason}</div>`:''}</div></div>`).join('')}</div></div>`:''}
+    ${r.hookPatterns?.length?`<div class="rsec"><div class="rsec-hd"><span class="rsec-icon">📐</span><span class="rsec-ttl">훅 패턴 분류</span><span class="rsec-badge">${r.hookPatterns.length}가지</span></div><div class="rsec-body">${r.hookPatterns.map(p=>`<div class="hp-item"><div class="hp-type">${p.type||p.유형||''}</div><div class="hp-ex">"${p.example||p.예시||''}"</div><div class="hp-freq">${p.frequency||p.빈도||''}</div></div>`).join('')}</div></div>`:''}
+    ${r.toneAnalysis?`<div class="rsec"><div class="rsec-hd"><span class="rsec-icon">💬</span><span class="rsec-ttl">감성 톤 분석</span></div><div class="rsec-body"><div class="ibox">${r.toneAnalysis}</div></div></div>`:''}
+    ${r.structureInsight?`<div class="rsec"><div class="rsec-hd"><span class="rsec-icon">🎬</span><span class="rsec-ttl">영상 구조 패턴</span></div><div class="rsec-body"><div class="ibox">${r.structureInsight}</div></div></div>`:''}
+    ${r.ctaPatterns?`<div class="rsec"><div class="rsec-hd"><span class="rsec-icon">👉</span><span class="rsec-ttl">CTA 패턴</span></div><div class="rsec-body"><div class="ibox">${r.ctaPatterns}</div></div></div>`:''}
+    ${r.strategicInsight?.length?`<div class="rsec"><div class="rsec-hd"><span class="rsec-icon">⚡</span><span class="rsec-ttl">전략적 인사이트</span></div><div class="rsec-body">${r.strategicInsight.map(s=>`<div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)"><div style="color:var(--accent);flex-shrink:0">▸</div><div style="font-size:12px;color:var(--text2);line-height:1.65">${s}</div></div>`).join('')}</div></div>`:''}
+  `
 }
 
 // ══════════════════════════════════════════════
 // GENERATION
 // ══════════════════════════════════════════════
-async function runGen(){
-  if(!ST.keys.claude){ openModal('modal-api'); toast('Claude API 키를 입력해주세요','err'); return }
-  if(!selectedBrandId){ toast('브랜드를 선택해주세요','err'); return }
-  if(!selectedComps.length){ toast('경쟁사 레퍼런스를 1개 이상 선택해주세요','err'); return }
+async function doGen(brand,anal){
+  const cnt=parseInt(document.getElementById('i-cnt').value)||3
+  const adType=document.getElementById('i-adtype').value
+  const tone=document.getElementById('i-tone').value
+  const topH=(anal.topHooks||[]).map((h,i)=>`${i+1}."${h.hook||h}"`).join('\n')
+  const hPats=(anal.hookPatterns||[]).map(p=>`- ${p.type||p.유형}:"${p.example||p.예시}"`).join('\n')
+  const insights=(anal.strategicInsight||[]).join('\n')
 
-  const btn = document.getElementById('btn-gen')
-  btn.disabled = true
-  document.getElementById('btn-txt').innerHTML = '<span class="spin">◌</span> 생성 중...'
-  document.getElementById('empty-gen').style.display = 'none'
-  document.getElementById('scripts-out').innerHTML = ''
+  const prompt=`퍼포먼스 광고 카피라이터로서 아래 브랜드의 대본을 생성하세요.
 
-  // build reference text
-  const refText = selectedComps.map(id=>{
-    const c = ST.competitors.find(c=>c.id===id)
-    const entries = c.entries || []
-    const hooks = entries.filter(e=>e.type==='hook')
-    const scripts = entries.filter(e=>e.type==='script')
-    const videos = entries.filter(e=>e.type==='video')
+브랜드:${brand.name}|카테고리:${brand.category||'미설정'}|페인포인트:${brand.painpoint||'미설정'}|USP:${brand.usp||'미설정'}|톤:${brand.tone||'미설정'}${brand.prohibit?`|금지:${brand.prohibit}`:''}
 
-    let section = `## ${c.name} 레퍼런스\n`
-    if(hooks.length){
-      section += `\n### 훅 텍스트\n`
-      hooks.forEach((e,i)=>{ section += `${i+1}. 훅: "${e.hook}"${e.cta?' / CTA: "'+e.cta+'"':''}${e.tag?' ['+e.tag+']':''}\n` })
-    }
-    if(scripts.length){
-      section += `\n### 대본 전문\n`
-      scripts.forEach((e,i)=>{
-        section += `${i+1}. ${e.hook?'훅: "'+e.hook+'" / ':''}`
-        section += `대본: "${e.body}"${e.scriptType?' ['+e.scriptType+']':''}\n`
-      })
-    }
-    if(videos.length){
-      section += `\n### 영상 레퍼런스 인사이트\n`
-      videos.forEach((e,i)=>{ if(e.note) section += `${i+1}. ${e.title||e.url}: ${e.note}\n` })
-    }
-    // fallback to rawText if no entries migrated
-    if(!entries.length && c.rawText) section += c.rawText
-    return section
-  }).join('\n\n')
+경쟁사 분석(Foreplay):
+요약:${anal.summary||''}
+TOP훅:${topH}
+훅패턴:${hPats}
+인사이트:${insights}
+감성톤:${anal.toneAnalysis||''}
+CTA:${anal.ctaPatterns||''}
 
-  const brand = ST.brands.find(b=>b.id===selectedBrandId)
-  const cnt = document.getElementById('cnt').value
-  const adType = document.getElementById('ad-type').value
-  const tone = document.getElementById('tone').value
-  const age = document.getElementById('age').value
-  const gender = document.getElementById('gender').value
-  const extraPain = document.getElementById('extra-pain').value
-  const interests = tags.length ? tags.join(', ') : '없음'
+설정:유형=${adType}|톤=${tone}|개수=${cnt}
 
-  // progress UI
-  const prog = document.getElementById('prog-area')
-  prog.innerHTML = `<div class="prog-wrap">
-    <div class="prog-ttl">✦ 대본 생성 중...</div>
-    <div class="prog-step"><div class="pi">🧠</div><div class="pl">레퍼런스 분석 & 브랜드 컨텍스트 로드</div><div class="ps run" id="p1"><span class="spin">◌</span></div></div>
-    <div class="prog-step"><div class="pi">✍️</div><div class="pl">타겟 최적화 대본 작성</div><div class="ps wait" id="p2">대기</div></div>
-    <div class="prog-step"><div class="pi">🎯</div><div class="pl">훅 & CTA 정제</div><div class="ps wait" id="p3">대기</div></div>
-  </div>`
+규칙:1)경쟁사 훅 구조 참고, 내용은 ${brand.name}에 맞게 완전히 새롭게 2)훅=3초 안에 스크롤 멈춤(1-2문장) 3)본문=페인포인트→USP→증거(3-5문장) 4)CTA=즉각 행동(1문장) 5)각 대본마다 다른 훅패턴 유형${brand.prohibit?` 6)금지:${brand.prohibit}`:''}
 
-  try {
-    await sleep(350)
-    qs('#p1').className='ps done'; qs('#p1').textContent='✓'
-    qs('#p2').className='ps run'; qs('#p2').innerHTML='<span class="spin">◌</span>'
+JSON만 응답:{"scripts":[{"id":1,"hook":"","body":"","cta":"","style":"","hookType":"","reason":""}]}`
 
-    const result = await callClaude({refText, brand, cnt, adType, tone, age, gender, extraPain, interests})
-    scripts = result
-
-    qs('#p2').className='ps done'; qs('#p2').textContent='✓'
-    qs('#p3').className='ps run'; qs('#p3').innerHTML='<span class="spin">◌</span>'
-    await sleep(250)
-    qs('#p3').className='ps done'; qs('#p3').textContent='✓'
-    await sleep(200)
-    prog.innerHTML = ''
-
-    renderScripts(result)
-    const badge = document.getElementById('scripts-badge')
-    badge.textContent = result.length; badge.style.display = 'inline-block'
-    toast(`${result.length}개 대본 생성 완료 ✦`,'ok')
-  } catch(e){
-    prog.innerHTML = `<div class="notice">⚠ ${e.message}</div>`
-    toast('생성 실패: '+e.message,'err')
-    console.error(e)
-  }
-
-  btn.disabled = false
-  document.getElementById('btn-txt').textContent = '✦ 대본 생성'
-}
-
-async function callClaude({refText, brand, cnt, adType, tone, age, gender, extraPain, interests}){
-  const prohibitLine = brand.prohibit ? `\n- 금지어/주의: ${brand.prohibit}` : ''
-  const ctxLine = brand.context ? `\n- 추가 컨텍스트: ${brand.context}` : ''
-
-  const prompt = `당신은 10년 경력의 퍼포먼스 광고 카피라이터입니다.
-
-## 우리 브랜드 정보
-- 브랜드명: ${brand.name}
-- 카테고리: ${brand.category||'미설정'}
-- 핵심 페인포인트: ${brand.painpoint||'미설정'}
-- USP / 차별점: ${brand.usp||'미설정'}
-- 브랜드 톤 & 보이스: ${brand.tone||'미설정'}${prohibitLine}${ctxLine}
-
-## 타겟 오디언스
-- ${age} ${gender}
-- 관심사: ${interests}
-${extraPain ? '- 추가 페인포인트: '+extraPain : ''}
-
-## 광고 설정
-- 유형: ${adType}
-- 톤 & 무드: ${tone}
-- 생성 수: ${cnt}개
-
-## 경쟁사 레퍼런스 훅 & 대본
-${refText}
-
-## 지시사항
-1. 경쟁사 레퍼런스의 구조·리듬·패턴을 참고하되, 내용은 우리 브랜드(${brand.name})에 맞게 완전히 새롭게 작성
-2. 훅은 3초 안에 스크롤을 멈추게 해야 함 (1-2문장, 강렬하게)
-3. 본문: 페인포인트 공감 → USP 자연스럽게 녹이기 → 신뢰/증거 (3-5문장)
-4. CTA: 즉각적인 행동 유도 (1문장)
-5. 브랜드 톤(${brand.tone||'자연스러운 한국어'})을 유지하며 구어체로
-${brand.prohibit ? `6. 금지: ${brand.prohibit}` : ''}
-
-JSON만 응답 (앞뒤 설명 없이):
-{"scripts":[{"id":1,"hook":"훅","body":"본문","cta":"CTA","style":"공감형","reason":"이 훅 선택 이유 1문장"}]}`
-
-  const res = await fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{
-      'Content-Type':'application/json',
-      'x-api-key': ST.keys.claude,
-      'anthropic-version':'2023-06-01',
-      'anthropic-dangerous-direct-browser-access':'true'
-    },
-    body: JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:3000,messages:[{role:'user',content:prompt}]})
-  })
-  if(!res.ok){ const e=await res.json().catch(()=>({})); throw new Error(e.error?.message||`HTTP ${res.status}`) }
-  const data = await res.json()
-  const text = data.content.map(c=>c.text||'').join('')
-  const clean = text.replace(/```json|```/g,'').trim()
-  return JSON.parse(clean).scripts
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':K.cl,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:3000,messages:[{role:'user',content:prompt}]})})
+  if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error?.message||`Claude ${r.status}`)}
+  const d=await r.json()
+  return JSON.parse(d.content.map(c=>c.text||'').join('').replace(/```json|```/g,'').trim()).scripts
 }
 
 function renderScripts(list){
-  document.getElementById('scripts-out').innerHTML = list.map(s=>`
-    <div class="scard">
+  document.getElementById('e3').style.display='none'
+  const out=document.getElementById('scripts-out')
+  out.style.display='flex'
+  out.innerHTML=list.map((s,i)=>`
+    <div class="scard" style="animation-delay:${i*.07}s">
       <div class="scard-hdr">
-        <div class="scard-num">SCRIPT ${String(s.id).padStart(2,'0')} / ${list.length}</div>
-        <div class="scard-style">${s.style}</div>
+        <span class="scard-num">SCRIPT ${String(s.id).padStart(2,'0')}</span>
+        <span class="scard-style">${s.style||''}</span>
+        ${s.hookType?`<span class="scard-fp">⚡FP: ${s.hookType}</span>`:''}
       </div>
       <div class="scard-body">
-        <div class="hook-lbl">HOOK</div>
-        <div class="hook-txt">${s.hook}</div>
-        <div class="body-lbl">BODY</div>
-        <div class="body-txt">${s.body}</div>
-        <div class="cta-box"><div class="cta-lbl">CTA</div><div class="cta-txt">${s.cta}</div></div>
-        ${s.reason?`<div class="reason-txt">💡 ${s.reason}</div>`:''}
+        <div class="slbl h">HOOK</div>
+        <div class="s-hook">${s.hook}</div>
+        <div class="slbl b">BODY</div>
+        <div class="s-body">${s.body}</div>
+        <div class="s-cta"><div class="s-cta-lbl">CTA</div><div class="s-cta-txt">${s.cta}</div></div>
+        ${s.reason?`<div class="s-reason">💡 ${s.reason}</div>`:''}
       </div>
       <div class="scard-foot">
-        <button class="btn accent" onclick="genTTS(${s.id-1})">🎙 TTS</button>
-        <button class="btn" onclick="copyScript(${s.id-1})">📋 복사</button>
+        <button class="btn pur sm" onclick="makeTTS(${i})">🎙 TTS 생성</button>
+        <button class="btn acc sm" onclick="cpScript(${i})">📋 복사</button>
       </div>
     </div>`).join('')
+  unlock(4); unlock(5)
 }
 
 // ══════════════════════════════════════════════
 // TTS
 // ══════════════════════════════════════════════
-async function genTTS(idx){
-  if(!ST.keys.eleven){ openModal('modal-api'); toast('ElevenLabs API 키를 입력해주세요','err'); return }
-  const s = scripts[idx]
-  const text = `${s.hook} ${s.body} ${s.cta}`
-  switchTab('tts', document.querySelectorAll('.out-tabs .tab')[1])
-  document.getElementById('empty-tts').style.display='none'
-
-  const out = document.getElementById('tts-out')
-  const lid = 'tl'+Date.now()
-  const loader = document.createElement('div')
-  loader.id = lid; loader.className = 'tts-card'
-  loader.innerHTML = `<div class="tts-body" style="color:var(--text3);font-family:'JetBrains Mono',monospace;font-size:12px"><span class="spin">◌</span> TTS 생성 중...</div>`
+async function makeTTS(idx){
+  if(!K.el){ openModal('modal-api'); toast('ElevenLabs API 키가 필요해요','err'); return }
+  const s=ttsScripts[idx]
+  const text=`${s.hook} ${s.body} ${s.cta}`
+  document.getElementById('e4').style.display='none'
+  const out=document.getElementById('tts-out')
+  out.style.display='flex'
+  stageSet(4,'run')
+  scrollTo(4)
+  const lid='tl'+Date.now()
+  const loader=document.createElement('div'); loader.id=lid; loader.className='tts-card'
+  loader.innerHTML=`<div class="tts-body" style="color:var(--text3);font-family:'JetBrains Mono',monospace;font-size:11px"><span class="spin">◌</span> TTS 생성 중...</div>`
   out.prepend(loader)
-
   try {
-    const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${ST.keys.voiceId||'21m00Tcm4TlvDq8ikWAM'}`,{
-      method:'POST',
-      headers:{'Accept':'audio/mpeg','Content-Type':'application/json','xi-api-key':ST.keys.eleven},
-      body:JSON.stringify({text,model_id:'eleven_multilingual_v2',voice_settings:{stability:.5,similarity_boost:.75}})
-    })
-    if(!res.ok) throw new Error('ElevenLabs 오류')
-    const blob = await res.blob()
-    const url = URL.createObjectURL(blob)
-    document.getElementById(lid).outerHTML = `
+    const r=await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${K.vo}`,{method:'POST',headers:{'Accept':'audio/mpeg','Content-Type':'application/json','xi-api-key':K.el},body:JSON.stringify({text,model_id:'eleven_multilingual_v2',voice_settings:{stability:.5,similarity_boost:.75}})})
+    if(!r.ok) throw new Error('ElevenLabs 오류')
+    const blob=await r.blob(); const url=URL.createObjectURL(blob)
+    document.getElementById(lid).outerHTML=`
       <div class="tts-card">
-        <div class="tts-hdr"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3)">TTS ${String(s.id).padStart(2,'0')} · ${s.style}</span><span style="font-size:11px;color:var(--green)">✓ 완료</span></div>
+        <div class="tts-hdr">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3)">TTS ${String(s.id).padStart(2,'0')} · ${s.style||''}</span>
+          <span style="font-size:11px;color:var(--green)">✓ 완료</span>
+        </div>
         <div class="tts-body">
           <div class="tts-hook">"${s.hook}"</div>
           <audio controls src="${url}"></audio>
-          <div style="margin-top:8px"><a href="${url}" download="tts_${s.id}.mp3" class="btn accent">⬇ 다운로드</a></div>
+          <div style="margin-top:8px"><a href="${url}" download="tts_${s.id}.mp3" class="btn grn sm">⬇ 다운로드</a></div>
         </div>
       </div>`
-    toast('TTS 완료!','ok')
-  } catch(e){
-    document.getElementById(lid)?.remove()
-    toast('TTS 실패: '+e.message,'err')
-  }
+    stageSet(4,'done'); toast('TTS 완료!','ok')
+    scrollTo(5)
+  } catch(e){ document.getElementById(lid)?.remove(); stageSet(4,'err'); toast('TTS 실패: '+e.message,'err') }
+}
+
+// ══════════════════════════════════════════════
+// EXPORT
+// ══════════════════════════════════════════════
+function cpScript(idx){ const s=ttsScripts[idx]; navigator.clipboard.writeText(`[훅] ${s.hook}\n\n[본문] ${s.body}\n\n[CTA] ${s.cta}`); toast('복사됨 ✓','ok') }
+function exportAll(){
+  if(!ttsScripts.length){ toast('생성된 대본이 없어요','err'); return }
+  const txt=ttsScripts.map(s=>`=== SCRIPT ${s.id} (${s.style}) ===\n[훅] ${s.hook}\n\n[본문] ${s.body}\n\n[CTA] ${s.cta}\n`).join('\n')
+  navigator.clipboard.writeText(txt); toast(`${ttsScripts.length}개 대본 복사됨 ✓`,'ok')
+}
+function exportTxt(){
+  if(!ttsScripts.length){ toast('생성된 대본이 없어요','err'); return }
+  const txt=ttsScripts.map(s=>`=== SCRIPT ${s.id} (${s.style}) ===\n[훅] ${s.hook}\n\n[본문] ${s.body}\n\n[CTA] ${s.cta}\n`).join('\n')
+  const blob=new Blob([txt],{type:'text/plain'}); const url=URL.createObjectURL(blob)
+  const a=document.createElement('a'); a.href=url; a.download='adforge_scripts.txt'; a.click()
+  URL.revokeObjectURL(url); toast('TXT 다운로드 완료 ✓','ok')
+}
+
+// ══════════════════════════════════════════════
+// BRAND CRUD
+// ══════════════════════════════════════════════
+function openBrandModal(editId=null){
+  editBrandId=editId
+  document.getElementById('bm-ttl').textContent=editId?'브랜드 편집':'브랜드 추가'
+  const b=editId?brands.find(x=>x.id===editId):null
+  ;['b-nm','b-cat','b-pain','b-usp','b-tone','b-prhb','b-ctx'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=b?b[{
+    'b-nm':'name','b-cat':'category','b-pain':'painpoint','b-usp':'usp','b-tone':'tone','b-prhb':'prohibit','b-ctx':'context'
+  }[id]]||'':'' })
+  openModal('modal-brand')
+}
+function saveBrand(){
+  const nm=document.getElementById('b-nm').value.trim()
+  if(!nm){ toast('브랜드명을 입력해주세요','err'); return }
+  const b={id:editBrandId||'b'+Date.now(),name:nm,category:document.getElementById('b-cat').value.trim(),painpoint:document.getElementById('b-pain').value.trim(),usp:document.getElementById('b-usp').value.trim(),tone:document.getElementById('b-tone').value.trim(),prohibit:document.getElementById('b-prhb').value.trim(),context:document.getElementById('b-ctx').value.trim()}
+  if(editBrandId){ const idx=brands.findIndex(x=>x.id===editBrandId); brands[idx]=b } else brands.push(b)
+  DB.saveBrands(brands)
+  renderBrandDrop(); closeModal('modal-brand'); toast(`"${nm}" 저장됨`,'ok')
+}
+function renderBrandDrop(){
+  const sel=document.getElementById('sel-brand'); const cur=sel.value
+  sel.innerHTML='<option value="">— 브랜드 선택 —</option>'
+  brands.forEach(b=>{ const o=document.createElement('option'); o.value=b.id; o.textContent=b.name; sel.appendChild(o) })
+  if(cur) sel.value=cur
+}
+function onBrandChange(){
+  const b=brands.find(b=>b.id===document.getElementById('sel-brand').value)
+  const prev=document.getElementById('brand-prev')
+  if(!b){ prev.style.display='none'; return }
+  prev.style.display='block'
+  prev.innerHTML=`<strong style="color:var(--text)">${b.name}</strong>${b.category?' · '+b.category:''}${b.painpoint?`<br><span style="color:var(--text3)">페인포인트:</span> ${b.painpoint.slice(0,55)}…`:''}`
 }
 
 // ══════════════════════════════════════════════
 // UTILS
 // ══════════════════════════════════════════════
-function copyScript(idx){
-  const s=scripts[idx]
-  navigator.clipboard.writeText(`[훅] ${s.hook}\n\n[본문] ${s.body}\n\n[CTA] ${s.cta}`)
-  toast('복사됨 ✓','ok')
-}
 function sleep(ms){ return new Promise(r=>setTimeout(r,ms)) }
-function qs(sel){ return document.querySelector(sel) }
-
-// ══════════════════════════════════════════════
-// URL MANAGEMENT & AI ANALYSIS
-// ══════════════════════════════════════════════
-
-// ── COMP URLs ──
-let compUrls = [] // [{url, label, status}]
-
-function addCompUrl(){
-  const inp = document.getElementById('comp-url-new')
-  const url = inp.value.trim()
-  if(!url) return
-  if(!url.startsWith('http')){ toast('http:// 또는 https://로 시작하는 URL을 입력해주세요','err'); return }
-  if(compUrls.find(u=>u.url===url)){ toast('이미 추가된 URL이에요','err'); return }
-  compUrls.push({ url, label: urlLabel(url), status: 'added' })
-  inp.value = ''
-  renderCompUrls()
-}
-
-function removeCompUrl(i){
-  compUrls.splice(i,1)
-  renderCompUrls()
-}
-
-function renderCompUrls(){
-  const el = document.getElementById('comp-url-list')
-  if(!compUrls.length){ el.innerHTML=''; return }
-  el.innerHTML = compUrls.map((u,i)=>`
-    <div class="url-chip">
-      <div class="url-chip-icon">${urlIcon(u.url)}</div>
-      <div class="url-chip-text" title="${u.url}">${u.url}</div>
-      <div class="url-chip-badge ${u.status==='done'?'ok':u.status==='analyzing'?'analyzing':''}">${
-        u.status==='done'?'✓ 분석됨':u.status==='analyzing'?'분석중...':'대기'
-      }</div>
-      <button class="url-chip-del" onclick="removeCompUrl(${i})">✕</button>
-    </div>`).join('')
-}
-
-async function analyzeCompUrls(){
-  if(!ST.keys.claude){ openModal('modal-api'); toast('Claude API 키가 필요해요','err'); return }
-  if(!compUrls.length){ toast('URL을 먼저 추가해주세요','err'); return }
-
-  const btn = document.getElementById('comp-analyze-btn')
-  const status = document.getElementById('comp-analyze-status')
-  btn.disabled = true; btn.innerHTML = '<span class="spin">◌</span> 분석 중...'
-  status.style.display='block'; status.style.color='var(--text3)'
-  status.textContent='URL 내용을 분석하고 있어요...'
-  compUrls.forEach(u=>{ u.status='analyzing' }); renderCompUrls()
-
-  try {
-    const urlList = compUrls.map(u=>u.url).join('\n')
-    const compName = document.getElementById('comp-name-inp').value.trim() || '경쟁사'
-    const result = await callClaudeAnalyze(`
-아래는 경쟁사 "${compName}"의 URL 목록입니다. 웹 검색을 활용해 각 페이지를 분석하고, 다음 정보를 JSON으로 추출해주세요.
-
-URL 목록:
-${urlList}
-
-추출할 정보:
-- name: 브랜드/회사명
-- category: 카테고리 (예: 뷰티, 식품, 패션 등)
-- mainProducts: 주요 상품/서비스 (배열, 최대 5개)
-- priceRange: 가격대 (예: 1만원대~5만원대)
-- usp: 핵심 차별점이나 마케팅 포인트
-- targetAudience: 주요 타겟 고객층
-- tone: 브랜드 커뮤니케이션 톤 (예: 트렌디하고 밝은, 전문적이고 신뢰감있는)
-- promotions: 현재 진행 중인 프로모션/할인 정보 (있으면)
-- insights: 광고 소재 제작에 유용한 인사이트 (2-3문장)
-
-JSON만 응답 (설명 없이):
-{"name":"","category":"","mainProducts":[],"priceRange":"","usp":"","targetAudience":"","tone":"","promotions":"","insights":""}
-    `)
-
-    // 이름/카테고리 빈 필드 채우기
-    const nameEl = document.getElementById('comp-name-inp')
-    const catEl  = document.getElementById('comp-cat-inp')
-    if(!nameEl.value && result.name) nameEl.value = result.name
-    if(!catEl.value  && result.category) catEl.value = result.category
-
-    // 분석 인사이트를 script entry로 추가
-    const insightParts = []
-    if(result.mainProducts?.length) insightParts.push(`주요 상품: ${result.mainProducts.join(', ')}`)
-    if(result.priceRange)    insightParts.push(`가격대: ${result.priceRange}`)
-    if(result.targetAudience) insightParts.push(`타겟: ${result.targetAudience}`)
-    if(result.usp)           insightParts.push(`USP: ${result.usp}`)
-    if(result.tone)          insightParts.push(`톤: ${result.tone}`)
-    if(result.promotions)    insightParts.push(`프로모션: ${result.promotions}`)
-    if(result.insights)      insightParts.push(`인사이트: ${result.insights}`)
-
-    const analyzedAt = new Date().toLocaleString('ko-KR',{month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'})
-
-    if(insightParts.length){
-      // 기존 AI분석 항목 교체 (중복 방지)
-      tempScripts = tempScripts.filter(s=>s.tag!=='AI분석')
-      tempScripts.unshift({
-        id:'e'+Date.now(), type:'script',
-        hook:`[AI 자동 분석 · ${analyzedAt}]`,
-        body: insightParts.join('\n'),
-        scriptType:'', tag:'AI분석'
-      })
-      renderCompScriptRows()
-      switchCompTab('script')
-    }
-
-    // ★ 분석 즉시 자동 저장
-    compUrls.forEach(u=>{ u.status='done' })
-    const compName2 = nameEl.value.trim()
-    const cat2      = catEl.value.trim()
-
-    // 현재 편집 중인 경쟁사가 있으면 업데이트, 없으면 임시 저장
-    if(editingCompId){
-      const idx = ST.competitors.findIndex(c=>c.id===editingCompId)
-      if(idx>=0){
-        ST.competitors[idx].lastAnalyzedAt = analyzedAt
-        ST.competitors[idx].analysisData   = result
-        ST.competitors[idx].urls = compUrls.map(({url,label})=>({url,label}))
-        if(compName2) ST.competitors[idx].name = compName2
-        if(cat2)      ST.competitors[idx].category = cat2
-        // 분석 결과 entry도 저장
-        ST.competitors[idx].entries = ST.competitors[idx].entries || []
-        ST.competitors[idx].entries = ST.competitors[idx].entries.filter(e=>e.tag!=='AI분석')
-        ST.competitors[idx].entries.unshift(tempScripts[0])
-        DB.save('competitors', ST.competitors)
-        renderCompSidebar(); renderGenCompList()
-      }
-    }
-    // 편집 중이 아닐 때는 tempScripts에 보관 → saveComp() 때 같이 저장됨
-
-    renderCompUrls()
-    status.textContent = `✓ 분석 완료 · ${analyzedAt} · 자동 저장됨`
-    status.style.color = 'var(--green)'
-    toast('AI 분석 완료 & 자동 저장됨 ✓','ok')
-  } catch(e){
-    status.textContent = '오류: ' + e.message
-    status.style.color = 'var(--red)'
-    compUrls.forEach(u=>{ u.status='added' }); renderCompUrls()
-    toast('분석 실패: '+e.message,'err')
-  }
-  btn.disabled=false; btn.innerHTML='✦ AI 분석'
-}
-
-// ── BRAND URLs ──
-let brandUrls = []
-
-function addBrandUrl(){
-  const inp = document.getElementById('brand-url-new')
-  const url = inp.value.trim()
-  if(!url) return
-  if(!url.startsWith('http')){ toast('http://로 시작하는 URL을 입력해주세요','err'); return }
-  if(brandUrls.find(u=>u.url===url)){ toast('이미 추가된 URL이에요','err'); return }
-  brandUrls.push({ url, label: urlLabel(url), status: 'added' })
-  inp.value = ''
-  renderBrandUrls()
-}
-
-function removeBrandUrl(i){
-  brandUrls.splice(i,1)
-  renderBrandUrls()
-}
-
-function renderBrandUrls(){
-  const el = document.getElementById('brand-url-list')
-  if(!el) return
-  if(!brandUrls.length){ el.innerHTML=''; return }
-  el.innerHTML = brandUrls.map((u,i)=>`
-    <div class="url-chip">
-      <div class="url-chip-icon">${urlIcon(u.url)}</div>
-      <div class="url-chip-text" title="${u.url}">${u.url}</div>
-      <div class="url-chip-badge ${u.status==='done'?'ok':u.status==='analyzing'?'analyzing':''}">${
-        u.status==='done'?'✓ 분석됨':u.status==='analyzing'?'분석중...':'대기'
-      }</div>
-      <button class="url-chip-del" onclick="removeBrandUrl(${i})">✕</button>
-    </div>`).join('')
-}
-
-async function analyzeBrandUrls(){
-  if(!ST.keys.claude){ openModal('modal-api'); toast('Claude API 키가 필요해요','err'); return }
-  if(!brandUrls.length){ toast('URL을 먼저 추가해주세요','err'); return }
-
-  const btn = document.getElementById('brand-analyze-btn')
-  const status = document.getElementById('brand-analyze-status')
-  btn.disabled=true; btn.innerHTML='<span class="spin">◌</span> 분석 중...'
-  status.style.display='block'; status.style.color='var(--text3)'
-  status.textContent='URL 내용을 분석하고 있어요...'
-  brandUrls.forEach(u=>{ u.status='analyzing' }); renderBrandUrls()
-
-  try {
-    const urlList   = brandUrls.map(u=>u.url).join('\n')
-    const brandName = document.getElementById('brand-name-inp').value.trim() || '브랜드'
-    const result = await callClaudeAnalyze(`
-아래는 브랜드 "${brandName}"의 URL 목록입니다. 웹 검색을 활용해 각 페이지를 분석하고, 광고 카피라이팅에 필요한 정보를 JSON으로 추출해주세요.
-
-URL 목록:
-${urlList}
-
-추출할 정보:
-- name: 브랜드명
-- category: 카테고리
-- painpoint: 이 브랜드가 해결하는 핵심 고객 페인포인트 (2-3문장)
-- usp: USP / 핵심 차별점 (경쟁사 대비 강점, 2-3문장)
-- tone: 브랜드 톤 & 보이스
-- mainProducts: 주요 상품 (배열, 최대 5개)
-- priceRange: 가격대
-- targetAudience: 주요 타겟층
-- prohibit: 광고 표현 시 주의사항 (법적 제한, 민감 표현 등, 없으면 빈 문자열)
-- context: 추가 컨텍스트 (현재 프로모션, 시즌 이슈, 기타 광고에 참고할 내용)
-
-JSON만 응답 (설명 없이):
-{"name":"","category":"","painpoint":"","usp":"","tone":"","mainProducts":[],"priceRange":"","targetAudience":"","prohibit":"","context":""}
-    `)
-
-    const analyzedAt = new Date().toLocaleString('ko-KR',{month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'})
-
-    // 필드 자동 채우기 (빈 필드만)
-    const fieldMap = {
-      'brand-name-inp':     result.name,
-      'brand-cat-inp':      result.category,
-      'brand-pain-inp':     [result.painpoint, result.targetAudience ? '타겟: '+result.targetAudience : ''].filter(Boolean).join('\n'),
-      'brand-usp-inp':      [result.usp, result.mainProducts?.length ? '주요 상품: '+result.mainProducts.join(', ') : ''].filter(Boolean).join('\n'),
-      'brand-tone-inp':     result.tone,
-      'brand-prohibit-inp': result.prohibit,
-      'brand-ctx-inp':      [result.priceRange ? '가격대: '+result.priceRange : '', result.context].filter(Boolean).join('\n'),
-    }
-    Object.entries(fieldMap).forEach(([id, val])=>{
-      const el = document.getElementById(id)
-      if(el && val && !el.value) el.value = val
-    })
-
-    brandUrls.forEach(u=>{ u.status='done' })
-
-    // ★ 분석 즉시 자동 저장
-    if(editingBrandId){
-      const idx = ST.brands.findIndex(b=>b.id===editingBrandId)
-      if(idx>=0){
-        ST.brands[idx].lastAnalyzedAt = analyzedAt
-        ST.brands[idx].analysisData   = result
-        ST.brands[idx].urls = brandUrls.map(({url,label})=>({url,label}))
-        // 분석 데이터로 빈 필드 업데이트
-        if(!ST.brands[idx].painpoint && result.painpoint) ST.brands[idx].painpoint = result.painpoint
-        if(!ST.brands[idx].usp       && result.usp)       ST.brands[idx].usp       = result.usp
-        if(!ST.brands[idx].tone      && result.tone)      ST.brands[idx].tone      = result.tone
-        if(!ST.brands[idx].name      && result.name)      ST.brands[idx].name      = result.name
-        if(!ST.brands[idx].category  && result.category)  ST.brands[idx].category  = result.category
-        DB.save('brands', ST.brands)
-        renderBrandSidebar(); renderBrandDropdown()
-      }
-    }
-    // 새 브랜드는 analysisData를 window에 임시 보관 → saveBrand() 때 같이 저장
-    window.__pendingAnalysis = { result, analyzedAt }
-
-    renderBrandUrls()
-    status.textContent = `✓ 분석 완료 · ${analyzedAt} · 자동 저장됨`
-    status.style.color = 'var(--green)'
-    toast('브랜드 AI 분석 완료 & 자동 저장됨 ✓','ok')
-  } catch(e){
-    status.textContent='오류: '+e.message; status.style.color='var(--red)'
-    brandUrls.forEach(u=>{ u.status='added' }); renderBrandUrls()
-    toast('분석 실패: '+e.message,'err')
-  }
-  btn.disabled=false; btn.innerHTML='✦ AI 분석'
-}
-
-// ── SHARED ANALYZE HELPER ──
-async function callClaudeAnalyze(prompt){
-  const res = await fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{
-      'Content-Type':'application/json',
-      'x-api-key': ST.keys.claude,
-      'anthropic-version':'2023-06-01',
-      'anthropic-dangerous-direct-browser-access':'true'
-    },
-    body: JSON.stringify({
-      model:'claude-sonnet-4-20250514',
-      max_tokens:1500,
-      tools:[{ type:'web_search_20250305', name:'web_search' }],
-      messages:[{ role:'user', content: prompt }]
-    })
-  })
-  if(!res.ok){ const e=await res.json().catch(()=>({})); throw new Error(e.error?.message||`HTTP ${res.status}`) }
-  const data = await res.json()
-  const text = data.content.filter(c=>c.type==='text').map(c=>c.text).join('')
-  const clean = text.replace(/```json|```/g,'').trim()
-  return JSON.parse(clean)
-}
-
-// ── URL HELPERS ──
-function urlLabel(url){
-  try{ return new URL(url).hostname.replace('www.','') } catch{ return url.substring(0,30) }
-}
-function urlIcon(url){
-  if(/coupang/i.test(url)) return '🛒'
-  if(/smartstore|naver/i.test(url)) return '🟢'
-  if(/instagram/i.test(url)) return '📷'
-  if(/youtube/i.test(url)) return '▶️'
-  if(/kakao/i.test(url)) return '💬'
-  if(/gmarket|auction|11st/i.test(url)) return '🏪'
-  return '🌐'
-}
-
-// ── Reset URL state when opening modals ──
-const _origOpenAddComp = openAddComp
-openAddComp = function(editId=null){
-  compUrls = editId ? (ST.competitors.find(c=>c.id===editId)?.urls||[]).map(u=>({...u, status:'done'})) : []
-  _origOpenAddComp(editId)
-  renderCompUrls()
-}
-
-const _origOpenAddBrand = openAddBrand
-openAddBrand = function(editId=null){
-  brandUrls = editId ? (ST.brands.find(b=>b.id===editId)?.urls||[]).map(u=>({...u, status:'done'})) : []
-  _origOpenAddBrand(editId)
-  renderBrandUrls()
-}
-
-// ── Sheets에 URLs 포함해서 저장 ──
-const _origSaveComp = saveComp
-saveComp = function(){
-  const idx = editingCompId ? ST.competitors.findIndex(c=>c.id===editingCompId) : -1
-  if(idx>=0) ST.competitors[idx].urls = compUrls.map(({url,label})=>({url,label}))
-  _origSaveComp()
-}
-
-const _origSaveBrand = saveBrand
-saveBrand = function(){
-  window.__pendingBrandUrls = brandUrls.map(({url,label})=>({url,label}))
-  _origSaveBrand()
-}
-
 let _tt
-function toast(msg, type=''){
+function toast(msg,type=''){
   clearTimeout(_tt); document.querySelector('.toast')?.remove()
   const t=document.createElement('div'); t.className='toast'+(type?' '+type:''); t.textContent=msg
-  document.body.appendChild(t); _tt=setTimeout(()=>t.remove(),3000)
+  document.body.appendChild(t); _tt=setTimeout(()=>t.remove(),3500)
 }
 </script>
 </body>
