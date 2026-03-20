@@ -1630,20 +1630,26 @@ async function loadSpyderBrands(){
       const r=await fetch('https://junoflow.app.n8n.cloud/webhook/foreplay-proxy',
         {method:'POST',headers:{'Content-Type':'application/json'},
          body:JSON.stringify({endpoint:'/api/spyder/brands',params:{offset,limit:100},apiKey:K.fp})})
-      if(!r.ok) break
+      if(!r.ok){
+        console.error('Foreplay API 오류:', r.status)
+        listEl.innerHTML='<div class="spyder-loading" style="color:var(--red,#ff5f57)">API 오류 ('+r.status+')<br><span style="font-size:10px;color:var(--text3)">F12 콘솔에서 상세 확인</span></div>'
+        if(btn){ btn.disabled=false; btn.innerHTML='↻' }
+        return
+      }
       const d=await r.json()
+      console.log('Foreplay 응답:', JSON.stringify(d).slice(0,200))
       // 응답 구조 최대한 유연하게 파싱
       let raw = Array.isArray(d) ? d[0] : d
       if(raw?.data && !Array.isArray(raw.data)) raw = raw.data
       const arr = (Array.isArray(raw) ? raw : null)
              || raw?.brands || raw?.data || raw?.results
              || raw?.spyder_brands || raw?.trackedBrands || []
+      console.log('파싱된 브랜드 수:', arr.length, '/ raw keys:', Object.keys(raw||{}).join(','))
       if(!Array.isArray(arr)||arr.length===0) break
       allBrands=allBrands.concat(arr)
-      console.log(`Spyder 로드: offset=${offset}, 이번=${arr.length}, 누적=${allBrands.length}`)
       if(arr.length<100) hasMore=false
       else offset+=100
-      if(allBrands.length>=500) break  // 안전장치
+      if(allBrands.length>=500) break
     }
     const spArr=allBrands
 
@@ -1658,6 +1664,7 @@ async function loadSpyderBrands(){
 
     if(!spyderBrands.length){
       listEl.innerHTML='<div class="spyder-loading">Spyder 추적 브랜드가 없어요<br><span style="color:var(--text3)">foreplay.co에서 먼저 브랜드를 추적 등록하세요</span></div>'
+      if(btn){ btn.disabled=false; btn.innerHTML='↻' }
       return
     }
     const myPanel2 = document.getElementById('spyder-panel-my')
@@ -1667,16 +1674,11 @@ async function loadSpyderBrands(){
     toast(`Spyder 브랜드 ${spyderBrands.length}개 로드됨`,'ok')
 
   } catch(e){
-    // API 실패 시 Mock 브랜드 목록으로 대체
-    spyderBrands = mockSpyderBrands()
-    renderSpyderList()
-    const listNote=document.createElement('div')
-    listNote.style.cssText='font-size:10px;color:var(--gold);margin-top:5px;padding:5px 7px;background:var(--gold-dim);border-radius:var(--r);border:1px solid rgba(245,166,35,.2)'
-    listNote.textContent='⚠ Mock 데이터 — 실제 API 연결 시 Spyder 브랜드 표시'
-    document.getElementById('spyder-brand-list')?.appendChild(listNote)
+    console.error('Spyder 로드 에러:', e.message)
+    listEl.innerHTML='<div class="spyder-loading" style="color:var(--red,#ff5f57)">로드 실패: '+e.message+'<br><span style="color:var(--text3);font-size:10px">↻ 버튼으로 다시 시도하세요</span></div>'
+  } finally {
+    if(btn){ btn.disabled=false; btn.innerHTML='↻' }
   }
-
-  if(btn){ btn.disabled=false; btn.innerHTML='↻ 새로고침' }
 }
 
 function mockSpyderBrands(){
