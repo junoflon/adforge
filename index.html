@@ -1222,15 +1222,25 @@ const DB = {
 
   async loadBrands(){
     try {
-      const r = await fetch('https://nroylubtytcslujylicw.supabase.co/rest/v1/brands?select=*&order=created_at',{
+      const r = await fetch('https://nroylubtytcslujylicw.supabase.co/rest/v1/brands?select=*',{
         headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ'}
       })
       if(r.ok){
         const rows = await r.json()
-        return rows.map(sbToBrand)
+        console.log('✅ Supabase brands:', rows.length, '개')
+        if(Array.isArray(rows) && rows.length > 0){
+          const mapped = rows.map(sbToBrand)
+          try{ localStorage.setItem('af_brands', JSON.stringify(mapped)) }catch(e){}
+          return mapped
+        }
+      } else {
+        const errTxt = await r.text()
+        console.warn('❌ brands 로드 실패:', r.status, errTxt)
       }
     } catch(e){ console.warn('Supabase 브랜드 로드 실패:', e.message) }
-    return JSON.parse(localStorage.getItem('af_brands')||'[]')
+    const local = JSON.parse(localStorage.getItem('af_brands')||'[]')
+    console.log('📦 localStorage 브랜드 폴백:', local.length, '개')
+    return local
   },
 
   saveBrands(data){
@@ -3075,7 +3085,7 @@ function getRefData(){
 
 async function loadManualBrands(){
   try {
-    const r = await fetch('https://nroylubtytcslujylicw.supabase.co/rest/v1/competitors?select=*&order=created_at',{
+    const r = await fetch('https://nroylubtytcslujylicw.supabase.co/rest/v1/competitors?select=*',{
       headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ'}
     })
     if(r.ok){
