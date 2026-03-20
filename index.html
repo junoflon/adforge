@@ -920,32 +920,11 @@ const DB = {
 
   saveBrands(data){
     localStorage.setItem('af_brands', JSON.stringify(data))
-    if(SB.isConnected()){
-      clearTimeout(this._saveTimer)
-      this._saveTimer=setTimeout(async ()=>{
-        try {
-          const r = await fetch('https://nroylubtytcslujylicw.supabase.co/rest/v1/brands?on_conflict=id',{
-            method:'POST',
-            headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ','Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
-            body:JSON.stringify(data.map(brandToSb))
-          })
-          if(r.ok) showSaveIndicator('☁️ Supabase 저장됨 ✓')
-          else showSaveIndicator('⚠️ Supabase 저장 실패 ('+r.status+')', true)
-        } catch(e){
-          console.error('Supabase 저장 실패:', e)
-          showSaveIndicator('⚠️ 로컬 저장됨 — Supabase 오류', true)
-        }
-      }, 600)
-    } else {
-      // Supabase 미연결이어도 로컬은 항상 저장됨 (anon key로 직접 저장 시도)
-      try {
-        await fetch('https://nroylubtytcslujylicw.supabase.co/rest/v1/brands?on_conflict=id',{
-          method:'POST',
-          headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ','Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
-          body:JSON.stringify(data.map(brandToSb))
-        }).then(r=>{ if(r.ok) showSaveIndicator('☁️ Supabase 저장됨 ✓') })
-      } catch(e){ showSaveIndicator('⚠️ 로컬에만 저장됨', true) }
-    }
+    const payload = data.map(brandToSb)
+    // Supabase에 직접 저장 (타이머 없이, await 없이)
+    fetch('https://nroylubtytcslujylicw.supabase.co/rest/v1/brands?on_conflict=id',{method:'POST',headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ','Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(payload)})
+      .then(r=>{ if(r.ok) showSaveIndicator('☁️ Supabase 저장됨 ✓'); else showSaveIndicator('⚠️ Supabase 저장 실패 ('+r.status+')', true) })
+      .catch(e=>{ console.warn('brands 저장 실패:',e.message); showSaveIndicator('⚠️ 로컬 저장됨 — 서버 오류', true) })
   }
 }
 
