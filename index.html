@@ -1477,7 +1477,7 @@ async function testSpyderAPI(){
   try {
     const r = await fetch('https://junoflow.app.n8n.cloud/webhook/foreplay-proxy', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({endpoint:'/api/spyder/brands', params:{offset:0,limit:10}, apiKey:K.fp})
+      body: JSON.stringify({endpoint:'/spyder/brands', params:{offset:0,limit:10}, apiKey:K.fp})
     })
     const text = await r.text()
     listEl.innerHTML = '<div style="font-size:9px;color:var(--green);padding:6px;word-break:break-all;background:var(--s3);border-radius:var(--r);max-height:200px;overflow-y:auto"><b>status: '+r.status+'</b><br><br>'+text.replace(/</g,'&lt;').slice(0,800)+'</div>'
@@ -1667,11 +1667,12 @@ async function loadSpyderBrands(){
     listEl.innerHTML='<div class="spyder-loading"><span class="spin">◌</span> 불러오는 중... <span id="spyder-load-count">0</span>개</div>'
     while(hasMore){
       // N8N 프록시 통해서만 호출 (브라우저 CORS 우회)
+      // API 문서: /api/spyder/brands limit 최대 10, offset 기반 페이지네이션
       let d
       try {
         const r = await fetch('https://junoflow.app.n8n.cloud/webhook/foreplay-proxy', {
           method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({endpoint:`/api/spyder/brands?offset=${offset}&limit=10`, params:{}, apiKey:K.fp})
+          body: JSON.stringify({endpoint:`/spyder/brands?offset=${offset}&limit=10`, params:{}, apiKey:K.fp})
         })
         if(!r.ok) break
         d = await r.json()
@@ -1679,19 +1680,33 @@ async function loadSpyderBrands(){
         console.warn('Spyder API 호출 실패:', e.message)
         break
       }
-      // N8N이 배열로 감싸서 반환하는 경우 처리
       const raw = Array.isArray(d) ? d[0] : d
+      if(raw?.error || raw?.metadata?.success === false){
+        console.warn('Foreplay API 에러:', raw?.error?.message || raw?.metadata?.message)
+        break
+      }
       const arr = raw?.data || raw?.brands || (Array.isArray(raw) ? raw : [])
       if(!Array.isArray(arr)||arr.length===0) break
       allBrands=allBrands.concat(arr)
       const countEl=document.getElementById('spyder-load-count')
       if(countEl) countEl.textContent=allBrands.length
+      // API limit 최대 10 → 10개 미만이면 마지막 페이지
       if(arr.length < 10) hasMore=false
-      else offset+=10
+      else offset+=10  // 다음 페이지로
       if(allBrands.length>=500) break
-      await new Promise(resolve=>setTimeout(resolve,150))
+      await new Promise(resolve=>setTimeout(resolve,200))
     }
     const spArr=allBrands
+
+    // 기존 캐시에서 그룹 정보 복원 (폴더화 유지)
+    const existingGroups={}
+    if(spyderBrands.length){
+      spyderBrands.forEach(b=>{ if(b.groupName) existingGroups[b.id]=b.groupName })
+    }
+    try{
+      const cached=JSON.parse(localStorage.getItem('af_spyder_cache')||'null')
+      if(cached?.brands) cached.brands.forEach(b=>{ if(b.groupName) existingGroups[b.id]=b.groupName })
+    }catch(e){}
 
     spyderBrands=(Array.isArray(spArr)?spArr:[]).map(b=>({
       id: b.id||('sp_'+Math.random().toString(36).slice(2,6)),
@@ -1702,7 +1717,9 @@ async function loadSpyderBrands(){
       url: b.url||'',
       adCount: b.adCount||b.total_ads||0,
       liveCount: b.liveCount||b.active_ads||0,
-      selected: false
+      selected: false,
+      // 기존 그룹 정보 복원 (폴더화 유지) - ID 기반으로 매핑
+      groupName: existingGroups[b.id]||null
     }))
 
     if(!spyderBrands.length){
@@ -2240,14 +2257,36 @@ async function apiGet(){
   if(mode==='spyder'){
     const selected=spyderBrands.filter(b=>b.selected)
     if(!selected.length) throw new Error('Spyder에서 브랜드를 선택해주세요')
-    const params = {limit:lim, sort}
-    if(filters.has('active')) params.active = 'true'
-    if(fmts.length) params.formats = fmts.join(',')
 
-    const results=await Promise.all(selected.map(async brand=>{
-      const d=await n8nFetch('/api/spyder/brand/ads', {...params, brand_id: brand.id})
-      return fpArr(d).map(a=>({...norm(a),brand:brand.name||a.brandName||a.brand?.name||'알 수 없음'}))
-    }))
+    // API 문서: brand_id는 쿼리파라미터, cursor 기반 페이지네이션
+    const fetchBrandAds = async (brand) => {
+      let allAds=[], cursor=null, hasMore=true, pageCount=0
+      const maxPages = Math.ceil(lim / 50)  // 요청 수량 기준 페이지 수
+      while(hasMore && pageCount < maxPages){
+        // endpoint에 brand_id 직접 포함 (N8N이 params를 쿼리로 제대로 변환 안 할 수 있음)
+        let endpoint = `/spyder/brand/ads?brand_id=${encodeURIComponent(brand.id)}&limit=50`
+        // 활성 광고 필터 (API: live=true/false, string)
+        if(filters.has('active')) endpoint += '&live=true'
+        // 포맷 필터
+        if(fmts.length) fmts.forEach(f=>{ endpoint += `&display_format=${f}` })
+        // cursor 기반 페이지네이션
+        if(cursor) endpoint += `&cursor=${cursor}`
+        const d = await n8nFetch(endpoint, {})
+        const raw = Array.isArray(d) ? d[0] : d
+        if(raw?.error || raw?.metadata?.success === false) break
+        const arr = raw?.data || []
+        if(!Array.isArray(arr)||arr.length===0) break
+        allAds = allAds.concat(arr)
+        cursor = raw?.metadata?.cursor || null
+        if(!cursor || arr.length < 50) hasMore=false
+        pageCount++
+        if(allAds.length >= lim) break
+        await new Promise(r=>setTimeout(r,200))
+      }
+      return allAds.slice(0,lim).map(a=>({...norm(a), brand:brand.name||'알 수 없음'}))
+    }
+
+    const results = await Promise.all(selected.map(fetchBrandAds))
     return results.flat()
   }
 
@@ -2274,11 +2313,19 @@ async function apiGet(){
 
 function norm(r){
   // Foreplay API 실제 필드 파싱
-  const tr = r.full_transcription || r.transcript || r.transcription || r.body || ''
-  // 타임스탬프 트랜스크립트에서 첫 문장 추출 (훅)
+  // 문서: full_transcription (string), carousel/DCO는 cards 배열 안에 있음
+  let tr = r.full_transcription || r.transcript || r.transcription || r.body || ''
+  // carousel/DCO: cards 배열에서 트랜스크립트 추출
+  if(!tr && Array.isArray(r.cards)){
+    tr = r.cards.map(c=>c.full_transcription||'').filter(Boolean).join(' ')
+  }
+  // timestamped_transcription에서도 추출 시도
+  if(!tr && Array.isArray(r.timestamped_transcription) && r.timestamped_transcription.length){
+    tr = r.timestamped_transcription.map(s=>s.sentence||'').filter(Boolean).join(' ')
+  }
   const firstSentence = r.timestamped_transcription?.[0]?.sentence?.trim() || ''
   const secondSentence = r.timestamped_transcription?.[1]?.sentence?.trim() || ''
-  const hook = r.hook || (firstSentence ? (firstSentence + (secondSentence ? ' ' + secondSentence : '')) : '') || r.description?.split('\n')[0]?.slice(0,80) || (tr?tr.split(/[.!?\n]/)[0].slice(0,80):'') || ''
+  const hook = r.hook || r.name || (firstSentence ? (firstSentence + (secondSentence ? ' ' + secondSentence : '')) : '') || r.description?.split('\n')[0]?.slice(0,80) || (tr?tr.split(/[.!?\n]/)[0].slice(0,80):'') || r.headline || ''
   // 플랫폼
   const platforms = r.publisher_platform || r.platforms || [r.platform] || []
   const platform = Array.isArray(platforms) ? platforms[0] : platforms || 'facebook'
