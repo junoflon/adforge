@@ -1637,14 +1637,19 @@ async function loadSpyderBrands(){
         return
       }
       const d=await r.json()
-      console.log('Foreplay 응답:', JSON.stringify(d).slice(0,200))
-      // 응답 구조 최대한 유연하게 파싱
+      // 응답 구조 UI에 직접 표시 (디버그)
+      const debugStr = JSON.stringify(d).slice(0,300)
+      listEl.innerHTML='<div style="font-size:10px;color:var(--text3);padding:8px;word-break:break-all;background:var(--s3);border-radius:var(--r)">API 응답:<br>'+debugStr+'</div>'
+      // 응답 구조 파싱
       let raw = Array.isArray(d) ? d[0] : d
+      // N8N 래핑 구조 처리: [{body:{data:[...]}}] 형태일 수 있음
+      if(raw?.body) raw = raw.body
       if(raw?.data && !Array.isArray(raw.data)) raw = raw.data
       const arr = (Array.isArray(raw) ? raw : null)
              || raw?.brands || raw?.data || raw?.results
-             || raw?.spyder_brands || raw?.trackedBrands || []
-      console.log('파싱된 브랜드 수:', arr.length, '/ raw keys:', Object.keys(raw||{}).join(','))
+             || raw?.spyder_brands || raw?.trackedBrands
+             || (raw?.body ? (Array.isArray(raw.body)?raw.body:raw.body?.data||raw.body?.brands||[]) : [])
+             || []
       if(!Array.isArray(arr)||arr.length===0) break
       allBrands=allBrands.concat(arr)
       if(arr.length<100) hasMore=false
