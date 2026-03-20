@@ -432,6 +432,7 @@ audio{width:100%;height:30px}
               <div style="display:flex;gap:4px">
                 <button class="btn sm" onclick="spyderGroupEdit()" style="font-size:10px;padding:3px 8px" title="그룹 편집">📁</button>
                 <button class="btn sm" id="spyder-refresh-btn" onclick="document.getElementById('spyder-refresh-btn').dataset.force='1';loadSpyderBrands()" style="font-size:10px;padding:3px 8px" title="새로고침">↻</button>
+                <button class="btn sm" onclick="testSpyderAPI()" style="font-size:10px;padding:3px 8px;background:var(--gold-dim);color:var(--gold)" title="API 테스트">🔍</button>
                 <a href="https://app.foreplay.co/library-spyder" target="_blank" class="btn sm" style="font-size:10px;padding:3px 8px;text-decoration:none" title="Foreplay에서 브랜드 추가" onclick="registerSpyderReturn()">+ Spyder</a>
               </div>
             </div>
@@ -1449,6 +1450,22 @@ let spyderBrands = []   // [{id, name, pageId, adCount, liveCount, selected}]
 
 // ── Spyder 탭 전환 ──
 // ── Foreplay에서 돌아왔을 때 Spyder 자동 새로고침 ──
+async function testSpyderAPI(){
+  const listEl = document.getElementById('spyder-brand-list')
+  listEl.innerHTML = '<div style="font-size:10px;color:var(--text3);padding:6px"><span class="spin">◌</span> API 테스트 중...</div>'
+  try {
+    const r = await fetch('https://junoflow.app.n8n.cloud/webhook/foreplay-proxy', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({endpoint:'/api/spyder/brands', params:{offset:0,limit:10}, apiKey:K.fp})
+    })
+    const text = await r.text()
+    listEl.innerHTML = '<div style="font-size:9px;color:var(--green);padding:6px;word-break:break-all;background:var(--s3);border-radius:var(--r);max-height:200px;overflow-y:auto"><b>status: '+r.status+'</b><br><br>'+text.replace(/</g,'&lt;').slice(0,800)+'</div>'
+  } catch(e) {
+    listEl.innerHTML = '<div style="font-size:10px;color:var(--red,#ff5f57);padding:6px">에러: '+e.message+'</div>'
+  }
+}
+
+
 function registerSpyderReturn(){
   // foreplay.co에서 돌아올 때 한 번만 새로고침
   const handler = () => {
