@@ -432,7 +432,6 @@ audio{width:100%;height:30px}
               <div style="display:flex;gap:4px">
                 <button class="btn sm" onclick="spyderGroupEdit()" style="font-size:10px;padding:3px 8px" title="그룹 편집">📁</button>
                 <button class="btn sm" id="spyder-refresh-btn" onclick="document.getElementById('spyder-refresh-btn').dataset.force='1';loadSpyderBrands()" style="font-size:10px;padding:3px 8px" title="새로고침">↻</button>
-                <button class="btn sm" onclick="testSpyderAPI()" style="font-size:10px;padding:3px 8px;background:var(--gold-dim);color:var(--gold)" title="API 테스트">🔍</button>
                 <a href="https://app.foreplay.co/library-spyder" target="_blank" class="btn sm" style="font-size:10px;padding:3px 8px;text-decoration:none" title="Foreplay에서 브랜드 추가" onclick="registerSpyderReturn()">+ Spyder</a>
               </div>
             </div>
@@ -1321,7 +1320,7 @@ function disconnectSb(){
 const K = {
   get fp() { return _k().foreplay||'' },
   get cl() { return _k().claude||'' },
-  get el() { const v=_k().eleven||'sk_54fe7460dfeec0ed25a4d17557c193b24ad364a74954a903'; return v.replace(/[^\x00-\x7F]/g,'').trim() },
+  get el() { const v=_k().eleven||''; return v.replace(/[^\x00-\x7F]/g,'').trim() },
   get vo() { return _k().voiceId||'21m00Tcm4TlvDq8ikWAM' },
   save(fp,cl,el,vo){
     const data={foreplay:fp,claude:cl,eleven:el,voiceId:vo||'21m00Tcm4TlvDq8ikWAM'}
@@ -1380,9 +1379,20 @@ async function loadSettingsFromSB(){
       voiceId:   map['elevenlabs_voice_id']|| existing.voiceId  || '21m00Tcm4TlvDq8ikWAM'
     }
     localStorage.setItem('af_keys', JSON.stringify(merged))
+
     console.log('✅ Supabase settings에서 API 키 로드 완료')
   } catch(e) {
-    console.warn('settings 로드 실패 (테이블 없거나 오류):', e.message)
+    console.warn('settings 로드 실패, 기본값 사용:', e.message)
+    // 실패해도 기본값으로 localStorage 세팅
+    const existing = JSON.parse(localStorage.getItem('af_keys')||'{}')
+    if(!existing.foreplay) {
+      localStorage.setItem('af_keys', JSON.stringify({
+        foreplay: '',
+        claude: '',
+        eleven: '',
+        voiceId: '21m00Tcm4TlvDq8ikWAM'
+      }))
+    }
   }
 }
 
@@ -1397,6 +1407,11 @@ async function init(){
   document.getElementById('k-cl').value = K.cl
   document.getElementById('k-el').value = K.el
   document.getElementById('k-vo').value = K.vo
+
+  // 3. 필수 키 없으면 설정 모달 자동 오픈
+  if(!K.cl || !K.fp){
+    setTimeout(()=>openModal('modal-api'), 800)
+  }
 
   // 3. Supabase 모달 URL/Key 자동 채우기
   const sbCfg=SB.getCfg()
@@ -1418,10 +1433,6 @@ async function init(){
     entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('visible') })
   },{threshold:.1})
   document.querySelectorAll('.stage').forEach(s=>obs.observe(s))
-  // 수동 경쟁사 서버에서 로드
-  loadManualBrands()
-  // TTS 설정 로드
-  loadTTSSettings()
 }
 init()
 
@@ -1643,32 +1654,23 @@ async function loadSpyderBrands(){
   try {
     // Foreplay API: 내 Spyder 추적 브랜드 목록 (페이지네이션)
     let allBrands=[], offset=0, hasMore=true
+    listEl.innerHTML='<div class="spyder-loading"><span class="spin">◌</span> 불러오는 중... <span id="spyder-load-count">0</span>개</div>'
     while(hasMore){
-      const fetchParams = {limit:100}
-      if(offset) fetchParams.cursor = offset
       const r=await fetch('https://junoflow.app.n8n.cloud/webhook/foreplay-proxy',
         {method:'POST',headers:{'Content-Type':'application/json'},
-         body:JSON.stringify({endpoint:'/api/spyder/brands',params:fetchParams,apiKey:K.fp})})
-      if(!r.ok){
-        console.error('Foreplay API 오류:', r.status)
-        listEl.innerHTML='<div class="spyder-loading" style="color:var(--red,#ff5f57)">API 오류 ('+r.status+')<br><span style="font-size:10px;color:var(--text3)">F12 콘솔에서 상세 확인</span></div>'
-        if(btn){ btn.disabled=false; btn.innerHTML='↻' }
-        return
-      }
+         body:JSON.stringify({endpoint:'/api/spyder/brands',params:{offset,limit:10},apiKey:K.fp})})
+      if(!r.ok) break
       const d=await r.json()
-      // 응답 구조 UI에 직접 표시 (디버그)
-      const debugStr = JSON.stringify(d).slice(0,300)
-      listEl.innerHTML='<div style="font-size:10px;color:var(--text3);padding:8px;word-break:break-all;background:var(--s3);border-radius:var(--r)">API 응답:<br>'+debugStr+'</div>'
-      // 응답 구조 파싱
-      // 실제 응답 구조: {metadata:{cursor,count}, data:[{id,name,ad_library_id,avatar,...}]}
       const arr = d?.data || []
-      const cursor = d?.metadata?.cursor || null
       if(!Array.isArray(arr)||arr.length===0) break
       allBrands=allBrands.concat(arr)
-      // cursor 기반 페이지네이션
-      if(!cursor || arr.length < 10) hasMore=false
-      else { offset = cursor }  // cursor를 다음 offset으로 사용
+      const countEl=document.getElementById('spyder-load-count')
+      if(countEl) countEl.textContent=allBrands.length
+      // 10개씩 오면 offset 증가해서 계속 요청
+      if(arr.length < 10) hasMore=false
+      else offset+=10
       if(allBrands.length>=500) break
+      await new Promise(r=>setTimeout(r,100))
     }
     const spArr=allBrands
 
@@ -1825,15 +1827,18 @@ function updateSpyderInfo(){
 function setMode(el){
   mode=el.dataset.m
   document.querySelectorAll('.mchip').forEach(c=>c.classList.toggle('on',c===el))
-  ;['spyder','brand','pageid','kw','manual'].forEach(m=>{ const el=document.getElementById('m-'+m); if(el) el.style.display=m===mode?'block':'none' })
+  ;['spyder','brand','pageid','kw','manual'].forEach(m=>{
+    const mEl=document.getElementById('m-'+m)
+    if(mEl) mEl.style.display=m===mode?'block':'none'
+  })
   // 수동 모드: 필터 숨기고 레퍼런스 표시
   const isManual = mode==='manual'
-  const filterEl = document.getElementById('section-filter')
-  const analysisEl = document.getElementById('section-analysis-opts')
-  const refEl = document.getElementById('section-reference')
-  if(filterEl) filterEl.style.display = isManual ? 'none' : ''
-  if(analysisEl) analysisEl.style.display = isManual ? 'none' : ''
-  if(refEl) refEl.style.display = isManual ? 'block' : 'none'
+  ;['section-filter','section-analysis-opts'].forEach(id=>{
+    const el=document.getElementById(id)
+    if(el) el.style.display = isManual?'none':''
+  })
+  const refEl=document.getElementById('section-reference')
+  if(refEl) refEl.style.display = isManual?'block':'none'
   // Spyder 탭 진입 시 자동 로드
   if(mode==='spyder' && spyderBrands.length===0) loadSpyderBrands()
 }
