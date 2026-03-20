@@ -394,7 +394,7 @@ audio{width:100%;height:30px}
   <div class="hdr-r">
     <div class="api-dot" onclick="openModal('modal-api')"><div class="dot" id="dot-fp"></div>Foreplay</div>
     <div class="api-dot" onclick="openModal('modal-api')"><div class="dot" id="dot-cl"></div>Claude</div>
-    <div class="api-dot" onclick="openModal('modal-api')"><div class="dot" id="dot-el"></div>ElevenLabs</div>
+    <div class="api-dot" onclick="openTTSModal()"><div class="dot" id="dot-el"></div>ElevenLabs</div>
     <div class="api-dot" onclick="openModal('modal-sb')" id="sb-btn" style="display:none"><div class="dot" id="dot-sb"></div><span id="lbl-sb">Supabase</span></div>
   </div>
 </header>
@@ -413,6 +413,7 @@ audio{width:100%;height:30px}
           <div class="mchip on" data-m="brand" onclick="setMode(this)">🏢 브랜드</div>
           <div class="mchip" data-m="pageid" onclick="setMode(this)">📘 ID</div>
           <div class="mchip" data-m="kw" onclick="setMode(this)">🔍 키워드</div>
+          <div class="mchip" data-m="manual" onclick="setMode(this)" style="border-color:rgba(45,212,122,.4);color:var(--green)">✍️ 수동</div>
         </div>
 
         <!-- Spyder 모드 -->
@@ -439,10 +440,26 @@ audio{width:100%;height:30px}
           <div class="field"><input type="text" id="i-kw" placeholder="키워드" onkeydown="if(event.key==='Enter')go()"></div>
           <div class="field"><select id="i-cat"><option value="">전체 카테고리</option><option>뷰티/스킨케어</option><option>다이어트/건강</option><option>패션/의류</option><option>식품/음료</option><option>육아/유아</option><option>반려동물</option><option>가전/전자기기</option></select></div>
         </div>
+
+        <!-- 수동 경쟁사 입력 모드 -->
+        <div id="m-manual" style="display:none">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:8px;line-height:1.5">
+            경쟁사 광고 대본을 대량으로 붙여넣거나<br>URL/PDF로 분석해서 대본 생성
+          </div>
+
+          <!-- 저장된 경쟁사 목록 -->
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+            <div style="font-size:10px;font-weight:600;color:var(--text2);letter-spacing:.5px;text-transform:uppercase">경쟁사 목록</div>
+            <button class="btn sm pur" onclick="openManualAddModal()" style="font-size:10px;padding:2px 8px">+ 추가</button>
+          </div>
+          <div id="manual-list-wrap">
+            <div style="font-size:10px;color:var(--text3);padding:8px 0;text-align:center">추가된 경쟁사가 없어요</div>
+          </div>
+        </div>
       </div>
 
       <!-- 필터 -->
-      <div class="sb-section">
+      <div class="sb-section" id="section-filter">
         <div class="sb-hd">필터</div>
         <div class="field">
           <label>상태</label>
@@ -464,8 +481,75 @@ audio{width:100%;height:30px}
         </div>
       </div>
 
+
+      <!-- 레퍼런스 (수동 모드 전용) -->
+      <div class="sb-section" id="section-reference" style="display:none">
+        <div class="sb-hd">레퍼런스 삽입</div>
+        <div style="font-size:10px;color:var(--text3);margin-bottom:10px;line-height:1.5">
+          원하는 광고 형태를 참고자료로 넣으면<br>그 스타일에 맞게 대본이 생성돼요
+        </div>
+
+        <!-- 탭: 대본 / 영상 / 이미지 -->
+        <div style="display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:10px">
+          <button id="ref-tab-script" onclick="switchRefTab('script')" style="flex:1;padding:6px 4px;font-size:10px;font-weight:600;border:none;background:none;cursor:pointer;color:var(--purple);border-bottom:2px solid var(--purple)">📝 대본</button>
+          <button id="ref-tab-video" onclick="switchRefTab('video')" style="flex:1;padding:6px 4px;font-size:10px;font-weight:600;border:none;background:none;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent">🎬 영상</button>
+          <button id="ref-tab-image" onclick="switchRefTab('image')" style="flex:1;padding:6px 4px;font-size:10px;font-weight:600;border:none;background:none;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent">🖼 이미지</button>
+        </div>
+
+        <!-- 대본 탭 -->
+        <div id="ref-panel-script">
+          <div class="field">
+            <label>참고 대본 <span style="font-size:10px;color:var(--text3);font-weight:400">이 스타일/구조로 생성</span></label>
+            <textarea id="ref-script-text" rows="5" placeholder="참고할 광고 대본을 붙여넣기하세요.
+
+예:
+훅: 혹시 이런 고민 있으신 분?
+본문: 저도 3년간 같은 고민이었는데...
+CTA: 지금 바로 확인해보세요!" style="font-size:11px;line-height:1.6;resize:vertical"></textarea>
+          </div>
+          <div class="field">
+            <label>스타일 지시 <span style="font-size:10px;color:var(--text3);font-weight:400">선택사항</span></label>
+            <input type="text" id="ref-script-style" placeholder="예: 공감형으로, 짧고 임팩트 있게, UGC 느낌으로">
+          </div>
+        </div>
+
+        <!-- 영상 탭 -->
+        <div id="ref-panel-video" style="display:none">
+          <div class="field">
+            <label>참고 영상 URL</label>
+            <div id="ref-videos-wrap"></div>
+            <button class="btn sm" onclick="addRefVideo()" style="width:100%;margin-top:4px;font-size:10px">+ 영상 URL 추가</button>
+          </div>
+          <div class="field">
+            <label>이 영상에서 참고할 것 <span style="font-size:10px;color:var(--text3);font-weight:400">선택사항</span></label>
+            <input type="text" id="ref-video-note" placeholder="예: 훅 방식, 편집 스타일, 말투">
+          </div>
+          <div style="font-size:10px;color:var(--text3);padding:6px 8px;background:var(--s3);border-radius:var(--r);line-height:1.5">
+            💡 TikTok, Instagram Reels, YouTube Shorts URL 지원<br>
+            Claude가 URL을 분석해서 영상 스타일을 파악해요
+          </div>
+        </div>
+
+        <!-- 이미지 탭 -->
+        <div id="ref-panel-image" style="display:none">
+          <div class="field">
+            <label>참고 이미지 <span style="font-size:10px;color:var(--text3);font-weight:400">최대 3장</span></label>
+            <div onclick="document.getElementById('ref-img-input').click()" style="cursor:pointer;padding:16px;background:var(--s3);border:1px dashed var(--border2);border-radius:var(--r);text-align:center;font-size:11px;color:var(--text3)">
+              🖼 이미지 선택 (PNG, JPG)
+              <input type="file" id="ref-img-input" accept="image/*" multiple style="display:none" onchange="handleRefImages(this)">
+            </div>
+            <div id="ref-img-preview" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px"></div>
+          </div>
+          <div class="field">
+            <label>이 이미지에서 참고할 것 <span style="font-size:10px;color:var(--text3);font-weight:400">선택사항</span></label>
+            <input type="text" id="ref-image-note" placeholder="예: 비주얼 스타일, 카피 레이아웃, 색감">
+          </div>
+        </div>
+
+      </div>
+
       <!-- 분석 옵션 -->
-      <div class="sb-section">
+      <div class="sb-section" id="section-analysis-opts">
         <div class="sb-hd">분석 옵션</div>
         <label class="ck-row"><input type="checkbox" id="o-hook" checked> 훅 패턴 분류</label>
         <label class="ck-row"><input type="checkbox" id="o-tone" checked> 감성 톤 분석</label>
@@ -601,7 +685,15 @@ audio{width:100%;height:30px}
             <div class="empty-ttl">분석 완료 후 자동 생성</div>
             <div class="empty-sub">좌측에서 브랜드를 선택하면<br>경쟁사 분석 기반 대본이 생성됩니다</div>
           </div>
+          <!-- 대본/후킹 탭 -->
+          <div id="scripts-tabs" style="display:none;padding:0 22px;border-bottom:1px solid var(--border);display:none">
+            <div style="display:flex;gap:0">
+              <button id="tab-scripts" onclick="switchScriptTab('scripts')" style="padding:10px 16px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;color:var(--purple);border-bottom:2px solid var(--purple)">📝 대본</button>
+              <button id="tab-hooks" onclick="switchScriptTab('hooks')" style="padding:10px 16px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent">⚡ 후킹 아이디어</button>
+            </div>
+          </div>
           <div id="scripts-out" class="scripts-wrap" style="display:none"></div>
+          <div id="hooks-out" class="scripts-wrap" style="display:none;padding:16px 22px"></div>
         </div>
       </div>
 
@@ -703,12 +795,134 @@ audio{width:100%;height:30px}
       <div class="field"><label>Foreplay API 키</label><input type="password" id="k-fp" placeholder="fp_..."><div class="hint">foreplay.co → Dashboard → API → Generate Key</div></div>
       <div class="divider"></div>
       <div class="field"><label>Anthropic (Claude) API 키</label><input type="password" id="k-cl" placeholder="sk-ant-api03-..."></div>
-      <div class="field"><label>ElevenLabs API 키</label><input type="password" id="k-el" placeholder="xi-api-..."></div>
-      <div class="field"><label>Voice ID</label><input type="text" id="k-vo" value="21m00Tcm4TlvDq8ikWAM"></div>
+      <div class="field" style="display:flex;align-items:center;justify-content:space-between">
+        <label style="margin:0">ElevenLabs</label>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span id="el-status-txt" style="font-size:10px;color:var(--text3)">미연결</span>
+          <button class="btn sm pur" onclick="closeModal('modal-api');openModal('modal-tts')" style="font-size:10px">🎙 TTS 설정</button>
+        </div>
+      </div>
+      <!-- 숨겨진 입력 (하위 호환) -->
+      <input type="hidden" id="k-el">
+      <input type="hidden" id="k-vo" value="21m00Tcm4TlvDq8ikWAM">
     </div>
     <div class="modal-ftr">
       <button class="btn" onclick="closeModal('modal-api')">취소</button>
       <button class="btn pur" onclick="saveKeys()">저장</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ── MODAL: TTS 설정 ── -->
+<div class="overlay" id="modal-tts" onclick="if(event.target===this)closeModal('modal-tts')">
+  <div class="modal" style="max-width:520px;width:96%">
+    <div class="modal-hdr">
+      <div class="modal-ttl">🎙 TTS 설정</div>
+      <button class="modal-x" onclick="closeModal('modal-tts')">✕</button>
+    </div>
+    <div class="modal-body" style="max-height:75vh;overflow-y:auto">
+
+      <!-- API 키 -->
+      <div class="field">
+        <label>ElevenLabs API 키</label>
+        <div style="display:flex;gap:6px">
+          <input type="password" id="tts-api-key" placeholder="xi-api-..." style="flex:1" oninput="ttsApiChanged()">
+          <button class="btn sm" id="tts-connect-btn" onclick="connectElevenLabs()" style="white-space:nowrap;min-width:64px">연결</button>
+        </div>
+        <div id="tts-connect-status" style="font-size:10px;margin-top:4px;display:none"></div>
+        <div class="hint">elevenlabs.io → Profile → API Key</div>
+      </div>
+
+      <!-- 목소리 선택 -->
+      <div class="field" id="tts-voice-section" style="display:none">
+        <label style="display:flex;align-items:center;justify-content:space-between">
+          <span>목소리 선택</span>
+          <span id="tts-voice-count" style="font-size:10px;color:var(--text3)"></span>
+        </label>
+
+        <!-- 검색 -->
+        <input type="text" id="tts-voice-search" placeholder="목소리 검색..." oninput="filterVoices(this.value)" style="margin-bottom:8px;font-size:11px">
+
+        <!-- 카테고리 탭 -->
+        <div style="display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap">
+          <button class="btn sm on" id="vcat-all" onclick="filterVoiceCategory('all')" style="font-size:10px">전체</button>
+          <button class="btn sm" id="vcat-premade" onclick="filterVoiceCategory('premade')" style="font-size:10px">기본</button>
+          <button class="btn sm" id="vcat-cloned" onclick="filterVoiceCategory('cloned')" style="font-size:10px">클론</button>
+          <button class="btn sm" id="vcat-generated" onclick="filterVoiceCategory('generated')" style="font-size:10px">AI 생성</button>
+        </div>
+
+        <!-- 목소리 목록 -->
+        <div id="tts-voice-list" style="max-height:240px;overflow-y:auto;display:flex;flex-direction:column;gap:4px">
+          <div style="font-size:11px;color:var(--text3);text-align:center;padding:16px">연결하면 목소리 목록이 로드돼요</div>
+        </div>
+      </div>
+
+      <!-- 음성 설정 슬라이더 -->
+      <div id="tts-settings-section" style="display:none">
+        <div class="divider" style="margin:12px 0"></div>
+        <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">음성 설정</div>
+
+        <div class="field">
+          <label>Stability <span id="stab-v" style="color:var(--purple);font-family:'JetBrains Mono',monospace">0.5</span>
+            <span style="font-size:10px;color:var(--text3);font-weight:400;margin-left:4px">낮을수록 감정적, 높을수록 안정적</span>
+          </label>
+          <input type="range" id="tts-stability" min="0" max="1" step="0.05" value="0.5"
+            oninput="document.getElementById('stab-v').textContent=parseFloat(this.value).toFixed(2)"
+            style="-webkit-appearance:none;height:2px;background:var(--s4);border-radius:1px;border:none;width:100%;outline:none;cursor:pointer">
+        </div>
+
+        <div class="field">
+          <label>Similarity Boost <span id="sim-v" style="color:var(--purple);font-family:'JetBrains Mono',monospace">0.75</span>
+            <span style="font-size:10px;color:var(--text3);font-weight:400;margin-left:4px">목소리 유사도</span>
+          </label>
+          <input type="range" id="tts-similarity" min="0" max="1" step="0.05" value="0.75"
+            oninput="document.getElementById('sim-v').textContent=parseFloat(this.value).toFixed(2)"
+            style="-webkit-appearance:none;height:2px;background:var(--s4);border-radius:1px;border:none;width:100%;outline:none;cursor:pointer">
+        </div>
+
+        <div class="field">
+          <label>Style Exaggeration <span id="style-v" style="color:var(--purple);font-family:'JetBrains Mono',monospace">0</span>
+            <span style="font-size:10px;color:var(--text3);font-weight:400;margin-left:4px">스타일 강조 (0=자연스러움)</span>
+          </label>
+          <input type="range" id="tts-style" min="0" max="1" step="0.05" value="0"
+            oninput="document.getElementById('style-v').textContent=parseFloat(this.value).toFixed(2)"
+            style="-webkit-appearance:none;height:2px;background:var(--s4);border-radius:1px;border:none;width:100%;outline:none;cursor:pointer">
+        </div>
+
+        <div class="field">
+          <label>Speed <span id="speed-v" style="color:var(--purple);font-family:'JetBrains Mono',monospace">1.0</span>
+            <span style="font-size:10px;color:var(--text3);font-weight:400;margin-left:4px">말하기 속도</span>
+          </label>
+          <input type="range" id="tts-speed" min="0.7" max="1.2" step="0.05" value="1.0"
+            oninput="document.getElementById('speed-v').textContent=parseFloat(this.value).toFixed(2)"
+            style="-webkit-appearance:none;height:2px;background:var(--s4);border-radius:1px;border:none;width:100%;outline:none;cursor:pointer">
+        </div>
+
+        <!-- 모델 선택 -->
+        <div class="field">
+          <label>모델</label>
+          <select id="tts-model" style="font-size:11px">
+            <option value="eleven_multilingual_v2">Multilingual v2 (다국어, 권장)</option>
+            <option value="eleven_turbo_v2_5">Turbo v2.5 (빠름, 한국어)</option>
+            <option value="eleven_flash_v2_5">Flash v2.5 (최고속)</option>
+            <option value="eleven_monolingual_v1">Monolingual v1 (영어 전용)</option>
+          </select>
+        </div>
+
+        <!-- 미리 듣기 -->
+        <div style="display:flex;gap:6px;align-items:center;margin-top:4px">
+          <button class="btn sm pur" onclick="previewTTS()" id="tts-preview-btn" style="flex:1">▶ 미리 듣기</button>
+          <div id="tts-preview-player" style="flex:2;display:none">
+            <audio controls style="width:100%;height:28px"></audio>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-ftr">
+      <button class="btn" onclick="closeModal('modal-tts')">취소</button>
+      <button class="btn acc" onclick="saveTTSSettings()">저장</button>
     </div>
   </div>
 </div>
@@ -796,6 +1010,70 @@ audio{width:100%;height:30px}
     </div>
   </div>
 </div>
+
+<!-- ── MODAL: 경쟁사 수동 입력 ── -->
+<div class="overlay" id="modal-manual" onclick="if(event.target===this)closeModal('modal-manual')">
+  <div class="modal" style="max-width:600px;width:96%">
+    <div class="modal-hdr">
+      <div class="modal-ttl">✍️ 경쟁사 추가</div>
+      <button class="modal-x" onclick="closeModal('modal-manual')">✕</button>
+    </div>
+    <div class="modal-body" style="max-height:70vh;overflow-y:auto">
+
+      <div class="field">
+        <label>경쟁사 이름</label>
+        <input type="text" id="mc-name" placeholder="예: 올리브영, 닥터지 등">
+      </div>
+
+      <!-- 대량 텍스트 입력 -->
+      <div class="field">
+        <label>광고 대본 대량 입력
+          <span style="font-size:10px;color:var(--text3);font-weight:400;margin-left:4px">여러 광고를 한번에 붙여넣기 (구분선 = "---" 또는 빈 줄 2개)</span>
+        </label>
+        <textarea id="mc-bulk" rows="8" oninput="updateMcBulkCount()" placeholder="여기에 광고 대본들을 붙여넣기 하세요.
+각 광고 사이는 --- 로 구분하거나 빈 줄 2개로 구분해요.
+
+예시:
+지금 이 영상 보는 분들 주목! 저도 처음엔 몰랐는데...
+피부가 이렇게 좋아질 줄 몰랐어요. 지금 링크 클릭!
+---
+여러분 혹시 이런 고민 있으신가요? 저도 똑같은 고민이 있었는데...
+딱 2주 만에 완전히 달라졌어요." style="font-size:11px;line-height:1.6;resize:vertical"></textarea>
+        <div class="hint" id="mc-bulk-count"></div>
+      </div>
+
+      <!-- URL 추가 -->
+      <div class="field">
+        <label>브랜드 URL <span style="font-size:10px;color:var(--text3);font-weight:400">(여러 개 가능)</span></label>
+        <div id="mc-urls-wrap"></div>
+        <button class="btn sm" onclick="addMcUrl()" style="width:100%;margin-top:4px">+ URL 추가</button>
+      </div>
+
+      <!-- PDF 업로드 -->
+      <div class="field">
+        <label>브랜드 문서 <span style="font-size:10px;color:var(--text3);font-weight:400">PDF · 최대 5개</span></label>
+        <div class="pdf-drop" onclick="document.getElementById('mc-pdf-input').click()" style="cursor:pointer;padding:10px;background:var(--s3);border:1px dashed var(--border2);border-radius:var(--r);text-align:center;font-size:11px;color:var(--text3)">
+          📄 PDF 파일 선택
+          <input type="file" id="mc-pdf-input" accept=".pdf" multiple style="display:none" onchange="handleMcPdf(this)">
+        </div>
+        <div id="mc-pdf-list" style="margin-top:5px"></div>
+      </div>
+
+      <!-- 학습된 컨텍스트 -->
+      <div class="field" id="mc-learned-wrap" style="display:none">
+        <label style="color:var(--purple)">🧠 분석된 브랜드 정보</label>
+        <textarea id="mc-learned" rows="3" style="font-size:11px;line-height:1.6;color:var(--text2);resize:vertical"></textarea>
+      </div>
+
+    </div>
+    <div class="modal-ftr" style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" onclick="closeModal('modal-manual')">취소</button>
+      <button class="btn pur" id="mc-learn-btn" onclick="learnManualBrand()">🧠 URL/PDF 분석</button>
+      <button class="btn acc" onclick="saveManualBrand()" style="margin-left:auto">저장</button>
+    </div>
+  </div>
+</div>
+
 
 <script>
 // ══════════════════════════════════════════════
@@ -1003,7 +1281,7 @@ function disconnectSb(){
 const K = {
   get fp() { return _k().foreplay||'' },
   get cl() { return _k().claude||'' },
-  get el() { return _k().eleven||'' },
+  get el() { return _k().eleven||'sk_54fe7460dfeec0ed25a4d17557c193b24ad364a74954a903' },
   get vo() { return _k().voiceId||'21m00Tcm4TlvDq8ikWAM' },
   save(fp,cl,el,vo){
     const data={foreplay:fp,claude:cl,eleven:el,voiceId:vo||'21m00Tcm4TlvDq8ikWAM'}
@@ -1092,10 +1370,18 @@ async function init(){
   updateDots()
   // Spyder 브랜드 미리 로드
   loadSpyderBrands()
+  // 수동 경쟁사 로드
+  loadManualBrands()
+  // TTS 설정 로드
+  loadTTSSettings()
   const obs = new IntersectionObserver(entries=>{
     entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('visible') })
   },{threshold:.1})
   document.querySelectorAll('.stage').forEach(s=>obs.observe(s))
+  // 수동 경쟁사 서버에서 로드
+  loadManualBrands()
+  // TTS 설정 로드
+  loadTTSSettings()
 }
 init()
 
@@ -1324,7 +1610,15 @@ function updateSpyderInfo(){
 function setMode(el){
   mode=el.dataset.m
   document.querySelectorAll('.mchip').forEach(c=>c.classList.toggle('on',c===el))
-  ;['spyder','brand','pageid','kw'].forEach(m=>{ document.getElementById('m-'+m).style.display=m===mode?'block':'none' })
+  ;['spyder','brand','pageid','kw','manual'].forEach(m=>{ const el=document.getElementById('m-'+m); if(el) el.style.display=m===mode?'block':'none' })
+  // 수동 모드: 필터 숨기고 레퍼런스 표시
+  const isManual = mode==='manual'
+  const filterEl = document.getElementById('section-filter')
+  const analysisEl = document.getElementById('section-analysis-opts')
+  const refEl = document.getElementById('section-reference')
+  if(filterEl) filterEl.style.display = isManual ? 'none' : ''
+  if(analysisEl) analysisEl.style.display = isManual ? 'none' : ''
+  if(refEl) refEl.style.display = isManual ? 'block' : 'none'
   // Spyder 탭 진입 시 자동 로드
   if(mode==='spyder' && spyderBrands.length===0) loadSpyderBrands()
 }
@@ -1399,6 +1693,63 @@ async function loadAdsCache(brandIds){
   return null
 }
 
+// ══════════════════════════════════════════════
+// 생성 결과 캐시 (분석/대본/후킹 서버 저장)
+// ══════════════════════════════════════════════
+async function saveGenCache(cacheKey, data){
+  // data: {analysis, scripts, hooks, brandId, generatedAt}
+  const payload = {
+    id: 'gen_' + cacheKey.sort().join('_').slice(0, 80),
+    brand_id: data.brandId || '',
+    brand_name: data.brandName || '',
+    data_json: JSON.stringify({
+      analysis: data.analysis,
+      scripts: data.scripts,
+      hooks: data.hooks,
+      generatedAt: Date.now()
+    }),
+    fetched_at: Date.now()
+  }
+  try {
+    await fetch('https://nroylubtytcslujylicw.supabase.co/rest/v1/ads_cache?on_conflict=id', {
+      method:'POST',
+      headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ','Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
+      body:JSON.stringify(payload)
+    })
+    console.log('✅ 생성 결과 캐시 저장')
+  } catch(e){ console.warn('캐시 저장 실패:', e.message) }
+  // 로컬에도 백업
+  try { localStorage.setItem('af_gen_' + payload.id, JSON.stringify(payload)) } catch(e){}
+}
+
+async function loadGenCache(cacheKey, brandId){
+  const id = 'gen_' + cacheKey.sort().join('_').slice(0, 80)
+  // 1. Supabase
+  try {
+    const r = await fetch('https://nroylubtytcslujylicw.supabase.co/rest/v1/ads_cache?id=eq.'+id+'&select=data_json,fetched_at', {
+      headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ'}
+    })
+    if(r.ok){
+      const rows = await r.json()
+      if(rows.length && rows[0].data_json){
+        const d = JSON.parse(rows[0].data_json)
+        // 7일 이내 캐시만 사용
+        if(Date.now() - (d.generatedAt||0) < 7*24*60*60*1000) return d
+      }
+    }
+  } catch(e){}
+  // 2. 로컬 폴백
+  try {
+    const local = JSON.parse(localStorage.getItem('af_gen_'+id)||'null')
+    if(local?.data_json){
+      const d = JSON.parse(local.data_json)
+      if(Date.now() - (d.generatedAt||0) < 7*24*60*60*1000) return d
+    }
+  } catch(e){}
+  return null
+}
+
+
 async function saveAdsCache(brandIds, adsData){
   const keyPrefix = brandIds.sort().join('|')
   const payload = {
@@ -1438,6 +1789,8 @@ async function go(){
   document.getElementById('report-out').style.display='none'
   document.getElementById('e2').style.display='flex'
   document.getElementById('scripts-out').style.display='none'
+  document.getElementById('hooks-out').style.display='none'
+  const tabsElReset=document.getElementById('scripts-tabs'); if(tabsElReset) tabsElReset.style.display='none'
   document.getElementById('e3').style.display='flex'
   document.getElementById('tts-out').style.display='none'
   document.getElementById('e4').style.display='flex'
@@ -1455,6 +1808,8 @@ async function go(){
       // Supabase 캐시 먼저 확인
       const cacheKey = mode==='spyder'
         ? spyderBrands.filter(b=>b.selected).map(b=>b.id)
+        : mode==='manual'
+        ? ['manual_'+manualBrands.map(b=>b.name).join('_')]
         : [mode+'_'+document.getElementById('i-brand')?.value||document.getElementById('i-pid')?.value||document.getElementById('i-kw')?.value||'']
       const forceRefresh = window._forceRefreshAds
       window._forceRefreshAds = false
@@ -1491,9 +1846,22 @@ async function go(){
     if(!K.cl) throw new Error('Claude API 키가 없어요 — 헤더의 API 설정에서 추가해주세요')
     stageSet(2,'run'); scrollTo(2)
     pstep('a1','Claude AI 경쟁사 분석 중','run'); pbar(40)
-    analysis = await doAnalysis(ads)
-    pstep('a1','✓ 분석 완료','done'); pbar(65)
-    renderReport(analysis,ads); stageSet(2,'done'); unlock(3); await sleep(150)
+
+    // 캐시에서 분석 결과 먼저 확인
+    const genCacheKey = mode==='spyder'
+      ? spyderBrands.filter(b=>b.selected).map(b=>b.id)
+      : [mode+'_'+Date.now().toString().slice(0,-4)] // 10분 단위
+    const cachedGen = !window._forceRefreshAds ? await loadGenCache(genCacheKey, document.getElementById('sel-brand').value) : null
+
+    if(cachedGen?.analysis){
+      analysis = cachedGen.analysis
+      pstep('a1','✓ 분석 완료 (캐시)','done'); pbar(65)
+      renderReport(analysis,ads); stageSet(2,'done'); unlock(3); await sleep(150)
+    } else {
+      analysis = await doAnalysis(ads)
+      pstep('a1','✓ 분석 완료','done'); pbar(65)
+      renderReport(analysis,ads); stageSet(2,'done'); unlock(3); await sleep(150)
+    }
 
     // ── 3. 대본 ──
     const brandId=document.getElementById('sel-brand').value
@@ -1507,10 +1875,24 @@ async function go(){
     stageSet(3,'run'); scrollTo(3)
     pstep('g1','경쟁사 인사이트 기반 대본 작성','run'); pbar(70)
     const brand=brands.find(b=>b.id===brandId)
-    scripts = await doGen(brand, analysis)
-    ttsScripts = scripts
-    pstep('g1',`✓ ${scripts.length}개 대본 완성`,'done'); pbar(88)
-    renderScripts(scripts); stageSet(3,'done'); document.getElementById('regen-btn').style.display='flex'; unlock(4); unlock(5)
+
+    // 대본/후킹도 캐시 확인
+    let genHooks = []
+    if(cachedGen?.scripts?.length){
+      scripts = cachedGen.scripts
+      genHooks = cachedGen.hooks || []
+      ttsScripts = scripts
+      pstep('g1',`✓ 대본 ${scripts.length}개 + 후킹 ${genHooks.length}개 (캐시)`,'done'); pbar(88)
+    } else {
+      const genResult = await doGen(brand, analysis)
+      scripts = genResult.scripts || genResult
+      genHooks = genResult.hooks || []
+      ttsScripts = scripts
+      pstep('g1',`✓ 대본 ${scripts.length}개 + 후킹 ${genHooks.length}개 완성`,'done'); pbar(88)
+      // 서버에 저장
+      saveGenCache(genCacheKey, {analysis, scripts, hooks:genHooks, brandId, brandName:brand.name})
+    }
+    renderScripts(scripts, genHooks); stageSet(3,'done'); document.getElementById('regen-btn').style.display='flex'; unlock(4); unlock(5)
 
     pstep('g2','TTS·영상제작 준비 완료','done'); pbar(100)
     stageSet(4,'run'); stageSet(5,'run')
@@ -1534,10 +1916,15 @@ async function onlyGen(){
   btn.disabled=true; btxt.innerHTML='<span class="spin">◌</span> 대본 재생성 중...'
   stageSet(3,'run')
   try {
-    scripts = await doGen(brand, analysis)
+    const rr = await doGen(brand, analysis)
+    scripts = rr.scripts || rr
+    const rHooks = rr.hooks || []
     ttsScripts = scripts
-    renderScripts(scripts); stageSet(3,'done')
-    toast(`✦ ${scripts.length}개 대본 재생성 완료`,'ok')
+    renderScripts(scripts, rHooks); stageSet(3,'done')
+    // 재생성 결과도 서버 저장
+    const rKey = [brand.id + '_regen_' + Date.now().toString().slice(0,-4)]
+    saveGenCache(rKey, {analysis, scripts, hooks:rHooks, brandId:brand.id, brandName:brand.name})
+    toast(`✦ 대본 ${scripts.length}개 + 후킹 ${rHooks.length}개 재생성 완료`,'ok')
     scrollTo(3)
   } catch(e){ toast('생성 실패: '+e.message,'err') }
   btn.disabled=false; btxt.textContent='⚡ 수집 → 분석 → 대본 생성'
@@ -1547,6 +1934,12 @@ async function onlyGen(){
 // API / MOCK
 // ══════════════════════════════════════════════
 async function apiGet(){
+  // 수동 입력 모드
+  if(mode==='manual'){
+    const ads = getManualAds()
+    if(!ads.length) throw new Error('경쟁사 광고를 입력해주세요')
+    return ads
+  }
   const lim=parseInt(document.getElementById('i-lim').value)
   const sort=document.getElementById('i-sort').value
   const p=new URLSearchParams({limit:lim,sort})
@@ -1798,24 +2191,69 @@ CTA:${anal.ctaPatterns||''}
 
 설정:유형=${adType}|톤=${tone}|개수=${cnt}
 
-규칙:1)경쟁사 훅 구조 참고, 내용은 ${brand.name}에 맞게 완전히 새롭게 2)훅=3초 안에 스크롤 멈춤(1-2문장) 3)본문=페인포인트→USP→증거(한국어 기준 총 ${targetChars}자 내외, ${durLabel} 분량) 4)CTA=즉각 행동(1문장) 5)각 대본마다 다른 훅패턴 유형 6)대본은 실제 낭독 시 ${durLabel}이 되도록 길이 조절${brand.prohibit?` 6)금지:${brand.prohibit}`:''}
+규칙:1)경쟁사 훅 구조 참고, 내용은 ${brand.name}에 맞게 완전히 새롭게${refData?` 1-1)[중요] 참고 레퍼런스(${refData.type==='script'?'대본':refData.type==='video'?'영상':'이미지'})의 스타일·구조·톤을 최우선으로 반영`:''}  2)훅=3초 안에 스크롤 멈춤(1-2문장) 3)본문=페인포인트→USP→증거(한국어 기준 총 ${targetChars}자 내외, ${durLabel} 분량) 4)CTA=즉각 행동(1문장) 5)각 대본마다 다른 훅패턴 유형 6)대본은 실제 낭독 시 ${durLabel}이 되도록 길이 조절${brand.prohibit?` 6)금지:${brand.prohibit}`:''}
 
 JSON만 응답:{"scripts":[{"id":1,"hook":"","body":"","cta":"","style":"","hookType":"","reason":""}]}`
 
-
   // 학습된 브랜드 컨텍스트 포함 (크레딧 추가 소모 없음)
   const learnedCtx=brand.learnedContext?'\n\n[학습된 브랜드 정보]\n'+brand.learnedContext:''
-  const fullPrompt=prompt+learnedCtx
+
+  // 수동 모드 레퍼런스
+  const refData = mode==='manual' ? getRefData() : null
+  let refCtx = ''
+  if(refData){
+    if(refData.type==='script')
+      refCtx = `\n\n[참고 대본 레퍼런스]\n${refData.text}${refData.style?'\n스타일 지시: '+refData.style:''}`
+    else if(refData.type==='video')
+      refCtx = `\n\n[참고 영상 URL]\n${refData.urls.join('\n')}${refData.note?'\n참고 포인트: '+refData.note:''}`
+    else if(refData.type==='image')
+      refCtx = `\n\n[참고 이미지 첨부됨]${refData.note?'\n참고 포인트: '+refData.note:''}`
+  }
+  const fullPrompt=prompt+learnedCtx+refCtx
+
+  // 후킹 프롬프트 (별도 병렬 호출)
+  const hookPrompt=`광고 카피라이터로서 ${brand.name} 브랜드의 SNS 광고용 후킹 아이디어를 생성하세요.
+
+브랜드:${brand.name}|카테고리:${brand.category||'미설정'}|페인포인트:${brand.painpoint||'미설정'}|USP:${brand.usp||'미설정'}
+경쟁사 TOP훅(참고):${topH}${brand.learnedContext?'\n\n[브랜드 정보]\n'+brand.learnedContext:''}
+
+규칙:
+1) 스크롤을 멈추게 하는 첫 1-2줄 후킹 문구만 (본문 없이)
+2) 패턴 다양하게 - 질문형/공감형/충격형/숫자형/호기심형/반전형/시크릿형 등
+3) 한국어, 실제 광고에 바로 복붙 가능한 수준
+4) 10~15개 생성${brand.prohibit?`\n5) 금지: ${brand.prohibit}`:''}
+
+JSON만 응답:{"hooks":[{"id":1,"text":"","pattern":"","why":""}]}`
 
   // 텍스트만 전송 (PDF는 학습 단계에서 이미 처리됨)
-  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':K.cl,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:3000,messages:[{role:'user',content:fullPrompt}]})})
-  if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error?.message||`Claude ${r.status}`)}
-  const d=await r.json()
-  return JSON.parse(d.content.map(c=>c.text||'').join('').replace(/```json|```/g,'').trim()).scripts
+  // 대본 + 후킹 병렬 생성
+  // 이미지 레퍼런스면 멀티모달로
+  const scriptContent = (refData?.type==='image' && refData.images?.length)
+    ? [...refData.images.map(img=>({type:'image',source:{type:'base64',media_type:img.type,data:img.data}})), {type:'text',text:fullPrompt}]
+    : fullPrompt
+
+  const [r1, r2] = await Promise.all([
+    fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':K.cl,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:3000,messages:[{role:'user',content:scriptContent}]})}),
+    fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':K.cl,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,messages:[{role:'user',content:hookPrompt+(brand.learnedContext?'\n\n[브랜드 정보]\n'+brand.learnedContext:'')}]})})
+  ])
+  if(!r1.ok){const e=await r1.json().catch(()=>({}));throw new Error(e.error?.message||`Claude ${r1.status}`)}
+  const d1=await r1.json()
+  const scripts=JSON.parse(d1.content.map(c=>c.text||'').join('').replace(/```json|```/g,'').trim()).scripts
+
+  let hooks=[]
+  if(r2.ok){
+    try{
+      const d2=await r2.json()
+      hooks=JSON.parse(d2.content.map(c=>c.text||'').join('').replace(/```json|```/g,'').trim()).hooks||[]
+    }catch(e){ console.warn('후킹 파싱 실패:', e) }
+  }
+  return {scripts, hooks}
 }
 
-function renderScripts(list){
+function renderScripts(list, hooks=[]){
   document.getElementById('e3').style.display='none'
+  const tabsEl = document.getElementById('scripts-tabs')
+  if(tabsEl) tabsEl.style.display='block'
   const out=document.getElementById('scripts-out')
   out.style.display='flex'
   out.innerHTML=list.map((s,i)=>`
@@ -1838,14 +2276,307 @@ function renderScripts(list){
         <button class="btn acc sm" onclick="cpScript(${i})">📋 복사</button>
       </div>
     </div>`).join('')
+
+  // 후킹 렌더링
+  if(hooks.length) renderHooks(hooks)
   unlock(4); unlock(5)
+}
+
+function renderHooks(list){
+  const out = document.getElementById('hooks-out')
+  if(!out) return
+  out.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:700;color:var(--text2)">⚡ 후킹 아이디어 ${list.length}개</div>
+      <button class="btn sm acc" onclick="copyAllHooks()" style="font-size:10px">📋 전체 복사</button>
+    </div>
+    ${list.map((h,i)=>`
+    <div style="padding:10px 12px;background:var(--s2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:6px;transition:border .15s" onmouseover="this.style.borderColor='var(--border2)'" onmouseout="this.style.borderColor='var(--border)'">
+      <div style="display:flex;align-items:flex-start;gap:8px">
+        <span style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--purple);background:var(--purple-dim);padding:2px 6px;border-radius:4px;flex-shrink:0;margin-top:1px">${h.pattern||'후킹'}</span>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600;color:var(--text);line-height:1.5;font-family:'Syne',sans-serif">${h.text}</div>
+          ${h.why?`<div style="font-size:10px;color:var(--text3);margin-top:4px">💡 ${h.why}</div>`:''}
+        </div>
+        <button onclick="navigator.clipboard.writeText('${h.text.replace(/'/g,"\'")}');toast('복사됨','ok')" style="font-size:11px;background:none;border:none;color:var(--text3);cursor:pointer;flex-shrink:0;padding:2px 4px">📋</button>
+      </div>
+    </div>`).join('')}
+  `
+}
+
+function copyAllHooks(){
+  const out = document.getElementById('hooks-out')
+  const hooks = [...out.querySelectorAll('[style*="Syne"]')].map((el,i)=>`${i+1}. ${el.textContent}`).join('\n')
+  navigator.clipboard.writeText(hooks)
+  toast(`후킹 ${out.querySelectorAll('[style*="Syne"]').length}개 복사됨`,'ok')
+}
+
+function switchScriptTab(tab){
+  const scriptsOut = document.getElementById('scripts-out')
+  const hooksOut = document.getElementById('hooks-out')
+  const tabScripts = document.getElementById('tab-scripts')
+  const tabHooks = document.getElementById('tab-hooks')
+  if(tab === 'scripts'){
+    scriptsOut.style.display = 'flex'
+    hooksOut.style.display = 'none'
+    tabScripts.style.color = 'var(--purple)'; tabScripts.style.borderBottomColor = 'var(--purple)'
+    tabHooks.style.color = 'var(--text3)'; tabHooks.style.borderBottomColor = 'transparent'
+  } else {
+    scriptsOut.style.display = 'none'
+    hooksOut.style.display = 'block'
+    tabHooks.style.color = 'var(--purple)'; tabHooks.style.borderBottomColor = 'var(--purple)'
+    tabScripts.style.color = 'var(--text3)'; tabScripts.style.borderBottomColor = 'transparent'
+  }
 }
 
 // ══════════════════════════════════════════════
 // TTS
 // ══════════════════════════════════════════════
+// ══════════════════════════════════════════════
+// TTS 설정
+// ══════════════════════════════════════════════
+let _allVoices = []
+let _ttsSettings = {
+  voiceId: '21m00Tcm4TlvDq8ikWAM',
+  voiceName: 'Rachel',
+  stability: 0.5,
+  similarity: 0.75,
+  style: 0,
+  speed: 1.0,
+  model: 'eleven_multilingual_v2'
+}
+
+// TTS 설정 로드 (Supabase settings)
+async function loadTTSSettings(){
+  try {
+    const r = await fetch('https://nroylubtytcslujylicw.supabase.co/rest/v1/settings?key=in.(elevenlabs_api_key,elevenlabs_voice_id,tts_settings)&select=key,value',{
+      headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ'}
+    })
+    if(r.ok){
+      const rows = await r.json()
+      const map = {}
+      rows.forEach(r=>map[r.key]=r.value)
+      if(map.elevenlabs_api_key) {
+        K.save(K.fp, K.cl, map.elevenlabs_api_key, map.elevenlabs_voice_id||'21m00Tcm4TlvDq8ikWAM')
+      }
+      if(map.tts_settings){
+        try{ Object.assign(_ttsSettings, JSON.parse(map.tts_settings)) }catch(e){}
+      }
+    }
+  } catch(e){}
+}
+
+function ttsApiChanged(){
+  document.getElementById('tts-connect-status').style.display='none'
+}
+
+async function openTTSModal(){
+  // 현재 설정 UI에 반영
+  const apiInput = document.getElementById('tts-api-key')
+  if(apiInput) apiInput.value = K.el||''
+  document.getElementById('tts-stability').value = _ttsSettings.stability
+  document.getElementById('stab-v').textContent = _ttsSettings.stability.toFixed(2)
+  document.getElementById('tts-similarity').value = _ttsSettings.similarity
+  document.getElementById('sim-v').textContent = _ttsSettings.similarity.toFixed(2)
+  document.getElementById('tts-style').value = _ttsSettings.style
+  document.getElementById('style-v').textContent = _ttsSettings.style.toFixed(2)
+  document.getElementById('tts-speed').value = _ttsSettings.speed
+  document.getElementById('speed-v').textContent = _ttsSettings.speed.toFixed(2)
+  document.getElementById('tts-model').value = _ttsSettings.model
+  
+  // 이미 연결된 상태면 목소리 목록 표시
+  if(K.el && _allVoices.length){
+    showVoiceSection()
+    renderVoiceList(_allVoices)
+  } else if(K.el){
+    connectElevenLabs()
+  }
+  openModal('modal-tts')
+}
+
+async function connectElevenLabs(){
+  const apiKey = document.getElementById('tts-api-key').value.trim()
+  if(!apiKey){ toast('API 키를 입력해주세요','err'); return }
+  
+  const btn = document.getElementById('tts-connect-btn')
+  const status = document.getElementById('tts-connect-status')
+  btn.disabled=true; btn.innerHTML='<span class="spin">◌</span>'
+  status.style.display='none'
+  
+  try {
+    // 1. API 키 검증 + 목소리 목록 가져오기
+    const r = await fetch('https://api.elevenlabs.io/v1/voices',{
+      headers:{'xi-api-key': apiKey}
+    })
+    if(!r.ok) throw new Error('API 키가 올바르지 않아요')
+    const d = await r.json()
+    _allVoices = d.voices.map(v=>{
+      return {
+        id: v.voice_id,
+        name: v.name,
+        category: v.category,
+        labels: v.labels||{},
+        preview_url: v.preview_url,
+        description: v.description||''
+      }
+    })
+    
+    // 2. 임시 저장 + UI 업데이트
+    K.save(K.fp, K.cl, apiKey, _ttsSettings.voiceId)
+    status.style.display='block'
+    status.style.color='var(--green)'
+    status.textContent=`✓ 연결 성공! 목소리 ${_allVoices.length}개 로드됨`
+    
+    // 3. ElevenLabs dot 업데이트
+    document.getElementById('dot-el')?.classList.add('on')
+    document.getElementById('el-status-txt').textContent='연결됨 ✓'
+    document.getElementById('el-status-txt').style.color='var(--green)'
+    
+    showVoiceSection()
+    renderVoiceList(_allVoices)
+    
+  } catch(e){
+    status.style.display='block'
+    status.style.color='var(--red,#ff5f57)'
+    status.textContent='✕ ' + e.message
+  }
+  btn.disabled=false; btn.innerHTML='연결'
+}
+
+function showVoiceSection(){
+  document.getElementById('tts-voice-section').style.display='block'
+  document.getElementById('tts-settings-section').style.display='block'
+  document.getElementById('tts-voice-count').textContent=_allVoices.length+'개'
+}
+
+function renderVoiceList(voices){
+  const list = document.getElementById('tts-voice-list')
+  if(!voices.length){ list.innerHTML='<div style="font-size:11px;color:var(--text3);text-align:center;padding:12px">목소리가 없어요</div>'; return }
+  list.innerHTML = voices.map(v=>{
+    const isSel = v.id === _ttsSettings.voiceId
+    const lang = v.labels?.language||v.labels?.accent||''
+    const gender = v.labels?.gender||''
+    const age = v.labels?.age||''
+    const use = v.labels?.use_case||''
+    const tags = [lang,gender,age,use].filter(Boolean).slice(0,3).join(' · ')
+    return `<div onclick="selectVoice('${v.id}','${v.name.replace(/'/g,"\\'")}')" 
+      style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:${isSel?'var(--purple-dim)':'var(--s2)'};border:1px solid ${isSel?'var(--purple)':'var(--border)'};border-radius:var(--r);cursor:pointer;transition:all .13s"
+      id="vitem-${v.id}">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:11px;font-weight:600;color:${isSel?'var(--purple)':'var(--text)'}">${v.name}</div>
+        ${tags?`<div style="font-size:9px;color:var(--text3);margin-top:1px">${tags}</div>`:''}
+      </div>
+      <span style="font-size:9px;padding:1px 5px;border-radius:4px;background:var(--s3);color:var(--text3);text-transform:uppercase;flex-shrink:0">${v.category||''}</span>
+      ${v.preview_url?`<button onclick="event.stopPropagation();playVoicePreview('${v.preview_url}')" style="font-size:10px;background:none;border:none;cursor:pointer;color:var(--text3);flex-shrink:0;padding:2px 4px" title="미리 듣기">▶</button>`:''}
+    </div>`
+  }).join('')
+}
+
+function selectVoice(id, name){
+  _ttsSettings.voiceId = id
+  _ttsSettings.voiceName = name
+  // 선택 UI 업데이트
+  document.querySelectorAll('[id^="vitem-"]').forEach(el=>{
+    const vid = el.id.replace('vitem-','')
+    const isSel = vid===id
+    el.style.background = isSel?'var(--purple-dim)':'var(--s2)'
+    el.style.borderColor = isSel?'var(--purple)':'var(--border)'
+    el.querySelector('div>div').style.color = isSel?'var(--purple)':'var(--text)'
+  })
+  toast('🎙 '+name+' 선택됨','ok')
+}
+
+function playVoicePreview(url){
+  const player = document.getElementById('tts-preview-player')
+  player.style.display='block'
+  const audio = player.querySelector('audio')
+  audio.src = url
+  audio.play()
+}
+
+function filterVoices(query){
+  const q = query.toLowerCase()
+  const filtered = q ? _allVoices.filter(v=>
+    v.name.toLowerCase().includes(q) ||
+    Object.values(v.labels).some(l=>String(l).toLowerCase().includes(q))
+  ) : _allVoices
+  renderVoiceList(filtered)
+}
+
+let _voiceCategoryFilter = 'all'
+function filterVoiceCategory(cat){
+  _voiceCategoryFilter = cat
+  document.querySelectorAll('[id^="vcat-"]').forEach(btn=>{
+    btn.classList.toggle('on', btn.id==='vcat-'+cat)
+  })
+  const filtered = cat==='all' ? _allVoices : _allVoices.filter(v=>v.category===cat)
+  renderVoiceList(filtered)
+}
+
+async function previewTTS(){
+  if(!K.el){ toast('API 키를 먼저 연결해주세요','err'); return }
+  const btn = document.getElementById('tts-preview-btn')
+  btn.disabled=true; btn.innerHTML='<span class="spin">◌</span> 생성 중...'
+  try {
+    const text = '안녕하세요! 이 목소리로 광고 대본을 읽어드릴게요. 자연스럽게 들리나요?'
+    const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${_ttsSettings.voiceId}`,{
+      method:'POST',
+      headers:{'Accept':'audio/mpeg','Content-Type':'application/json','xi-api-key':K.el},
+      body:JSON.stringify({
+        text, model_id:document.getElementById('tts-model').value,
+        voice_settings:{
+          stability:parseFloat(document.getElementById('tts-stability').value),
+          similarity_boost:parseFloat(document.getElementById('tts-similarity').value),
+          style:parseFloat(document.getElementById('tts-style').value),
+          use_speaker_boost:true
+        },
+        speed: parseFloat(document.getElementById('tts-speed').value)
+      })
+    })
+    if(!r.ok) throw new Error('TTS 실패')
+    const blob=await r.blob()
+    const url=URL.createObjectURL(blob)
+    const player = document.getElementById('tts-preview-player')
+    player.style.display='block'
+    const audio = player.querySelector('audio')
+    audio.src=url; audio.play()
+  } catch(e){ toast('미리 듣기 실패: '+e.message,'err') }
+  btn.disabled=false; btn.innerHTML='▶ 미리 듣기'
+}
+
+async function saveTTSSettings(){
+  const apiKey = document.getElementById('tts-api-key').value.trim()
+  _ttsSettings.stability = parseFloat(document.getElementById('tts-stability').value)
+  _ttsSettings.similarity = parseFloat(document.getElementById('tts-similarity').value)
+  _ttsSettings.style = parseFloat(document.getElementById('tts-style').value)
+  _ttsSettings.speed = parseFloat(document.getElementById('tts-speed').value)
+  _ttsSettings.model = document.getElementById('tts-model').value
+  
+  // API 키 저장
+  if(apiKey) K.save(K.fp, K.cl, apiKey, _ttsSettings.voiceId)
+  
+  // Supabase에 TTS 설정 저장
+  const pairs = [
+    {key:'tts_settings', value:JSON.stringify(_ttsSettings)},
+    {key:'elevenlabs_voice_id', value:_ttsSettings.voiceId}
+  ]
+  if(apiKey) pairs.push({key:'elevenlabs_api_key', value:apiKey})
+  
+  Promise.all(pairs.map(p=>
+    fetch('https://nroylubtytcslujylicw.supabase.co/rest/v1/settings?on_conflict=key',{
+      method:'POST',
+      headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ','Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
+      body:JSON.stringify(p)
+    })
+  )).then(()=>showSaveIndicator('☁️ TTS 설정 저장됨 ✓'))
+  
+  closeModal('modal-tts')
+  toast(`🎙 ${_ttsSettings.voiceName||'설정'} 저장됐어요`,'ok')
+}
+
+
 async function makeTTS(idx){
-  if(!K.el){ openModal('modal-api'); toast('ElevenLabs API 키가 필요해요','err'); return }
+  if(!K.el){ openTTSModal(); toast('ElevenLabs API 키를 먼저 설정해주세요','err'); return }
   const s=ttsScripts[idx]
   const text=`${s.hook} ${s.body} ${s.cta}`
   document.getElementById('e4').style.display='none'
@@ -1855,25 +2586,42 @@ async function makeTTS(idx){
   scrollTo(4)
   const lid='tl'+Date.now()
   const loader=document.createElement('div'); loader.id=lid; loader.className='tts-card'
-  loader.innerHTML=`<div class="tts-body" style="color:var(--text3);font-family:'JetBrains Mono',monospace;font-size:11px"><span class="spin">◌</span> TTS 생성 중...</div>`
+  loader.innerHTML=`<div class="tts-body" style="color:var(--text3);font-family:'JetBrains Mono',monospace;font-size:11px"><span class="spin">◌</span> TTS 생성 중 (${_ttsSettings.voiceName||'기본 목소리'})...</div>`
   out.prepend(loader)
   try {
-    const r=await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${K.vo}`,{method:'POST',headers:{'Accept':'audio/mpeg','Content-Type':'application/json','xi-api-key':K.el},body:JSON.stringify({text,model_id:'eleven_multilingual_v2',voice_settings:{stability:.5,similarity_boost:.75}})})
-    if(!r.ok) throw new Error('ElevenLabs 오류')
+    const r=await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${_ttsSettings.voiceId}`,{
+      method:'POST',
+      headers:{'Accept':'audio/mpeg','Content-Type':'application/json','xi-api-key':K.el},
+      body:JSON.stringify({
+        text,
+        model_id: _ttsSettings.model||'eleven_multilingual_v2',
+        voice_settings:{
+          stability: _ttsSettings.stability||0.5,
+          similarity_boost: _ttsSettings.similarity||0.75,
+          style: _ttsSettings.style||0,
+          use_speaker_boost: true
+        },
+        speed: _ttsSettings.speed||1.0
+      })
+    })
+    if(!r.ok) throw new Error('ElevenLabs 오류 ('+r.status+')')
     const blob=await r.blob(); const url=URL.createObjectURL(blob)
     document.getElementById(lid).outerHTML=`
       <div class="tts-card">
         <div class="tts-hdr">
-          <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3)">TTS ${String(s.id).padStart(2,'0')} · ${s.style||''}</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3)">TTS ${String(s.id).padStart(2,'0')} · ${_ttsSettings.voiceName||''}</span>
           <span style="font-size:11px;color:var(--green)">✓ 완료</span>
         </div>
         <div class="tts-body">
           <div class="tts-hook">"${s.hook}"</div>
           <audio controls src="${url}"></audio>
-          <div style="margin-top:8px"><a href="${url}" download="tts_${s.id}.mp3" class="btn grn sm">⬇ 다운로드</a></div>
+          <div style="display:flex;gap:6px;margin-top:8px">
+            <a href="${url}" download="tts_${s.id}.mp3" class="btn grn sm">⬇ 다운로드</a>
+            <button class="btn sm" onclick="openTTSModal()" style="font-size:10px">⚙ 목소리 변경</button>
+          </div>
         </div>
       </div>`
-    stageSet(4,'done'); toast('TTS 완료!','ok')
+    stageSet(4,'done'); toast(`🎙 TTS 완료! (${_ttsSettings.voiceName})`,'ok')
     scrollTo(5)
   } catch(e){ document.getElementById(lid)?.remove(); stageSet(4,'err'); toast('TTS 실패: '+e.message,'err') }
 }
@@ -1972,6 +2720,343 @@ function spyderGroupEdit(){
 }
 
 
+// ══════════════════════════════════════════════
+// 수동 경쟁사 입력 모드
+// ══════════════════════════════════════════════
+let manualBrands = []  // Supabase competitors 테이블에서 로드
+let _mcPdfData = []
+let editManualId = null
+
+// ── 서버 로드/저장 ──
+// ══════════════════════════════════════════════
+// 레퍼런스 (수동 모드)
+// ══════════════════════════════════════════════
+let _refImages = []  // [{name, data, type}]
+
+function switchRefTab(tab){
+  ['script','video','image'].forEach(t=>{
+    const panel = document.getElementById('ref-panel-'+t)
+    const btn = document.getElementById('ref-tab-'+t)
+    if(panel) panel.style.display = t===tab ? 'block' : 'none'
+    if(btn){
+      btn.style.color = t===tab ? 'var(--purple)' : 'var(--text3)'
+      btn.style.borderBottomColor = t===tab ? 'var(--purple)' : 'transparent'
+    }
+  })
+}
+
+function addRefVideo(){
+  const wrap = document.getElementById('ref-videos-wrap')
+  const div = document.createElement('div')
+  div.style.cssText = 'display:flex;gap:4px;margin-bottom:4px'
+  div.innerHTML = `<input type="text" placeholder="https://www.tiktok.com/..." style="flex:1;font-size:10px;padding:4px 8px;background:var(--s3);border:1px solid var(--border);border-radius:var(--r);color:var(--text)"><button onclick="this.parentElement.remove()" style="font-size:11px;background:none;border:none;color:var(--text3);cursor:pointer">✕</button>`
+  wrap.appendChild(div)
+}
+
+function handleRefImages(input){
+  const files = [...input.files].slice(0, 3 - _refImages.length)
+  const preview = document.getElementById('ref-img-preview')
+  files.forEach(file=>{
+    const reader = new FileReader()
+    reader.onload = e=>{
+      const data = e.target.result  // base64 포함 data URL
+      const base64 = data.split(',')[1]
+      const type = file.type
+      const id = 'ri_'+Date.now()
+      _refImages.push({id, name:file.name, data:base64, type, dataUrl:data})
+      // 미리보기
+      const div = document.createElement('div')
+      div.style.cssText = 'position:relative;width:72px;height:72px'
+      div.innerHTML = `
+        <img src="${data}" style="width:72px;height:72px;object-fit:cover;border-radius:var(--r);border:1px solid var(--border)">
+        <button onclick="removeRefImage('${id}')" style="position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:var(--s4);border:1px solid var(--border);font-size:9px;cursor:pointer;color:var(--text2);display:flex;align-items:center;justify-content:center;padding:0">✕</button>
+      `
+      div.id = 'rip_'+id
+      preview.appendChild(div)
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
+function removeRefImage(id){
+  _refImages = _refImages.filter(x=>x.id!==id)
+  document.getElementById('rip_'+id)?.remove()
+}
+
+// 레퍼런스 데이터 수집 (doGen에서 호출)
+function getRefData(){
+  const activeTab = ['script','video','image'].find(t=>{
+    const panel = document.getElementById('ref-panel-'+t)
+    return panel && panel.style.display !== 'none'
+  }) || 'script'
+
+  if(activeTab === 'script'){
+    const text = document.getElementById('ref-script-text')?.value.trim()
+    const style = document.getElementById('ref-script-style')?.value.trim()
+    return text ? {type:'script', text, style} : null
+  }
+  if(activeTab === 'video'){
+    const urls = [...document.querySelectorAll('#ref-videos-wrap input')].map(i=>i.value.trim()).filter(Boolean)
+    const note = document.getElementById('ref-video-note')?.value.trim()
+    return urls.length ? {type:'video', urls, note} : null
+  }
+  if(activeTab === 'image'){
+    const note = document.getElementById('ref-image-note')?.value.trim()
+    return _refImages.length ? {type:'image', images:_refImages, note} : null
+  }
+  return null
+}
+
+
+async function loadManualBrands(){
+  try {
+    const r = await fetch('https://nroylubtytcslujylicw.supabase.co/rest/v1/competitors?select=*&order=created_at',{
+      headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ'}
+    })
+    if(r.ok){
+      const rows = await r.json()
+      manualBrands = rows.map(r=>{
+        let ads = []
+        // raw_text에 ads JSON 또는 순수 텍스트 저장
+        try{
+          const parsed = JSON.parse(r.raw_text||'[]')
+          if(Array.isArray(parsed)) ads = parsed
+          else if(parsed.text) ads = [parsed]
+        } catch(e){
+          // 순수 텍스트면 하나의 광고로 처리
+          if(r.raw_text) ads = [{id:'ma_legacy', text:r.raw_text}]
+        }
+        let urls = []
+        try{ urls = (r.urls||'').split('\n').filter(Boolean) }catch(e){}
+        // analysis_data는 jsonb라 텍스트 추출
+        let learnedContext = null
+        try{
+          if(r.analysis_data) learnedContext = typeof r.analysis_data === 'string' ? r.analysis_data : JSON.stringify(r.analysis_data)
+        }catch(e){}
+        return {id:r.id, name:r.name, ads, urls, learnedContext, pdfs:[]}
+      })
+      renderManualList()
+    }
+  } catch(e){ console.warn('competitors 로드 실패:', e.message) }
+}
+
+async function saveManualToServer(brand){
+  const payload = {
+    id: brand.id,
+    name: brand.name,
+    raw_text: JSON.stringify(brand.ads||[]),  // ads를 raw_text에 저장
+    urls: (brand.urls||[]).join('\n'),
+    category: brand.learnedContext ? '✓학습완료' : ''  // analysis_data는 jsonb라 category에 간략 표시
+  }
+  await fetch('https://nroylubtytcslujylicw.supabase.co/rest/v1/competitors?on_conflict=id',{
+    method:'POST',
+    headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ','Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
+    body:JSON.stringify(payload)
+  })
+}
+
+async function deleteManualFromServer(id){
+  await fetch('https://nroylubtytcslujylicw.supabase.co/rest/v1/competitors?id=eq.'+id,{
+    method:'DELETE',
+    headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ'}
+  })
+}
+
+// ── 모달 열기/닫기 ──
+function openManualAddModal(id=null){
+  editManualId = id
+  _mcPdfData = []
+  const b = id ? manualBrands.find(x=>x.id===id) : null
+  document.getElementById('mc-name').value = b?.name||''
+  document.getElementById('mc-bulk').value = b ? (b.ads||[]).map(a=>a.text).join('\n---\n') : ''
+  document.getElementById('mc-learned-wrap').style.display = b?.learnedContext?'block':'none'
+  document.getElementById('mc-learned').value = b?.learnedContext||''
+  document.getElementById('mc-pdf-list').innerHTML = ''
+  // URL 필드
+  const urlWrap = document.getElementById('mc-urls-wrap')
+  const urls = b?.urls||[]
+  urlWrap.innerHTML = urls.map(u=>`
+    <div style="display:flex;gap:4px;margin-bottom:4px">
+      <input type="text" value="${u}" style="flex:1;font-size:11px;padding:3px 7px;background:var(--s3);border:1px solid var(--border);border-radius:var(--r);color:var(--text)">
+      <button onclick="this.parentElement.remove()" style="font-size:11px;background:none;border:none;color:var(--text3);cursor:pointer">✕</button>
+    </div>`).join('')
+  // 대본 개수 카운트
+  updateMcBulkCount()
+  openModal('modal-manual')
+}
+
+function addMcUrl(){
+  const wrap = document.getElementById('mc-urls-wrap')
+  const div = document.createElement('div')
+  div.style.cssText = 'display:flex;gap:4px;margin-bottom:4px'
+  div.innerHTML = `<input type="text" placeholder="https://..." style="flex:1;font-size:11px;padding:3px 7px;background:var(--s3);border:1px solid var(--border);border-radius:var(--r);color:var(--text)"><button onclick="this.parentElement.remove()" style="font-size:11px;background:none;border:none;color:var(--text3);cursor:pointer">✕</button>`
+  wrap.appendChild(div)
+}
+
+function handleMcPdf(input){
+  const files = [...input.files].slice(0, 5)
+  files.forEach(file=>{
+    const reader = new FileReader()
+    reader.onload = e=>{
+      const data = e.target.result.split(',')[1]
+      _mcPdfData.push({name:file.name, data})
+      const listEl = document.getElementById('mc-pdf-list')
+      const div = document.createElement('div')
+      div.style.cssText = 'font-size:10px;color:var(--text2);padding:3px 6px;background:var(--s3);border-radius:var(--r);margin-bottom:3px;display:flex;justify-content:space-between'
+      div.innerHTML = `<span>📄 ${file.name}</span><span onclick="this.parentElement.remove()" style="cursor:pointer;color:var(--text3)">✕</span>`
+      listEl.appendChild(div)
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
+function updateMcBulkCount(){
+  const txt = document.getElementById('mc-bulk').value
+  const ads = parseBulkAds(txt)
+  const countEl = document.getElementById('mc-bulk-count')
+  if(countEl) countEl.textContent = ads.length ? `${ads.length}개 광고 인식됨` : ''
+}
+
+function parseBulkAds(text){
+  if(!text.trim()) return []
+  // '---' 또는 빈 줄 2개로 분리
+  const parts = text.split(/\n---\n|\n\n\n+/)
+  return parts.map(p=>p.trim()).filter(p=>p.length>5)
+}
+
+// ── 저장 ──
+async function saveManualBrand(){
+  const name = document.getElementById('mc-name').value.trim()
+  if(!name){ toast('경쟁사 이름을 입력해주세요','err'); return }
+  
+  const bulkText = document.getElementById('mc-bulk').value
+  const adTexts = parseBulkAds(bulkText)
+  const urls = [...document.querySelectorAll('#mc-urls-wrap input')].map(i=>i.value.trim()).filter(Boolean)
+  const learnedCtx = document.getElementById('mc-learned').value.trim()||null
+  
+  const id = editManualId || ('mc_'+Date.now())
+  const brand = {
+    id, name,
+    ads: adTexts.map((t,i)=>{return {id:'ma_'+Date.now()+'_'+i, text:t}}),
+    urls, learnedContext: learnedCtx, pdfs: _mcPdfData
+  }
+  
+  if(editManualId){
+    const idx = manualBrands.findIndex(x=>x.id===editManualId)
+    if(idx>-1) manualBrands[idx] = brand
+    else manualBrands.push(brand)
+  } else {
+    manualBrands.push(brand)
+  }
+  
+  // 서버 저장
+  try{
+    await saveManualToServer(brand)
+    toast(`${name} 저장됐어요 (${adTexts.length}개 광고)`,'ok')
+  } catch(e){ toast('서버 저장 실패: '+e.message,'err') }
+  
+  renderManualList()
+  closeModal('modal-manual')
+  editManualId = null
+}
+
+// ── URL/PDF 분석 ──
+async function learnManualBrand(){
+  if(!K.cl){ toast('Claude API 키가 없어요','err'); return }
+  const urls = [...document.querySelectorAll('#mc-urls-wrap input')].map(i=>i.value.trim()).filter(Boolean)
+  if(!urls.length && !_mcPdfData.length){ toast('URL이나 PDF를 먼저 추가해주세요','err'); return }
+  
+  const btn = document.getElementById('mc-learn-btn')
+  btn.disabled=true; btn.innerHTML='<span class="spin">◌</span> 분석 중...'
+  
+  try {
+    let urlContents = ''
+    for(const url of urls.slice(0,3)){
+      try {
+        const r = await fetch('https://junoflow.app.n8n.cloud/webhook/url-fetch',{
+          method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})
+        })
+        if(r.ok){
+          const txt = await r.text()
+          if(txt && txt.length>50) urlContents += `\n\n[${url}]\n${txt.slice(0,3000)}`
+        }
+      } catch(e){ urlContents += `\n\n[분석 URL: ${url}]` }
+    }
+    
+    const contentParts = []
+    _mcPdfData.forEach(p=>contentParts.push({type:'document',source:{type:'base64',media_type:'application/pdf',data:p.data}}))
+    const userText = urlContents ? `${urlContents}\n\n위 URL/문서를 분석해서 경쟁사 브랜드 핵심 정보를 요약해주세요.` : '첨부된 PDF를 분석해주세요.'
+    contentParts.push({type:'text',text:userText})
+    
+    const r = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':K.cl,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,
+        system:'브랜드 분석 전문가로서 경쟁사의 브랜드 정보, 타겟, USP, 광고 톤을 한국어 500자 이내로 요약하세요.',
+        messages:[{role:'user',content:contentParts}]})
+    })
+    if(!r.ok) throw new Error('Claude API 오류')
+    const d = await r.json()
+    const summary = d.content.map(c=>c.text||'').join('').trim()
+    
+    document.getElementById('mc-learned-wrap').style.display = 'block'
+    document.getElementById('mc-learned').value = summary
+    toast('🧠 분석 완료!','ok')
+  } catch(e){ toast('분석 실패: '+e.message,'err') }
+  btn.disabled=false; btn.innerHTML='🧠 URL/PDF 분석'
+}
+
+// ── 삭제 ──
+async function deleteManualBrand(id){
+  if(!confirm('삭제할까요?')) return
+  manualBrands = manualBrands.filter(x=>x.id!==id)
+  try{ await deleteManualFromServer(id) }catch(e){}
+  renderManualList()
+}
+
+// ── 목록 렌더링 ──
+function renderManualList(){
+  const wrap = document.getElementById('manual-list-wrap')
+  if(!wrap) return
+  if(!manualBrands.length){
+    wrap.innerHTML = '<div style="font-size:10px;color:var(--text3);padding:8px 0;text-align:center">추가된 경쟁사가 없어요</div>'
+    return
+  }
+  wrap.innerHTML = manualBrands.map(b=>{
+    const adCount = b.ads?.length||0
+    const urlCount = b.urls?.length||0
+    return `<div style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--s2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:4px">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:11px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.name}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:1px">
+          ${adCount}개 광고${urlCount?' · URL '+urlCount+'개':''}${b.learnedContext?' · 🧠 분석됨':''}
+        </div>
+      </div>
+      <button class="btn sm" onclick="openManualAddModal('${b.id}')" style="font-size:10px;padding:2px 7px">편집</button>
+      <button onclick="deleteManualBrand('${b.id}')" style="font-size:11px;background:none;border:none;color:var(--text3);cursor:pointer">✕</button>
+    </div>`
+  }).join('')
+}
+
+// ── 광고 데이터 변환 (go() 에서 사용) ──
+function getManualAds(){
+  const result = []
+  manualBrands.forEach(b=>{
+    if(!b.name || !b.ads?.length) return
+    b.ads.forEach(a=>{
+      if(!a.text?.trim()) return
+      result.push({
+        id:a.id, brand:b.name,
+        hook: a.text.split('\n')[0]||'',
+        transcript: a.text, full_transcription: a.text,
+        format:'manual', live:false
+      })
+    })
+  })
+  return result
+}
+
+
 async function learnBrand(){
   const urls=[...document.querySelectorAll('#b-urls-wrap input')].map(i=>i.value.trim()).filter(Boolean)
   const hasPdf=_pdfData.length>0
@@ -1982,10 +3067,28 @@ async function learnBrand(){
   btn.disabled=true; btn.innerHTML='<span class="spin">◌</span> 학습 중...'
 
   try {
-    // 1. URL 내용 fetch (N8N 프록시 통해서)
-    // URL 목록을 Claude에게 직접 전달 (URL fetch 없이 Claude가 web_search로 분석)
-    const urlList = urls.slice(0,5).join('\n')
-    const urlContents = urlList ? `분석할 브랜드 URL 목록:\n${urlList}` : ''
+    // 1. URL 내용 fetch - N8N 프록시로 실제 페이지 내용 가져오기
+    let urlContents = ''
+    for(const url of urls.slice(0,3)){
+      try {
+        // N8N 프록시에서 URL 내용 fetch
+        const proxyUrl = 'https://junoflow.app.n8n.cloud/webhook/url-fetch'
+        const r = await fetch(proxyUrl, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({url})
+        })
+        if(r.ok){
+          const txt = await r.text()
+          if(txt && txt.length > 50) urlContents += `\n\n[${url}]\n${txt.slice(0,3000)}`
+        }
+      } catch(e){
+        // 프록시 실패 시 URL만 전달
+        urlContents += `\n\n[분석 URL: ${url}]`
+      }
+    }
+    if(!urlContents && urls.length) {
+      urlContents = `다음 URL들의 브랜드 정보를 분석해주세요:\n${urls.join('\n')}\n\n(URL에 직접 접근해서 내용을 파악해주세요)`
+    }
 
     // 2. Claude API로 요약 (URL 텍스트 + PDF 멀티모달)
     const systemPrompt=`당신은 브랜드 분석 전문가입니다. 주어진 URL 내용과 PDF 문서를 분석해서 광고 대본 작성에 필요한 핵심 브랜드 정보를 추출하세요.
