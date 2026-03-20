@@ -1477,14 +1477,31 @@ async function searchSpyderBrand(){
   resultEl.innerHTML = '<div style="font-size:11px;color:var(--text3);text-align:center;padding:12px"><span class="spin">◌</span> 검색 중...</div>'
 
   try {
-    const r = await fetch('https://junoflow.app.n8n.cloud/webhook/foreplay-proxy', {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({endpoint: '/brands/search', params: {name: q, limit: 10}, apiKey: K.fp})
-    })
-    if(!r.ok) throw new Error('검색 실패')
-    const d = await r.json()
-    const raw = Array.isArray(d) ? d[0] : d
-    const arr = raw?.data || raw?.brands || raw?.results || []
+    // Foreplay 브랜드 검색 - 여러 엔드포인트 시도
+    let searchResult = null
+    for(const endpoint of ['/brands/search', '/api/brands/search', '/api/spyder/search']){
+      try {
+        const res = await fetch('https://junoflow.app.n8n.cloud/webhook/foreplay-proxy', {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({endpoint, params: {name: q, q, query: q, limit: 10}, apiKey: K.fp})
+        })
+        if(res.ok){
+          const data = await res.json()
+          const raw = Array.isArray(data) ? data[0] : data
+          const arr = raw?.data || raw?.brands || raw?.results || (Array.isArray(raw) ? raw : [])
+          if(Array.isArray(arr) && arr.length > 0){ searchResult = arr; break }
+        }
+      } catch(e){}
+    }
+    const r = {ok: !!searchResult}
+    if(!r.ok || !searchResult) {
+      resultEl.innerHTML = `<div style="font-size:11px;color:var(--text3);padding:8px">
+        검색 결과가 없어요. 브랜드명을 영어로도 시도해보세요.<br>
+        또는 <a href="https://app.foreplay.co" target="_blank" style="color:var(--purple)">foreplay.co</a>에서 직접 검색해보세요.
+      </div>`
+      return
+    }
+    const arr = searchResult
 
     if(!arr.length){
       resultEl.innerHTML = '<div style="font-size:11px;color:var(--text3);text-align:center;padding:12px">검색 결과가 없어요</div>'
@@ -1555,21 +1572,26 @@ async function loadSpyderBrands(){
   listEl.innerHTML='<div class="spyder-loading"><span class="spin">◌</span> Spyder 브랜드 불러오는 중...</div>'
 
   try {
-    // Foreplay API: 내 Spyder 추적 브랜드 목록 (페이지네이션으로 전체 가져오기)
+    // Foreplay API: 내 Spyder 추적 브랜드 목록 (페이지네이션)
     let allBrands=[], offset=0, hasMore=true
     while(hasMore){
       const r=await fetch('https://junoflow.app.n8n.cloud/webhook/foreplay-proxy',
         {method:'POST',headers:{'Content-Type':'application/json'},
-         body:JSON.stringify({endpoint:'/api/spyder/brands',params:{offset,limit:10},apiKey:K.fp})})
+         body:JSON.stringify({endpoint:'/api/spyder/brands',params:{offset,limit:100},apiKey:K.fp})})
       if(!r.ok) break
       const d=await r.json()
-      const raw=Array.isArray(d)?d[0]:d
-      const arr=raw?.data||raw?.brands||raw?.results||[]
+      // 응답 구조 최대한 유연하게 파싱
+      let raw = Array.isArray(d) ? d[0] : d
+      if(raw?.data && !Array.isArray(raw.data)) raw = raw.data
+      const arr = (Array.isArray(raw) ? raw : null)
+             || raw?.brands || raw?.data || raw?.results
+             || raw?.spyder_brands || raw?.trackedBrands || []
       if(!Array.isArray(arr)||arr.length===0) break
       allBrands=allBrands.concat(arr)
-      if(arr.length<10) hasMore=false
-      else offset+=10
-      if(allBrands.length>=200) break  // 안전장치
+      console.log(`Spyder 로드: offset=${offset}, 이번=${arr.length}, 누적=${allBrands.length}`)
+      if(arr.length<100) hasMore=false
+      else offset+=100
+      if(allBrands.length>=500) break  // 안전장치
     }
     const spArr=allBrands
 
