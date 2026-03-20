@@ -3067,57 +3067,42 @@ async function learnBrand(){
   btn.disabled=true; btn.innerHTML='<span class="spin">◌</span> 학습 중...'
 
   try {
-    // 1. URL 내용 fetch - N8N 프록시로 실제 페이지 내용 가져오기
-    let urlContents = ''
-    for(const url of urls.slice(0,3)){
-      try {
-        // N8N 프록시에서 URL 내용 fetch
-        const proxyUrl = 'https://junoflow.app.n8n.cloud/webhook/url-fetch'
-        const r = await fetch(proxyUrl, {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({url})
-        })
-        if(r.ok){
-          const txt = await r.text()
-          if(txt && txt.length > 50) urlContents += `\n\n[${url}]\n${txt.slice(0,3000)}`
-        }
-      } catch(e){
-        // 프록시 실패 시 URL만 전달
-        urlContents += `\n\n[분석 URL: ${url}]`
-      }
-    }
-    if(!urlContents && urls.length) {
-      urlContents = `다음 URL들의 브랜드 정보를 분석해주세요:\n${urls.join('\n')}\n\n(URL에 직접 접근해서 내용을 파악해주세요)`
-    }
+    // 1. Claude API에 web_search 툴로 URL 직접 분석 (N8N 불필요)
+    const systemPrompt=`당신은 브랜드 분석 전문가입니다. 주어진 URL의 웹사이트와 PDF를 분석해서 광고 대본 작성에 필요한 브랜드 핵심 정보를 추출하세요.
 
-    // 2. Claude API로 요약 (URL 텍스트 + PDF 멀티모달)
-    const systemPrompt=`당신은 브랜드 분석 전문가입니다. 주어진 URL 내용과 PDF 문서를 분석해서 광고 대본 작성에 필요한 핵심 브랜드 정보를 추출하세요.
-
-다음 항목을 중심으로 구조화된 요약을 한국어로 작성하세요 (총 500자 이내):
-- 브랜드 핵심 가치 & 포지셔닝
-- 주요 제품/서비스 & 특징
+다음 항목을 한국어로 작성하세요 (총 600자 이내):
+- 브랜드명 & 카테고리
+- 주요 제품/서비스 & 특징  
 - 타겟 고객 & 페인포인트
 - 핵심 USP (경쟁사 대비 차별점)
 - 브랜드 톤 & 메시지 방향
-- 주요 프로모션/캠페인 포인트`
+- 가격대 & 주요 프로모션 포인트`
 
     const contentParts=[]
     // PDF 첨부
     if(_pdfData.length) _pdfData.forEach(p=>contentParts.push({type:'document',source:{type:'base64',media_type:'application/pdf',data:p.data}}))
-    // URL 내용 텍스트
-    const userText = (urlContents || _pdfData.length) 
-      ? `${urlContents ? urlContents + '\n\n' : ''}${_pdfData.length ? '첨부된 PDF 문서와 ' : ''}위 URL의 브랜드 정보를 분석해서 광고 대본 작성에 필요한 핵심 정보를 요약해주세요.`
-      : '브랜드 정보를 요약해주세요.'
+    // URL을 텍스트로 전달 (Claude가 web_search로 직접 접근)
+    const urlText = urls.length ? `다음 URL들을 방문해서 브랜드 정보를 분석해주세요:\n${urls.join('\n')}` : ''
+    const userText = `${urlText}${_pdfData.length ? '\n\n첨부된 PDF 문서도 함께 분석해주세요.' : ''}\n\n위 브랜드의 핵심 정보를 요약해주세요.`
     contentParts.push({type:'text',text:userText})
 
+    contentParts.push({type:'text',text:userText})
     const r=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':K.cl,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:systemPrompt,messages:[{role:'user',content:contentParts}]})
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1500,
+        system:systemPrompt,
+        tools:[{type:'web_search_20250305',name:'web_search'}],
+        messages:[{role:'user',content:contentParts}]
+      })
     })
-    if(!r.ok) throw new Error('Claude API 오류')
+    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error?.message||'Claude API 오류')}
     const d=await r.json()
-    const summary=d.content.map(c=>c.text||'').join('').trim()
+    // tool_use 결과 포함해서 텍스트 추출
+    const summary=d.content.map(c=>c.type==='text'?c.text:'').filter(Boolean).join('').trim()
+    if(!summary) throw new Error('분석 결과가 없어요. 잠시 후 다시 시도해주세요.')
 
     // 3. 버전 스택에 추가
     const nowTs=Date.now()
