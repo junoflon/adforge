@@ -910,16 +910,13 @@ const DB = {
       })
       if(r.ok){
         const rows = await r.json()
-        const data = rows.map(sbToBrand)
-        localStorage.setItem('af_brands', JSON.stringify(data))
-        return data
+        return rows.map(sbToBrand)
       }
     } catch(e){ console.warn('Supabase 브랜드 로드 실패:', e.message) }
     return JSON.parse(localStorage.getItem('af_brands')||'[]')
   },
 
   saveBrands(data){
-    localStorage.setItem('af_brands', JSON.stringify(data))
     const payload = data.map(brandToSb)
     // Supabase에 직접 저장 (타이머 없이, await 없이)
     fetch('https://nroylubtytcslujylicw.supabase.co/rest/v1/brands?on_conflict=id',{method:'POST',headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ','Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(payload)})
@@ -1031,7 +1028,7 @@ const K = {
 }
 function _k(){ try{return JSON.parse(localStorage.getItem('af_keys')||'{}')}catch(e){return {}} }
 
-let brands      = JSON.parse(localStorage.getItem('af_brands')||'[]')
+let brands      = []  // 서버에서 로드 (init()에서 채워짐)
 let competitors = JSON.parse(localStorage.getItem('af_competitors')||'[]')
 let mode        = 'brand'
 let filters     = new Set(['active','video','image'])
