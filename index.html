@@ -432,7 +432,7 @@ audio{width:100%;height:30px}
               <div style="display:flex;gap:4px">
                 <button class="btn sm" onclick="spyderGroupEdit()" style="font-size:10px;padding:3px 8px" title="그룹 편집">📁</button>
                 <button class="btn sm" id="spyder-refresh-btn" onclick="document.getElementById('spyder-refresh-btn').dataset.force='1';loadSpyderBrands()" style="font-size:10px;padding:3px 8px" title="새로고침">↻</button>
-                <a href="https://app.foreplay.co/library-spyder" target="_blank" class="btn sm" style="font-size:10px;padding:3px 8px;text-decoration:none" title="Foreplay에서 브랜드 추가">+ Spyder</a>
+                <a href="https://app.foreplay.co/library-spyder" target="_blank" class="btn sm" style="font-size:10px;padding:3px 8px;text-decoration:none" title="Foreplay에서 브랜드 추가" onclick="registerSpyderReturn()">+ Spyder</a>
               </div>
             </div>
             <div id="spyder-brand-list">
@@ -1448,6 +1448,27 @@ function closeModal(id){ document.getElementById(id)?.classList.remove('open') }
 let spyderBrands = []   // [{id, name, pageId, adCount, liveCount, selected}]
 
 // ── Spyder 탭 전환 ──
+// ── Foreplay에서 돌아왔을 때 Spyder 자동 새로고침 ──
+function registerSpyderReturn(){
+  // foreplay.co에서 돌아올 때 한 번만 새로고침
+  const handler = () => {
+    if(!document.hidden){
+      document.removeEventListener('visibilitychange', handler)
+      // 0.5초 후 강제 새로고침 (탭 전환 완료 후)
+      setTimeout(()=>{
+        const btn = document.getElementById('spyder-refresh-btn')
+        if(btn && mode==='spyder'){
+          btn.dataset.force = '1'
+          loadSpyderBrands()
+          toast('Spyder 브랜드 업데이트 중...', 'ok')
+        }
+      }, 500)
+    }
+  }
+  document.addEventListener('visibilitychange', handler)
+}
+
+
 function switchSpyderTab(tab){
   const myPanel = document.getElementById('spyder-panel-my')
   const searchPanel = document.getElementById('spyder-panel-search')
@@ -1471,72 +1492,100 @@ function switchSpyderTab(tab){
 async function searchSpyderBrand(){
   const q = document.getElementById('spyder-search-input')?.value.trim()
   if(!q){ toast('브랜드명을 입력해주세요','err'); return }
-  if(!K.fp){ toast('Foreplay API 키가 필요해요','err'); return }
 
   const resultEl = document.getElementById('spyder-search-result')
   resultEl.innerHTML = '<div style="font-size:11px;color:var(--text3);text-align:center;padding:12px"><span class="spin">◌</span> 검색 중...</div>'
 
   try {
-    // Foreplay 브랜드 검색 - 여러 엔드포인트 시도
-    let searchResult = null
-    for(const endpoint of ['/brands/search', '/api/brands/search', '/api/spyder/search']){
+    // 1. 내 Spyder 목록에서 먼저 필터링
+    const qLow = q.toLowerCase()
+    const localResults = spyderBrands.filter(b => b.name.toLowerCase().includes(qLow))
+
+    // 2. Foreplay API 검색 (있으면)
+    let apiResults = []
+    if(K.fp){
       try {
         const res = await fetch('https://junoflow.app.n8n.cloud/webhook/foreplay-proxy', {
-          method: 'POST', headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({endpoint, params: {name: q, q, query: q, limit: 10}, apiKey: K.fp})
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({endpoint:'/brands/search', params:{name:q, limit:20}, apiKey:K.fp})
         })
         if(res.ok){
           const data = await res.json()
-          const raw = Array.isArray(data) ? data[0] : data
-          const arr = raw?.data || raw?.brands || raw?.results || (Array.isArray(raw) ? raw : [])
-          if(Array.isArray(arr) && arr.length > 0){ searchResult = arr; break }
+          const raw = Array.isArray(data)?data[0]:data
+          const arr = raw?.data||raw?.brands||raw?.results||(Array.isArray(raw)?raw:[])
+          if(Array.isArray(arr)) apiResults = arr
         }
       } catch(e){}
     }
-    const r = {ok: !!searchResult}
-    if(!r.ok || !searchResult) {
-      resultEl.innerHTML = `<div style="font-size:11px;color:var(--text3);padding:8px">
-        검색 결과가 없어요. 브랜드명을 영어로도 시도해보세요.<br>
-        또는 <a href="https://app.foreplay.co" target="_blank" style="color:var(--purple)">foreplay.co</a>에서 직접 검색해보세요.
-      </div>`
-      return
-    }
-    const arr = searchResult
+
+    // 3. 합쳐서 표시 (내 Spyder 먼저, 그 다음 API 결과)
+    const arr = [
+      ...localResults.map(b=>({...b, _source:'my'})),
+      ...apiResults.filter(b=>{
+        const name = b.name||b.brandName||''
+        return !localResults.some(l=>l.name.toLowerCase()===name.toLowerCase())
+      }).map(b=>({...b, _source:'api'}))
+    ]
 
     if(!arr.length){
-      resultEl.innerHTML = '<div style="font-size:11px;color:var(--text3);text-align:center;padding:12px">검색 결과가 없어요</div>'
+      resultEl.innerHTML = `<div style="font-size:11px;color:var(--text3);padding:10px;line-height:1.6">
+        검색 결과가 없어요.<br>
+        <a href="https://app.foreplay.co" target="_blank" style="color:var(--purple)">foreplay.co</a>에서 Spyder 브랜드를 추가하면 여기서 선택할 수 있어요.
+      </div>`
       return
     }
 
-    resultEl.innerHTML = arr.map(b => {
+    // DOM으로 직접 생성 (따옴표 충돌 방지)
+    resultEl.innerHTML = ''
+    arr.forEach(b => {
       const name = b.name || b.page_name || b.brandName || '알 수 없음'
-      const pageId = b.page_id || b.pageId || b.id || ''
-      const adCount = b.ad_count || b.adCount || 0
+      const bid = b.id || b.page_id || b.pageId || ''
+      const adCount = b.adCount || b.ad_count || 0
       const avatar = b.avatar || b.logo || b.image || ''
-      return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--s2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:5px;cursor:pointer;transition:border .15s"
-        onmouseover="this.style.borderColor='var(--border2)'" onmouseout="this.style.borderColor='var(--border)'"
-        onclick="selectSearchResult('${pageId}','${name.replace(/'/g,"\'")}')">
-        ${avatar ? `<img src="${avatar}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">` : '<div style="width:28px;height:28px;border-radius:50%;background:var(--s3);flex-shrink:0"></div>'}
-        <div style="flex:1;min-width:0">
-          <div style="font-size:12px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</div>
-          <div style="font-size:10px;color:var(--text3)">광고 ${adCount}개${pageId ? ' · ID: '+pageId : ''}</div>
-        </div>
-        <button class="btn sm pur" style="font-size:10px;flex-shrink:0">선택</button>
-      </div>`
-    }).join('')
+      const isMy = b._source === 'my'
+      const div = document.createElement('div')
+      div.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--s2);border:1px solid '+(isMy?'var(--purple)':'var(--border)')+';border-radius:var(--r);margin-bottom:5px;cursor:pointer'
+      div.onclick = () => selectSearchResult(bid, name, isMy)
+      const img = document.createElement(avatar?'img':'div')
+      if(avatar){ img.src=avatar; img.onerror=()=>img.style.display='none' }
+      img.style.cssText = 'width:28px;height:28px;border-radius:50%;'+(avatar?'object-fit:cover':'background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:12px')+';flex-shrink:0'
+      if(!avatar) img.textContent = name[0]||'?'
+      const info = document.createElement('div')
+      info.style.cssText = 'flex:1;min-width:0'
+      info.innerHTML = '<div style="font-size:12px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+name+'</div>'
+        +'<div style="font-size:10px;color:var(--text3)">'+(isMy?'📌 내 Spyder · ':'')+'광고 '+adCount+'개</div>'
+      const btn = document.createElement('button')
+      btn.className = 'btn sm'+(isMy?' pur':'')
+      btn.style.cssText = 'font-size:10px;flex-shrink:0'
+      btn.textContent = isMy?'선택':'광고 수집'
+      btn.onclick = e => { e.stopPropagation(); selectSearchResult(bid,name,isMy) }
+      div.append(img,info,btn)
+      resultEl.appendChild(div)
+    })
 
   } catch(e){
     resultEl.innerHTML = `<div style="font-size:11px;color:var(--red,#ff5f57);padding:8px">검색 실패: ${e.message}</div>`
   }
 }
 
-function selectSearchResult(pageId, name){
-  if(!pageId){ toast('Page ID가 없어요','err'); return }
-  // Page ID 모드로 전환해서 바로 수집
+function selectSearchResult(id, name, isMy){
+  if(isMy === true || isMy === 'true'){
+    // 내 Spyder 브랜드 → Spyder 모드에서 해당 브랜드 선택
+    const brand = spyderBrands.find(b=>b.id===id||b.name===name)
+    if(brand){
+      brand.selected = true
+      switchSpyderTab('my')
+      renderSpyderList()
+      toast('📌 '+name+' 선택됨 → 수집 버튼을 눌러주세요','ok')
+      return
+    }
+  }
+  // 외부 브랜드 → Page ID 모드로 전환
+  if(!id){ toast('브랜드 ID가 없어요','err'); return }
   const modeEl = document.querySelector('[data-m="pageid"]')
   if(modeEl) setMode(modeEl)
   const pidEl = document.getElementById('i-pid')
-  if(pidEl){ pidEl.value = pageId; toast(`${name} 선택됨 → 수집 버튼을 눌러주세요`, 'ok') }
+  if(pidEl){ pidEl.value = id; toast(name+' 선택됨 → 수집 버튼을 눌러주세요','ok') }
 }
 
 
@@ -1562,6 +1611,9 @@ async function loadSpyderBrands(){
     const cached = await loadSpyderCache()
     if(cached && cached.length){
       spyderBrands = cached
+      // 패널이 숨겨져 있어도 렌더링
+      const myPanel = document.getElementById('spyder-panel-my')
+      if(myPanel) myPanel.style.display = 'block'
       renderSpyderList()
       if(btn){ btn.disabled=false; btn.innerHTML='↻' }
       return
@@ -1608,6 +1660,8 @@ async function loadSpyderBrands(){
       listEl.innerHTML='<div class="spyder-loading">Spyder 추적 브랜드가 없어요<br><span style="color:var(--text3)">foreplay.co에서 먼저 브랜드를 추적 등록하세요</span></div>'
       return
     }
+    const myPanel2 = document.getElementById('spyder-panel-my')
+    if(myPanel2) myPanel2.style.display = 'block'
     renderSpyderList()
     saveSpyderCache(spyderBrands)  // Supabase에 캐시 저장
     toast(`Spyder 브랜드 ${spyderBrands.length}개 로드됨`,'ok')
@@ -2176,7 +2230,7 @@ function norm(r){
   // 타임스탬프 트랜스크립트에서 첫 문장 추출 (훅)
   const firstSentence = r.timestamped_transcription?.[0]?.sentence?.trim() || ''
   const secondSentence = r.timestamped_transcription?.[1]?.sentence?.trim() || ''
-  const hook = r.hook || (firstSentence ? (firstSentence + (secondSentence ? ' ' + secondSentence : '')) : '') || r.description?.split('\n')[0]?.slice(0,80) || tr.split(/[.!?\n]/)[0].slice(0,80) || ''
+  const hook = r.hook || (firstSentence ? (firstSentence + (secondSentence ? ' ' + secondSentence : '')) : '') || r.description?.split('\n')[0]?.slice(0,80) || (tr?tr.split(/[.!?\n]/)[0].slice(0,80):'') || ''
   // 플랫폼
   const platforms = r.publisher_platform || r.platforms || [r.platform] || []
   const platform = Array.isArray(platforms) ? platforms[0] : platforms || 'facebook'
@@ -2193,7 +2247,7 @@ function norm(r){
   return {
     id: r.id || r.adId || ('fp_'+Math.random().toString(36).slice(2,8)),
     brand: r.brand?.name || r.brand_name || r.brandName || r.page_name || '',
-    hook: hook.trim(),
+    hook: (hook||'').trim(),
     transcript: tr,
     description: r.description || '',
     headline: r.headline || '',
@@ -3237,10 +3291,14 @@ function getManualAds(){
     if(!b.name || !b.ads?.length) return
     b.ads.forEach(a=>{
       if(!a.text?.trim()) return
+      const lines = a.text.split('\n').filter(l=>l.trim())
       result.push({
         id:a.id, brand:b.name,
-        hook: a.text.split('\n')[0]||'',
+        hook: lines[0]||'',
+        body: lines.slice(1,-1).join(' ')||lines[1]||'',
+        cta: lines[lines.length-1]||'',
         transcript: a.text, full_transcription: a.text,
+        tone:'', activeDays:0, isActive:true,
         format:'manual', live:false
       })
     })
