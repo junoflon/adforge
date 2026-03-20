@@ -1650,6 +1650,11 @@ async function loadSpyderBrands(){
              || raw?.spyder_brands || raw?.trackedBrands
              || (raw?.body ? (Array.isArray(raw.body)?raw.body:raw.body?.data||raw.body?.brands||[]) : [])
              || []
+      // 응답 전체를 항상 표시 (디버그)
+      listEl.innerHTML='<div style="font-size:9px;color:var(--text3);padding:6px;word-break:break-all;background:var(--s3);border-radius:var(--r);max-height:120px;overflow-y:auto">'+
+        '키: '+Object.keys(raw||{}).join(', ')+'<br>'+
+        '배열길이: '+(Array.isArray(arr)?arr.length:'not array')+'<br>'+
+        JSON.stringify(d).slice(0,400)+'</div>'
       if(!Array.isArray(arr)||arr.length===0) break
       allBrands=allBrands.concat(arr)
       if(arr.length<100) hasMore=false
