@@ -1656,21 +1656,32 @@ async function loadSpyderBrands(){
     let allBrands=[], offset=0, hasMore=true
     listEl.innerHTML='<div class="spyder-loading"><span class="spin">◌</span> 불러오는 중... <span id="spyder-load-count">0</span>개</div>'
     while(hasMore){
-      const r=await fetch('https://junoflow.app.n8n.cloud/webhook/foreplay-proxy',
-        {method:'POST',headers:{'Content-Type':'application/json'},
-         body:JSON.stringify({endpoint:'/api/spyder/brands',params:{offset,limit:10},apiKey:K.fp})})
+      // Foreplay API 직접 호출 (N8N 프록시 우회 - offset 파라미터 보장)
+      const fpUrl = `https://api.foreplay.co/api/spyder/brands?offset=${offset}&limit=10`
+      let r, d
+      try {
+        r = await fetch(fpUrl, {
+          headers:{'Authorization': `Bearer ${K.fp}`, 'Content-Type':'application/json'}
+        })
+        d = await r.json()
+      } catch(e) {
+        // 직접 호출 실패 시 N8N 프록시 fallback
+        r = await fetch('https://junoflow.app.n8n.cloud/webhook/foreplay-proxy', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({endpoint:`/api/spyder/brands?offset=${offset}&limit=10`, params:{}, apiKey:K.fp})
+        })
+        d = await r.json()
+      }
       if(!r.ok) break
-      const d=await r.json()
       const arr = d?.data || []
       if(!Array.isArray(arr)||arr.length===0) break
       allBrands=allBrands.concat(arr)
       const countEl=document.getElementById('spyder-load-count')
       if(countEl) countEl.textContent=allBrands.length
-      // 10개씩 오면 offset 증가해서 계속 요청
       if(arr.length < 10) hasMore=false
       else offset+=10
       if(allBrands.length>=500) break
-      await new Promise(r=>setTimeout(r,100))
+      await new Promise(resolve=>setTimeout(resolve,150))
     }
     const spArr=allBrands
 
