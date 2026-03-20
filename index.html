@@ -2166,6 +2166,18 @@ function renderReport(r,ads){
 // GENERATION
 // ══════════════════════════════════════════════
 async function doGen(brand,anal){
+  // 레퍼런스 먼저 선언 (prompt에서 참조하기 때문)
+  const refData = mode==='manual' ? getRefData() : null
+  let refCtx = ''
+  if(refData){
+    if(refData.type==='script')
+      refCtx = `\n\n[참고 대본 레퍼런스]\n${refData.text}${refData.style?'\n스타일 지시: '+refData.style:''}`
+    else if(refData.type==='video')
+      refCtx = `\n\n[참고 영상 URL]\n${refData.urls.join('\n')}${refData.note?'\n참고 포인트: '+refData.note:''}`
+    else if(refData.type==='image')
+      refCtx = `\n\n[참고 이미지 첨부됨]${refData.note?'\n참고 포인트: '+refData.note:''}`
+  }
+
   const cnt=parseInt(document.getElementById('i-cnt').value)||3
   const adType=document.getElementById('i-adtype').value
   const tone=document.getElementById('i-tone').value
@@ -2198,18 +2210,6 @@ JSON만 응답:{"scripts":[{"id":1,"hook":"","body":"","cta":"","style":"","hook
   // 학습된 브랜드 컨텍스트 포함 (크레딧 추가 소모 없음)
   // 학습 컨텍스트에서 고객 리뷰 언어 추출
   const learnedCtx=brand.learnedContext?`\n\n[학습된 브랜드 정보 + 고객 리뷰 인사이트]\n${brand.learnedContext}\n\n⚡ 위 정보 중 "고객이 실제로 쓰는 표현"은 훅에 그대로 활용하세요. 고객 언어로 시작하는 훅이 CTR이 높습니다.`:''
-
-  // 수동 모드 레퍼런스
-  const refData = mode==='manual' ? getRefData() : null
-  let refCtx = ''
-  if(refData){
-    if(refData.type==='script')
-      refCtx = `\n\n[참고 대본 레퍼런스]\n${refData.text}${refData.style?'\n스타일 지시: '+refData.style:''}`
-    else if(refData.type==='video')
-      refCtx = `\n\n[참고 영상 URL]\n${refData.urls.join('\n')}${refData.note?'\n참고 포인트: '+refData.note:''}`
-    else if(refData.type==='image')
-      refCtx = `\n\n[참고 이미지 첨부됨]${refData.note?'\n참고 포인트: '+refData.note:''}`
-  }
   const fullPrompt=prompt+learnedCtx+refCtx
 
   // 후킹 프롬프트 (별도 병렬 호출)
