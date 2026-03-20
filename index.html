@@ -1666,24 +1666,22 @@ async function loadSpyderBrands(){
     let allBrands=[], offset=0, hasMore=true
     listEl.innerHTML='<div class="spyder-loading"><span class="spin">◌</span> 불러오는 중... <span id="spyder-load-count">0</span>개</div>'
     while(hasMore){
-      // Foreplay API 직접 호출 (N8N 프록시 우회 - offset 파라미터 보장)
-      const fpUrl = `https://api.foreplay.co/api/spyder/brands?offset=${offset}&limit=10`
-      let r, d
+      // N8N 프록시 통해서만 호출 (브라우저 CORS 우회)
+      let d
       try {
-        r = await fetch(fpUrl, {
-          headers:{'Authorization': `Bearer ${K.fp}`, 'Content-Type':'application/json'}
-        })
-        d = await r.json()
-      } catch(e) {
-        // 직접 호출 실패 시 N8N 프록시 fallback
-        r = await fetch('https://junoflow.app.n8n.cloud/webhook/foreplay-proxy', {
+        const r = await fetch('https://junoflow.app.n8n.cloud/webhook/foreplay-proxy', {
           method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({endpoint:`/api/spyder/brands?offset=${offset}&limit=10`, params:{}, apiKey:K.fp})
         })
+        if(!r.ok) break
         d = await r.json()
+      } catch(e) {
+        console.warn('Spyder API 호출 실패:', e.message)
+        break
       }
-      if(!r.ok) break
-      const arr = d?.data || []
+      // N8N이 배열로 감싸서 반환하는 경우 처리
+      const raw = Array.isArray(d) ? d[0] : d
+      const arr = raw?.data || raw?.brands || (Array.isArray(raw) ? raw : [])
       if(!Array.isArray(arr)||arr.length===0) break
       allBrands=allBrands.concat(arr)
       const countEl=document.getElementById('spyder-load-count')
