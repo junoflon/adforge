@@ -476,9 +476,24 @@ audio{width:100%;height:30px}
           </div>
         </div>
         <div class="row2">
-          <div class="field"><label>수량</label><select id="i-lim"><option value="20">20개</option><option value="50" selected>50개</option><option value="100">100개</option></select></div>
-          <div class="field"><label>정렬</label><select id="i-sort"><option value="active_days">활성기간</option><option value="recent">최신순</option></select></div>
-        </div>
+            <div class="field">
+              <label>수량</label>
+              <select id="i-lim">
+                <option value="10">10개</option>
+                <option value="20">20개</option>
+                <option value="30">30개</option>
+                <option value="50" selected>50개</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>정렬</label>
+              <select id="i-sort">
+                <option value="active_days">활성기간</option>
+                <option value="recent">최신순</option>
+              </select>
+            </div>
+          </div>
+
       </div>
 
 
@@ -1281,7 +1296,7 @@ function disconnectSb(){
 const K = {
   get fp() { return _k().foreplay||'' },
   get cl() { return _k().claude||'' },
-  get el() { return _k().eleven||'sk_54fe7460dfeec0ed25a4d17557c193b24ad364a74954a903' },
+  get el() { const v=_k().eleven||'sk_54fe7460dfeec0ed25a4d17557c193b24ad364a74954a903'; return v.replace(/[^\x00-\x7F]/g,'').trim() },
   get vo() { return _k().voiceId||'21m00Tcm4TlvDq8ikWAM' },
   save(fp,cl,el,vo){
     const data={foreplay:fp,claude:cl,eleven:el,voiceId:vo||'21m00Tcm4TlvDq8ikWAM'}
@@ -1622,6 +1637,36 @@ function setMode(el){
   // Spyder 탭 진입 시 자동 로드
   if(mode==='spyder' && spyderBrands.length===0) loadSpyderBrands()
 }
+// ── 날짜 필터 ──
+function toggleDateFilter(on){
+  document.getElementById('date-filter-inputs').style.display = on ? 'block' : 'none'
+  if(on){
+    // 기본값: 최근 30일
+    setDateRange(30)
+  }
+}
+
+function setDateRange(days){
+  const to = new Date()
+  const from = new Date()
+  from.setDate(from.getDate() - days)
+  const fmt = d => d.toISOString().split('T')[0]
+  document.getElementById('i-date-from').value = fmt(from)
+  document.getElementById('i-date-to').value = fmt(to)
+}
+
+function getDateParams(){
+  const useDate = document.getElementById('use-date-filter')?.checked
+  if(!useDate) return {}
+  const from = document.getElementById('i-date-from')?.value
+  const to = document.getElementById('i-date-to')?.value
+  const params = {}
+  if(from) params.start_date = from
+  if(to) params.end_date = to
+  return params
+}
+
+
 function tf(el){
   const k=el.dataset.fk
   if(k==='all'){ document.querySelectorAll('[data-fk="active"],[data-fk="all"]').forEach(c=>c.classList.remove('on')); el.classList.add('on'); filters.delete('active') }
@@ -1946,6 +1991,7 @@ async function apiGet(){
   if(filters.has('active')) p.append('active','true')
   const fmts=['video','image'].filter(f=>filters.has(f))
   if(fmts.length) p.append('formats',fmts.join(','))
+
   let url
 
   // N8N 웹훅 공통 호출 함수
@@ -1973,6 +2019,7 @@ async function apiGet(){
     const params = {limit:lim, sort}
     if(filters.has('active')) params.active = 'true'
     if(fmts.length) params.formats = fmts.join(',')
+
     const results=await Promise.all(selected.map(async brand=>{
       const d=await n8nFetch('/api/spyder/brand/ads', {...params, brand_id: brand.id})
       return fpArr(d).map(a=>({...norm(a),brand:brand.name||a.brandName||a.brand?.name||'알 수 없음'}))
@@ -2408,7 +2455,7 @@ async function connectElevenLabs(){
   try {
     // 1. API 키 검증 + 목소리 목록 가져오기
     const r = await fetch('https://api.elevenlabs.io/v1/voices',{
-      headers:{'xi-api-key': apiKey}
+      headers:{'xi-api-key': apiKey.replace(/[^\x00-\x7F]/g,'').trim()}
     })
     if(!r.ok) throw new Error('API 키가 올바르지 않아요')
     const d = await r.json()
@@ -2593,7 +2640,7 @@ async function makeTTS(idx){
   try {
     const r=await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${_ttsSettings.voiceId}`,{
       method:'POST',
-      headers:{'Accept':'audio/mpeg','Content-Type':'application/json','xi-api-key':K.el},
+      headers:{'Accept':'audio/mpeg','Content-Type':'application/json','xi-api-key':K.el.replace(/[^\x00-\x7F]/g,'').trim()},
       body:JSON.stringify({
         text,
         model_id: _ttsSettings.model||'eleven_multilingual_v2',
