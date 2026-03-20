@@ -1644,9 +1644,11 @@ async function loadSpyderBrands(){
     // Foreplay API: 내 Spyder 추적 브랜드 목록 (페이지네이션)
     let allBrands=[], offset=0, hasMore=true
     while(hasMore){
+      const fetchParams = {limit:100}
+      if(offset) fetchParams.cursor = offset
       const r=await fetch('https://junoflow.app.n8n.cloud/webhook/foreplay-proxy',
         {method:'POST',headers:{'Content-Type':'application/json'},
-         body:JSON.stringify({endpoint:'/api/spyder/brands',params:{offset,limit:100},apiKey:K.fp})})
+         body:JSON.stringify({endpoint:'/api/spyder/brands',params:fetchParams,apiKey:K.fp})})
       if(!r.ok){
         console.error('Foreplay API 오류:', r.status)
         listEl.innerHTML='<div class="spyder-loading" style="color:var(--red,#ff5f57)">API 오류 ('+r.status+')<br><span style="font-size:10px;color:var(--text3)">F12 콘솔에서 상세 확인</span></div>'
@@ -1658,35 +1660,28 @@ async function loadSpyderBrands(){
       const debugStr = JSON.stringify(d).slice(0,300)
       listEl.innerHTML='<div style="font-size:10px;color:var(--text3);padding:8px;word-break:break-all;background:var(--s3);border-radius:var(--r)">API 응답:<br>'+debugStr+'</div>'
       // 응답 구조 파싱
-      let raw = Array.isArray(d) ? d[0] : d
-      // N8N 래핑 구조 처리: [{body:{data:[...]}}] 형태일 수 있음
-      if(raw?.body) raw = raw.body
-      if(raw?.data && !Array.isArray(raw.data)) raw = raw.data
-      const arr = (Array.isArray(raw) ? raw : null)
-             || raw?.brands || raw?.data || raw?.results
-             || raw?.spyder_brands || raw?.trackedBrands
-             || (raw?.body ? (Array.isArray(raw.body)?raw.body:raw.body?.data||raw.body?.brands||[]) : [])
-             || []
-      // 응답 전체를 항상 표시 (디버그)
-      listEl.innerHTML='<div style="font-size:9px;color:var(--text3);padding:6px;word-break:break-all;background:var(--s3);border-radius:var(--r);max-height:120px;overflow-y:auto">'+
-        '키: '+Object.keys(raw||{}).join(', ')+'<br>'+
-        '배열길이: '+(Array.isArray(arr)?arr.length:'not array')+'<br>'+
-        JSON.stringify(d).slice(0,400)+'</div>'
+      // 실제 응답 구조: {metadata:{cursor,count}, data:[{id,name,ad_library_id,avatar,...}]}
+      const arr = d?.data || []
+      const cursor = d?.metadata?.cursor || null
       if(!Array.isArray(arr)||arr.length===0) break
       allBrands=allBrands.concat(arr)
-      if(arr.length<100) hasMore=false
-      else offset+=100
+      // cursor 기반 페이지네이션
+      if(!cursor || arr.length < 10) hasMore=false
+      else { offset = cursor }  // cursor를 다음 offset으로 사용
       if(allBrands.length>=500) break
     }
     const spArr=allBrands
 
     spyderBrands=(Array.isArray(spArr)?spArr:[]).map(b=>({
-      id:b.id||b.brandId||('sp_'+Math.random().toString(36).slice(2,6)),
-      name:b.name||b.brandName||'알 수 없음',
-      pageId:b.pageId||b.facebookPageId||b.page_id||b.ad_library_id||'',
-      adCount:b.adCount||b.total_ads||0,
-      liveCount:b.liveCount||b.active_ads||0,
-      selected:false
+      id: b.id||('sp_'+Math.random().toString(36).slice(2,6)),
+      name: b.name||'알 수 없음',
+      pageId: b.ad_library_id||b.pageId||b.page_id||'',
+      avatar: b.avatar||'',
+      category: b.category||'',
+      url: b.url||'',
+      adCount: b.adCount||b.total_ads||0,
+      liveCount: b.liveCount||b.active_ads||0,
+      selected: false
     }))
 
     if(!spyderBrands.length){
