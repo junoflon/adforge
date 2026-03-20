@@ -840,24 +840,35 @@ const SB = {
   },
 
   async getAll(table){
-    return this._fetch(`/${table}?select=*&order=created_at.asc`)
+    const r=await fetch('https://nroylubtytcslujylicw.supabase.co/rest/v1/'+table+'?select=*',{
+      headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ'}
+    })
+    if(!r.ok) return []
+    return r.json()
   },
 
   async upsert(table, rows){
-    if(!rows.length) return
-    return this._fetch(`/${table}`, {
-      method:'POST', prefer:'resolution=merge-duplicates,return=minimal',
-      body: JSON.stringify(Array.isArray(rows)?rows:[rows])
+    const r=await fetch('https://nroylubtytcslujylicw.supabase.co/rest/v1/'+table+'?on_conflict=id',{
+      method:'POST',
+      headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ','Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
+      body:JSON.stringify(Array.isArray(rows)?rows:[rows])
     })
+    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.message||'DB '+r.status)}
+    return r
   },
 
   async delete(table, id){
-    return this._fetch(`/${table}?id=eq.${id}`, { method:'DELETE', prefer:'return=minimal' })
+    await fetch('https://nroylubtytcslujylicw.supabase.co/rest/v1/'+table+'?id=eq.'+id,{
+      method:'DELETE',
+      headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ'}
+    })
   },
 
   async deleteAll(table){
-    return this._fetch(`/${table}?id=neq.null_impossible_value`, { method:'DELETE', prefer:'return=minimal' })
-      .catch(()=> this._fetch(`/${table}?created_at=gte.1970-01-01`, { method:'DELETE', prefer:'return=minimal' }))
+    await fetch('https://nroylubtytcslujylicw.supabase.co/rest/v1/'+table+'?id=neq.impossible_value_xyz',{
+      method:'DELETE',
+      headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ'}
+    })
   },
 
   async test(){
@@ -868,18 +879,24 @@ const SB = {
 
 // row 변환 헬퍼
 function sbToBrand(r){
-  return {id:r.id,name:r.name,category:r.category||'',painpoint:r.painpoint||'',
-    usp:r.usp||'',tone:r.tone||'',prohibit:r.prohibit||'',context:r.context||'',
-    color:r.color||'#9b72fb',
+  return {
+    id:r.id, name:r.name, category:r.category||'',
+    painpoint:r.painpoint||'', usp:r.usp||'', tone:r.tone||'',
+    prohibit:r.prohibit||'', context:r.context||'', color:r.color||'#9b72fb',
     learnedContext:r.learned_context||null,
-    urls:r.urls?r.urls.split('\n').filter(Boolean):[]}
+    learnedStack:Array.isArray(r.learned_stack)?r.learned_stack:[],
+    urls:r.urls?r.urls.split('\n').filter(Boolean):[]
+  }
 }
 function brandToSb(b){
-  return {id:b.id,name:b.name,category:b.category||'',painpoint:b.painpoint||'',
-    usp:b.usp||'',tone:b.tone||'',prohibit:b.prohibit||'',context:b.context||'',
-    color:b.color||'#9b72fb',
+  return {
+    id:b.id, name:b.name, category:b.category||'',
+    painpoint:b.painpoint||'', usp:b.usp||'', tone:b.tone||'',
+    prohibit:b.prohibit||'', context:b.context||'', color:b.color||'#9b72fb',
     learned_context:b.learnedContext||null,
-    urls:b.urls?.filter(u=>u).join('\n')||null}
+    learned_stack:b.learnedStack?.length?b.learnedStack:null,
+    urls:b.urls?.filter(u=>u).join('\n')||null
+  }
 }
 
 // DB 헬퍼 — localStorage + Supabase 동기화
@@ -887,14 +904,17 @@ const DB = {
   _saveTimer: null,
 
   async loadBrands(){
-    if(SB.isConnected()){
-      try {
-        const rows=await SB.getAll('brands')
-        const data=rows.map(sbToBrand)
+    try {
+      const r = await fetch('https://nroylubtytcslujylicw.supabase.co/rest/v1/brands?select=*&order=created_at',{
+        headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ'}
+      })
+      if(r.ok){
+        const rows = await r.json()
+        const data = rows.map(sbToBrand)
         localStorage.setItem('af_brands', JSON.stringify(data))
         return data
-      } catch(e){ console.warn('Supabase 로드 실패, 로컬 사용:', e.message) }
-    }
+      }
+    } catch(e){ console.warn('Supabase 브랜드 로드 실패:', e.message) }
     return JSON.parse(localStorage.getItem('af_brands')||'[]')
   },
 
@@ -904,16 +924,27 @@ const DB = {
       clearTimeout(this._saveTimer)
       this._saveTimer=setTimeout(async ()=>{
         try {
-          await SB.deleteAll('brands')
-          if(data.length) await SB.upsert('brands', data.map(brandToSb))
-          showSaveIndicator('☁️ Supabase 저장됨 ✓')
+          const r = await fetch('https://nroylubtytcslujylicw.supabase.co/rest/v1/brands?on_conflict=id',{
+            method:'POST',
+            headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ','Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
+            body:JSON.stringify(data.map(brandToSb))
+          })
+          if(r.ok) showSaveIndicator('☁️ Supabase 저장됨 ✓')
+          else showSaveIndicator('⚠️ Supabase 저장 실패 ('+r.status+')', true)
         } catch(e){
           console.error('Supabase 저장 실패:', e)
-          showSaveIndicator('⚠️ 로컬 저장됨 — Supabase 오류. 팀원과 공유 안 됩니다', true)
+          showSaveIndicator('⚠️ 로컬 저장됨 — Supabase 오류', true)
         }
       }, 600)
     } else {
-      showSaveIndicator('⚠️ 로컬에만 저장됨 — Supabase 연결 시 팀 공유 가능', true)
+      // Supabase 미연결이어도 로컬은 항상 저장됨 (anon key로 직접 저장 시도)
+      try {
+        await fetch('https://nroylubtytcslujylicw.supabase.co/rest/v1/brands?on_conflict=id',{
+          method:'POST',
+          headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ','Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
+          body:JSON.stringify(data.map(brandToSb))
+        }).then(r=>{ if(r.ok) showSaveIndicator('☁️ Supabase 저장됨 ✓') })
+      } catch(e){ showSaveIndicator('⚠️ 로컬에만 저장됨', true) }
     }
   }
 }
@@ -998,7 +1029,26 @@ const K = {
   get cl() { return _k().claude||'' },
   get el() { return _k().eleven||'' },
   get vo() { return _k().voiceId||'21m00Tcm4TlvDq8ikWAM' },
-  save(fp,cl,el,vo){ localStorage.setItem('af_keys',JSON.stringify({foreplay:fp,claude:cl,eleven:el,voiceId:vo||'21m00Tcm4TlvDq8ikWAM'})) }
+  save(fp,cl,el,vo){
+    const data={foreplay:fp,claude:cl,eleven:el,voiceId:vo||'21m00Tcm4TlvDq8ikWAM'}
+    localStorage.setItem('af_keys',JSON.stringify(data))
+    // Supabase settings 테이블에도 저장
+    const pairs=[
+      {key:'foreplay_api_key',value:fp},
+      {key:'claude_api_key',value:cl},
+      {key:'elevenlabs_api_key',value:el},
+      {key:'elevenlabs_voice_id',value:vo||'21m00Tcm4TlvDq8ikWAM'}
+    ]
+    // settings 테이블에 각 키 upsert (key/value 구조)
+    Promise.all(pairs.map(p=>
+      fetch('https://nroylubtytcslujylicw.supabase.co/rest/v1/settings?on_conflict=key',{
+        method:'POST',
+        headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ','Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
+        body:JSON.stringify(p)
+      })
+    )).then(()=>{ console.log('✅ API 키 Supabase 저장 완료'); showSaveIndicator('☁️ API 키 Supabase 저장됨 ✓') })
+    .catch(e=>console.warn('API 키 Supabase 저장 실패:',e.message))
+  }
 }
 function _k(){ try{return JSON.parse(localStorage.getItem('af_keys')||'{}')}catch(e){return {}} }
 
@@ -1019,7 +1069,11 @@ let editBrandId = null
 // Supabase settings 테이블에서 API 키 자동 로드
 async function loadSettingsFromSB(){
   try {
-    const rows = await SB.getAll('settings')
+    const r = await fetch('https://nroylubtytcslujylicw.supabase.co/rest/v1/settings?select=*',{
+      headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ'}
+    })
+    if(!r.ok) return
+    const rows = await r.json()
     if(!rows.length) return
     const map = {}
     rows.forEach(r=>{ map[r.key]=r.value })
@@ -1345,31 +1399,52 @@ function pbar(p){ const b=document.getElementById('prog-bar'); if(b) b.style.wid
 // ══════════════════════════════════════════════
 // ── 광고 캐시 (Supabase ads_cache) ──
 async function loadAdsCache(brandIds){
-  if(!SB.isConnected()) return null
+  const keyPrefix = brandIds.sort().join('|')
+  // 1. Supabase에서 먼저
+  if(SB.isConnected()){
+    try {
+      const rows = await SB.getAll('ads_cache')
+      const row = rows.find(r=>r.id===keyPrefix)
+      if(row && Date.now()-row.fetched_at < 24*60*60*1000){
+        const parsed = JSON.parse(row.data_json||'[]')
+        if(parsed.length) return parsed
+      }
+    } catch(e){}
+  }
+  // 2. 로컬 폴백
   try {
-    // brand_id 기준으로 캐시 조회
-    const keyPrefix = brandIds.sort().join('|')
-    const rows = await SB.getAll('ads_cache')
-    const row = rows.find(r=>r.id===keyPrefix)
-    if(!row) return null
-    // 24시간 이내 캐시만 사용
-    if(Date.now()-row.fetched_at > 24*60*60*1000) return null
-    return JSON.parse(row.data_json||'[]')
-  } catch(e){ return null }
+    const local = JSON.parse(localStorage.getItem('af_ads_cache')||'{}')
+    const row = local[keyPrefix]
+    if(row && Date.now()-row.fetched_at < 24*60*60*1000){
+      const parsed = JSON.parse(row.data_json||'[]')
+      if(parsed.length) return parsed
+    }
+  } catch(e){}
+  return null
 }
 
 async function saveAdsCache(brandIds, adsData){
-  if(!SB.isConnected()) return
+  const keyPrefix = brandIds.sort().join('|')
+  const payload = {
+    id: keyPrefix,
+    brand_id: brandIds[0]||'',
+    brand_name: adsData[0]?.brand||'',
+    data_json: JSON.stringify(adsData),
+    fetched_at: Date.now()
+  }
+  // Supabase에 저장
+  if(SB.isConnected()){
+    try {
+      await SB.upsert('ads_cache', [payload])
+      console.log('✅ 광고 캐시 Supabase 저장')
+    } catch(e){ console.warn('광고 캐시 Supabase 저장 실패:', e.message) }
+  }
+  // 로컬에도 항상 백업
   try {
-    const keyPrefix = brandIds.sort().join('|')
-    await SB.upsert('ads_cache', [{
-      id: keyPrefix,
-      brand_id: brandIds[0]||'',
-      brand_name: adsData[0]?.brand||'',
-      data_json: JSON.stringify(adsData),
-      fetched_at: Date.now()
-    }])
-  } catch(e){ console.warn('광고 캐시 저장 실패:', e.message) }
+    const local = JSON.parse(localStorage.getItem('af_ads_cache')||'{}')
+    local[keyPrefix] = payload
+    localStorage.setItem('af_ads_cache', JSON.stringify(local))
+  } catch(e){}
 }
 
 
@@ -1853,17 +1928,22 @@ let _pdfData = []
 
 // ── Spyder 브랜드 Supabase 캐시 ──
 async function loadSpyderCache(){
-  // 1. Supabase에서 먼저
-  if(SB.isConnected()){
-    try {
-      const rows = await SB.getAll('spyder_cache')
+  // 1. Supabase에서 먼저 (anon key 직접)
+  try {
+    const r = await fetch('https://nroylubtytcslujylicw.supabase.co/rest/v1/spyder_cache?select=*',{
+      headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ'}
+    })
+    if(r.ok){
+      const rows = await r.json()
       if(rows&&rows.length){
         const row = rows[0]
-        if(Date.now()-row.updated_at < 7*24*60*60*1000)
-          return JSON.parse(row.brands_json||'[]')
+        if(Date.now()-row.updated_at < 7*24*60*60*1000){
+          const brands = JSON.parse(row.brands_json||'[]')
+          if(brands.length) return brands
+        }
       }
-    } catch(e){}
-  }
+    }
+  } catch(e){}
   // 2. 로컬 폴백
   try {
     const local = JSON.parse(localStorage.getItem('af_spyder_cache')||'null')
@@ -1873,14 +1953,19 @@ async function loadSpyderCache(){
 }
 
 async function saveSpyderCache(brands){
-  // groupName은 유지하면서 저장
   const toSave = brands.map(b=>({...b, groupName:b.groupName||null}))
-  if(SB.isConnected()){
-    try {
-      await SB.upsert('spyder_cache', [{id:'main', brands_json:JSON.stringify(toSave), updated_at:Date.now()}])
-    } catch(e){ console.warn('Spyder 캐시 저장 실패:', e.message) }
-  }
-  // 로컬에도 항상 저장
+  const payload = [{id:'main', brands_json:JSON.stringify(toSave), updated_at:Date.now()}]
+  // Supabase에 직접 저장 (anon key)
+  try {
+    const r = await fetch('https://nroylubtytcslujylicw.supabase.co/rest/v1/spyder_cache?on_conflict=id',{
+      method:'POST',
+      headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb3lsdWJ0eXRjc2x1anlsaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDA2MjEsImV4cCI6MjA4OTQ3NjYyMX0.2jgPGouTF-OW9GCkrtjJbLDsaCYLKXGtMY89t-eXULQ','Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
+      body:JSON.stringify(payload)
+    })
+    if(r.ok) console.log('✅ Spyder 캐시 Supabase 저장')
+    else console.warn('Spyder 캐시 저장 실패:', r.status)
+  } catch(e){ console.warn('Spyder 캐시 저장 오류:', e.message) }
+  // 로컬에도 항상 백업
   localStorage.setItem('af_spyder_cache', JSON.stringify({ts:Date.now(), brands:toSave}))
 }
 
