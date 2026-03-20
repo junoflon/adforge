@@ -418,20 +418,44 @@ audio{width:100%;height:30px}
 
         <!-- Spyder 모드 -->
         <div id="m-spyder" style="display:none">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">
-            <span style="font-size:11px;color:var(--text3)">내 Spyder 추적 브랜드</span>
-            <button class="btn sm" id="spyder-refresh-btn" onclick="document.getElementById('spyder-refresh-btn').dataset.force='1';loadSpyderBrands()" style="font-size:10px;padding:3px 8px" title="Foreplay에서 새로 가져오기">↻</button>
-          <button class="btn sm" onclick="spyderGroupEdit()" style="font-size:10px;padding:3px 8px" title="브랜드 그룹 편집">📁</button>
+
+          <!-- 탭: 내 Spyder / 브랜드 검색 -->
+          <div style="display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:10px">
+            <button id="spyder-tab-my" onclick="switchSpyderTab('my')" style="flex:1;padding:6px 4px;font-size:10px;font-weight:600;border:none;background:none;cursor:pointer;color:var(--purple);border-bottom:2px solid var(--purple)">📌 내 Spyder</button>
+            <button id="spyder-tab-search" onclick="switchSpyderTab('search')" style="flex:1;padding:6px 4px;font-size:10px;font-weight:600;border:none;background:none;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent">🔍 브랜드 검색</button>
           </div>
-          <div id="spyder-brand-list">
-            <div style="font-size:11px;color:var(--text3);padding:8px 0;text-align:center">
-              API 키를 입력하면 목록을 불러옵니다
+
+          <!-- 내 Spyder 패널 -->
+          <div id="spyder-panel-my">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">
+              <span style="font-size:10px;color:var(--text3)">추적 중인 브랜드</span>
+              <div style="display:flex;gap:4px">
+                <button class="btn sm" onclick="spyderGroupEdit()" style="font-size:10px;padding:3px 8px" title="그룹 편집">📁</button>
+                <button class="btn sm" id="spyder-refresh-btn" onclick="document.getElementById('spyder-refresh-btn').dataset.force='1';loadSpyderBrands()" style="font-size:10px;padding:3px 8px" title="새로고침">↻</button>
+                <a href="https://app.foreplay.co/library-spyder" target="_blank" class="btn sm" style="font-size:10px;padding:3px 8px;text-decoration:none" title="Foreplay에서 브랜드 추가">+ Spyder</a>
+              </div>
             </div>
+            <div id="spyder-brand-list">
+              <div style="font-size:11px;color:var(--text3);padding:8px 0;text-align:center">
+                API 키를 입력하면 목록을 불러옵니다
+              </div>
+            </div>
+            <div id="spyder-selected-info" style="display:none;margin-top:8px;padding:7px 9px;background:var(--purple-dim);border:1px solid rgba(155,114,251,.3);border-radius:var(--r);font-size:11px;color:var(--purple);font-family:'JetBrains Mono',monospace"></div>
           </div>
-          <div id="spyder-selected-info" style="display:none;margin-top:8px;padding:7px 9px;background:var(--purple-dim);border:1px solid rgba(155,114,251,.3);border-radius:var(--r);font-size:11px;color:var(--purple);font-family:'JetBrains Mono',monospace"></div>
-          <div style="margin-top:7px;font-size:10px;color:var(--text3);line-height:1.5">
-            Spyder에 추적 등록된 브랜드의<br>전체 광고 이력을 가져옵니다
+
+          <!-- 브랜드 검색 패널 -->
+          <div id="spyder-panel-search" style="display:none">
+            <div class="field">
+              <div style="display:flex;gap:6px">
+                <input type="text" id="spyder-search-input" placeholder="브랜드명 검색... (예: 올리브영)"
+                  style="flex:1;font-size:11px" onkeydown="if(event.key==='Enter')searchSpyderBrand()">
+                <button class="btn sm pur" onclick="searchSpyderBrand()" style="white-space:nowrap">검색</button>
+              </div>
+              <div class="hint">Facebook 페이지 기반으로 검색돼요</div>
+            </div>
+            <div id="spyder-search-result" style="margin-top:6px"></div>
           </div>
+
         </div>
 
         <div id="m-brand"><div class="field"><input type="text" id="i-brand" placeholder="예: 올리브영, 마켓컬리..." onkeydown="if(event.key==='Enter')go()"></div></div>
@@ -1422,6 +1446,82 @@ function closeModal(id){ document.getElementById(id)?.classList.remove('open') }
 // SPYDER — 내 추적 브랜드 관리
 // ══════════════════════════════════════════════
 let spyderBrands = []   // [{id, name, pageId, adCount, liveCount, selected}]
+
+// ── Spyder 탭 전환 ──
+function switchSpyderTab(tab){
+  const myPanel = document.getElementById('spyder-panel-my')
+  const searchPanel = document.getElementById('spyder-panel-search')
+  const myBtn = document.getElementById('spyder-tab-my')
+  const searchBtn = document.getElementById('spyder-tab-search')
+  if(tab === 'my'){
+    myPanel.style.display = 'block'
+    searchPanel.style.display = 'none'
+    myBtn.style.color = 'var(--purple)'; myBtn.style.borderBottomColor = 'var(--purple)'
+    searchBtn.style.color = 'var(--text3)'; searchBtn.style.borderBottomColor = 'transparent'
+  } else {
+    myPanel.style.display = 'none'
+    searchPanel.style.display = 'block'
+    searchBtn.style.color = 'var(--purple)'; searchBtn.style.borderBottomColor = 'var(--purple)'
+    myBtn.style.color = 'var(--text3)'; myBtn.style.borderBottomColor = 'transparent'
+    document.getElementById('spyder-search-input')?.focus()
+  }
+}
+
+// ── 브랜드 검색 ──
+async function searchSpyderBrand(){
+  const q = document.getElementById('spyder-search-input')?.value.trim()
+  if(!q){ toast('브랜드명을 입력해주세요','err'); return }
+  if(!K.fp){ toast('Foreplay API 키가 필요해요','err'); return }
+
+  const resultEl = document.getElementById('spyder-search-result')
+  resultEl.innerHTML = '<div style="font-size:11px;color:var(--text3);text-align:center;padding:12px"><span class="spin">◌</span> 검색 중...</div>'
+
+  try {
+    const r = await fetch('https://junoflow.app.n8n.cloud/webhook/foreplay-proxy', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({endpoint: '/brands/search', params: {name: q, limit: 10}, apiKey: K.fp})
+    })
+    if(!r.ok) throw new Error('검색 실패')
+    const d = await r.json()
+    const raw = Array.isArray(d) ? d[0] : d
+    const arr = raw?.data || raw?.brands || raw?.results || []
+
+    if(!arr.length){
+      resultEl.innerHTML = '<div style="font-size:11px;color:var(--text3);text-align:center;padding:12px">검색 결과가 없어요</div>'
+      return
+    }
+
+    resultEl.innerHTML = arr.map(b => {
+      const name = b.name || b.page_name || b.brandName || '알 수 없음'
+      const pageId = b.page_id || b.pageId || b.id || ''
+      const adCount = b.ad_count || b.adCount || 0
+      const avatar = b.avatar || b.logo || b.image || ''
+      return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--s2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:5px;cursor:pointer;transition:border .15s"
+        onmouseover="this.style.borderColor='var(--border2)'" onmouseout="this.style.borderColor='var(--border)'"
+        onclick="selectSearchResult('${pageId}','${name.replace(/'/g,"\'")}')">
+        ${avatar ? `<img src="${avatar}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">` : '<div style="width:28px;height:28px;border-radius:50%;background:var(--s3);flex-shrink:0"></div>'}
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</div>
+          <div style="font-size:10px;color:var(--text3)">광고 ${adCount}개${pageId ? ' · ID: '+pageId : ''}</div>
+        </div>
+        <button class="btn sm pur" style="font-size:10px;flex-shrink:0">선택</button>
+      </div>`
+    }).join('')
+
+  } catch(e){
+    resultEl.innerHTML = `<div style="font-size:11px;color:var(--red,#ff5f57);padding:8px">검색 실패: ${e.message}</div>`
+  }
+}
+
+function selectSearchResult(pageId, name){
+  if(!pageId){ toast('Page ID가 없어요','err'); return }
+  // Page ID 모드로 전환해서 바로 수집
+  const modeEl = document.querySelector('[data-m="pageid"]')
+  if(modeEl) setMode(modeEl)
+  const pidEl = document.getElementById('i-pid')
+  if(pidEl){ pidEl.value = pageId; toast(`${name} 선택됨 → 수집 버튼을 눌러주세요`, 'ok') }
+}
+
 
 async function loadSpyderBrands(){
   const listEl=document.getElementById('spyder-brand-list')
