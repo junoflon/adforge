@@ -1467,7 +1467,7 @@ async function testSpyderAPI(){
   listEl.innerHTML = '<div style="font-size:10px;color:var(--text3);padding:6px"><span class="spin">◌</span> offset 0 vs 10 비교 테스트 중...</div>'
   try {
     // offset=0 요청
-    const r0 = await fetch('https://junoflow.app.n8n.cloud/webhook/foreplay-proxy', {
+    const r0 = await fetch('/api/foreplay-proxy', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({endpoint:'/api/spyder/brands?offset=0&limit=10', params:{offset:0,limit:10}, apiKey:K.fp})
     })
@@ -1475,7 +1475,7 @@ async function testSpyderAPI(){
     const names0 = (d0?.data||[]).map(b=>b.name).join(', ')
 
     // offset=10 요청
-    const r1 = await fetch('https://junoflow.app.n8n.cloud/webhook/foreplay-proxy', {
+    const r1 = await fetch('/api/foreplay-proxy', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({endpoint:'/api/spyder/brands?offset=10&limit=10', params:{offset:10,limit:10}, apiKey:K.fp})
     })
@@ -1549,7 +1549,7 @@ async function searchSpyderBrand(){
     let apiResults = []
     if(K.fp){
       try {
-        const res = await fetch('https://junoflow.app.n8n.cloud/webhook/foreplay-proxy', {
+        const res = await fetch('/api/foreplay-proxy', {
           method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({endpoint:'/brands/search', params:{name:q, limit:20}, apiKey:K.fp})
         })
@@ -1674,7 +1674,7 @@ async function loadSpyderBrands(){
     while(hasMore){
       // N8N 프록시로 offset 포함해서 호출
       // endpoint에 쿼리스트링 직접 포함 (N8N이 params를 제대로 전달 못할 경우 대비)
-      const r=await fetch('https://junoflow.app.n8n.cloud/webhook/foreplay-proxy',{
+      const r=await fetch('/api/foreplay-proxy',{
         method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({
           endpoint:`/api/spyder/brands?offset=${offset}&limit=10`,
@@ -2223,7 +2223,7 @@ async function apiGet(){
 
   // N8N 웹훅 공통 호출 함수
   const n8nFetch = async (endpoint, params={}) => {
-    const r = await fetch('https://junoflow.app.n8n.cloud/webhook/foreplay-proxy', {
+    const r = await fetch('/api/foreplay-proxy', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({endpoint, params, apiKey: K.fp})
