@@ -400,22 +400,55 @@ async function learnBrand(){
     const urlText = urls.length ? `다음 URL들을 방문해서 브랜드 정보를 분석해주세요:\n${urls.join('\n')}` : ''
     const userText = `${urlText}${_pdfData.length ? '\n\n첨부된 PDF 문서도 함께 분석해주세요.' : ''}\n\n위 브랜드의 핵심 정보를 요약해주세요.`
     contentParts.push({type:'text',text:userText})
-    const r=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':K.cl,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:4096,
-        system:systemPrompt,
-        tools:[{type:'web_search_20250305',name:'web_search'}],
-        messages:[{role:'user',content:contentParts}]
+
+    // 멀티턴 루프: web_search 도구 호출 → 결과 반영 → 최종 분석까지 반복
+    const messages=[{role:'user',content:contentParts}]
+    let summary=''
+    const apiHeaders={'Content-Type':'application/json','x-api-key':K.cl,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'}
+    const maxTurns=10 // 안전장치: 최대 10턴
+
+    for(let turn=0; turn<maxTurns; turn++){
+      btn.innerHTML=`<span class="spin">◌</span> 학습 중... (${turn+1}/${maxTurns})`
+      const r=await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST', headers:apiHeaders,
+        body:JSON.stringify({
+          model:'claude-sonnet-4-20250514',
+          max_tokens:8192,
+          system:systemPrompt,
+          tools:[{type:'web_search_20250305',name:'web_search',max_uses:5}],
+          messages
+        })
       })
-    })
-    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error?.message||'Claude API 오류')}
-    const d=await r.json()
-    // tool_use 결과 포함해서 텍스트 추출
-    const summary=d.content.map(c=>c.type==='text'?c.text:'').filter(Boolean).join('').trim()
-    if(!summary) throw new Error('분석 결과가 없어요. 잠시 후 다시 시도해주세요.')
+      if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error?.message||'Claude API 오류')}
+      const d=await r.json()
+
+      // 텍스트 수집
+      const texts=d.content.filter(c=>c.type==='text').map(c=>c.text)
+      if(texts.length) summary+=texts.join('')
+
+      // 종료 조건: end_turn 또는 max_tokens
+      if(d.stop_reason==='end_turn' || d.stop_reason==='max_tokens') break
+
+      // tool_use인 경우 → server_tool_use 결과를 messages에 추가해서 계속
+      // web_search는 서버사이드 도구라 자동 처리됨, 응답에 결과가 이미 포함
+      // 하지만 stop_reason이 tool_use면 assistant 응답을 넣고 다음 user 턴 필요
+      if(d.stop_reason==='tool_use'){
+        messages.push({role:'assistant', content:d.content})
+        // server_tool_use 결과 블록 수집
+        const toolResults = d.content
+          .filter(c=>c.type==='server_tool_use')
+          .map(c=>({type:'server_tool_result', tool_use_id:c.id}))
+        if(toolResults.length){
+          messages.push({role:'user', content:toolResults})
+        } else {
+          break // tool 결과 없으면 종료
+        }
+        continue
+      }
+      break
+    }
+
+    if(!summary.trim()) throw new Error('분석 결과가 없어요. 잠시 후 다시 시도해주세요.')
 
     // 3. 버전 스택에 추가
     const nowTs=Date.now()
