@@ -576,16 +576,16 @@ function renderEditProducts(){
         <input type="text" value="${p.name||''}" onchange="_editProducts[${i}].name=this.value" placeholder="예: 여성청결제" style="font-size:11px">
       </div>
       <div class="field" style="margin-bottom:6px">
-        <label style="font-size:10px">USP (쉼표로 구분)</label>
-        <input type="text" value="${p.usp||''}" onchange="_editProducts[${i}].usp=this.value" placeholder="예: 산부인과 원내판매, pH5.0 약산성" style="font-size:11px">
+        <label style="font-size:10px">USP <span style="color:var(--text3);font-weight:400">한 줄에 하나씩</span></label>
+        <textarea rows="3" onchange="_editProducts[${i}].usp=this.value" placeholder="산부인과 원내판매\npH5.0 약산성\n임산부도 사용 가능" style="font-size:11px;line-height:1.5;resize:vertical">${(p.usp||'').replace(/,\s*/g,'\n')}</textarea>
       </div>
       <div class="field" style="margin-bottom:6px">
-        <label style="font-size:10px">페인포인트</label>
-        <input type="text" value="${p.painpoint||''}" onchange="_editProducts[${i}].painpoint=this.value" placeholder="예: 질염 반복, Y존 냄새" style="font-size:11px">
+        <label style="font-size:10px">페인포인트 <span style="color:var(--text3);font-weight:400">한 줄에 하나씩</span></label>
+        <textarea rows="2" onchange="_editProducts[${i}].painpoint=this.value" placeholder="질염 반복\nY존 냄새" style="font-size:11px;line-height:1.5;resize:vertical">${(p.painpoint||'').replace(/,\s*/g,'\n')}</textarea>
       </div>
       <div class="field">
         <label style="font-size:10px">타겟</label>
-        <input type="text" value="${p.target||''}" onchange="_editProducts[${i}].target=this.value" placeholder="예: 20대 여성, 질염 경험자" style="font-size:11px">
+        <textarea rows="2" onchange="_editProducts[${i}].target=this.value" placeholder="20대 여성\n질염 경험자" style="font-size:11px;line-height:1.5;resize:vertical">${(p.target||'').replace(/,\s*/g,'\n')}</textarea>
       </div>
     </div>`).join('')
 }
@@ -611,8 +611,8 @@ function saveBrand(){
   const urls=[...document.querySelectorAll('#b-urls-wrap input')].map(i=>i.value.trim()).filter(Boolean)
 
   // 제품에서 USP/페인포인트 합산 (하위호환)
-  const allUsp = _editProducts.map(p=>p.usp).filter(Boolean).join(', ')
-  const allPain = _editProducts.map(p=>p.painpoint).filter(Boolean).join(', ')
+  const allUsp = _editProducts.map(p=>p.usp).filter(Boolean).join('\n')
+  const allPain = _editProducts.map(p=>p.painpoint).filter(Boolean).join('\n')
 
   const b={
     id:editBrandId||'b'+Date.now(),
@@ -742,9 +742,9 @@ function _buildUspOptions(b, productName){
     // 특정 제품 선택 → 해당 제품의 USP/페인포인트만
     const prod = _brandProducts.find(p=>p.name===productName)
     if(prod){
-      if(prod.usp) prod.usp.split(/[,·]/).map(s=>s.trim()).filter(s=>s.length>2).forEach(u =>
+      if(prod.usp) prod.usp.split(/[,\n·]/).map(s=>s.trim()).filter(s=>s.length>2).forEach(u =>
         _uspOptions.push({text:u, type:'usp', product:prod.name}))
-      if(prod.painpoint) prod.painpoint.split(/[,·]/).map(s=>s.trim()).filter(s=>s.length>2).forEach(p =>
+      if(prod.painpoint) prod.painpoint.split(/[,\n·]/).map(s=>s.trim()).filter(s=>s.length>2).forEach(p =>
         _uspOptions.push({text:p, type:'pain', product:prod.name}))
     }
   } else {
@@ -757,10 +757,10 @@ function _buildUspOptions(b, productName){
     // 학습된 제품별 USP 추가
     const existing = new Set(_uspOptions.map(o=>o.text))
     _brandProducts.forEach(prod => {
-      if(prod.usp) prod.usp.split(/[,·]/).map(s=>s.trim()).filter(s=>s.length>2).forEach(u => {
+      if(prod.usp) prod.usp.split(/[,\n·]/).map(s=>s.trim()).filter(s=>s.length>2).forEach(u => {
         if(!existing.has(u)){ _uspOptions.push({text:u, type:'usp', product:prod.name}); existing.add(u) }
       })
-      if(prod.painpoint) prod.painpoint.split(/[,·]/).map(s=>s.trim()).filter(s=>s.length>2).forEach(p => {
+      if(prod.painpoint) prod.painpoint.split(/[,\n·]/).map(s=>s.trim()).filter(s=>s.length>2).forEach(p => {
         if(!existing.has(p)){ _uspOptions.push({text:p, type:'pain', product:prod.name}); existing.add(p) }
       })
     })
