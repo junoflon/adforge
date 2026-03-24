@@ -652,17 +652,37 @@ let _brandProducts = []    // 학습된 제품 목록 [{name, usp, painpoint, ta
 function _parseProducts(learnedContext){
   if(!learnedContext) return []
   const products = []
-  const lines = learnedContext.match(/[-·]\s*(.+?)\s*[—–-]\s*USP\s*[:：]\s*(.+?)(?:\s*[/|]\s*페인포인트\s*[:：]\s*(.+?))?(?:\s*[/|]\s*타겟\s*[:：]\s*(.+?))?$/gm) || []
-  lines.forEach(line => {
-    const m = line.match(/[-·]\s*(.+?)\s*[—–-]\s*USP\s*[:：]\s*(.+?)(?:\s*[/|]\s*페인포인트\s*[:：]\s*(.+?))?(?:\s*[/|]\s*타겟\s*[:：]\s*(.+?))?$/)
-    if(!m) return
+
+  // 패턴 1: "**제품 N: 제품명**" 블록 형식 (Claude 학습 결과)
+  const blockPattern = /\*\*제품\s*\d+\s*[:：]\s*(.+?)\*\*\s*\n[-\s]*USP\s*[:：]\s*(.+?)(?:\n[-\s]*페인포인트\s*[:：]\s*(.+?))?(?:\n[-\s]*타겟\s*[:：]\s*(.+?))?(?=\n\n|\n\*\*|$)/gs
+  let m
+  while((m = blockPattern.exec(learnedContext)) !== null){
     products.push({
       name: m[1].trim(),
       usp: m[2].trim(),
       painpoint: m[3]?.trim()||'',
       target: m[4]?.trim()||''
     })
-  })
+  }
+  if(products.length) return products
+
+  // 패턴 2: "N. **제품명** - USP: ..." 한줄 형식
+  const linePattern = /\d+\.\s*\*\*(.+?)\*\*\s*[-–—]\s*(.+)/g
+  while((m = linePattern.exec(learnedContext)) !== null){
+    products.push({ name: m[1].trim(), usp: m[2].trim(), painpoint:'', target:'' })
+  }
+  if(products.length) return products
+
+  // 패턴 3: "- 제품명 — USP: ..." 대시 형식
+  const dashPattern = /[-·]\s*(.+?)\s*[—–-]\s*USP\s*[:：]\s*(.+?)(?:\s*[/|]\s*페인포인트\s*[:：]\s*(.+?))?(?:\s*[/|]\s*타겟\s*[:：]\s*(.+?))?$/gm
+  while((m = dashPattern.exec(learnedContext)) !== null){
+    products.push({
+      name: m[1].trim(),
+      usp: m[2].trim(),
+      painpoint: m[3]?.trim()||'',
+      target: m[4]?.trim()||''
+    })
+  }
   return products
 }
 
