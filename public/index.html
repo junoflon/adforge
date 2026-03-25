@@ -247,7 +247,7 @@ CTA: 지금 바로 확인해보세요!" style="font-size:11px;line-height:1.6;re
 
       <!-- 대본 설정 -->
       <div class="sb-section">
-        <div class="sb-hd">대본 설정 <span class="sb-hd-act" onclick="openPromptManager()">⚙️ 프롬프트 편집</span></div>
+        <div class="sb-hd">대본 설정</div>
         <div class="field">
           <label>대본 수 <span id="cnt-v" style="color:var(--purple);font-family:'JetBrains Mono',monospace">3</span></label>
           <input type="range" id="i-cnt" min="1" max="5" value="3" oninput="document.getElementById('cnt-v').textContent=this.value" style="-webkit-appearance:none;height:2px;background:var(--s4);border-radius:1px;border:none;width:100%;outline:none;cursor:pointer">
@@ -272,6 +272,10 @@ CTA: 지금 바로 확인해보세요!" style="font-size:11px;line-height:1.6;re
             <option>공감형 (페인포인트 → 해결)</option><option>충격형 (반전/놀라운 사실)</option>
             <option>호기심형 (궁금증 유발)</option><option>사회적 증거형 (후기 중심)</option><option>긴박형 (한정/마감 강조)</option>
           </select>
+        </div>
+        <div class="field">
+          <label>추가 지시사항 <span style="font-size:10px;color:var(--text3);font-weight:400">선택</span></label>
+          <textarea id="i-instructions" rows="3" placeholder="예: 20대 말투로 써줘, ~했거든요 체로, 질문형 훅 위주로, 특정 성분 강조 등" style="font-size:11px;line-height:1.5;resize:vertical"></textarea>
         </div>
       </div>
 

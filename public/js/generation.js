@@ -32,7 +32,9 @@ async function doGenHooks(brand, anal){
     prohibitRule: brand.prohibit?`\n- 금지: ${brand.prohibit}`:''
   })
 
-  const hookFull = hookPrompt
+  // 추가 지시사항 반영
+  const userInstructions = document.getElementById('i-instructions')?.value.trim()
+  const hookFull = hookPrompt + (userInstructions ? `\n\n[사용자 추가 지시사항 — 반드시 반영]\n${userInstructions}` : '')
   const r = await fetch('/api/claude',{
     method:'POST', headers:{'Content-Type':'application/json'},
     body:JSON.stringify({prompt:hookFull, max_tokens:4000})
@@ -94,7 +96,9 @@ async function doGenScripts(brand, anal, selectedHooks){
   })
 
   const learnedCtx=brand.learnedContext?`\n\n[학습된 브랜드 정보 + 고객 리뷰 인사이트]\n${brand.learnedContext}\n\n⚡ 위 정보 중 "고객이 실제로 쓰는 표현"은 훅에 그대로 활용하세요.`:''
-  const fullPrompt=prompt+learnedCtx+refCtx+hooksCtx
+  const userInstructions2 = document.getElementById('i-instructions')?.value.trim()
+  const instructCtx = userInstructions2 ? `\n\n[사용자 추가 지시사항 — 반드시 반영]\n${userInstructions2}` : ''
+  const fullPrompt=prompt+learnedCtx+refCtx+hooksCtx+instructCtx
 
   const r = await fetch('/api/claude',{
     method:'POST', headers:{'Content-Type':'application/json'},
