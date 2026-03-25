@@ -304,9 +304,9 @@ function renderManualList(){
   cats.forEach(c=>catCounts[c]=manualBrands.filter(b=>b.category===c).length)
   const uncatCount = manualBrands.filter(b=>!b.category || !cats.includes(b.category)).length
 
-  const catTabs = `<div style="display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:6px">
-    <button onclick="setManualCatFilter('')" style="flex:1;padding:5px 2px;font-size:9px;font-weight:600;border:none;background:none;cursor:pointer;color:${!_manualCatFilter?'var(--green)':'var(--text3)'};border-bottom:2px solid ${!_manualCatFilter?'var(--green)':'transparent'}">전체 (${manualBrands.length})</button>
-    ${cats.map(c=>`<button onclick="setManualCatFilter('${c}')" style="flex:1;padding:5px 2px;font-size:9px;font-weight:600;border:none;background:none;cursor:pointer;color:${_manualCatFilter===c?'var(--green)':'var(--text3)'};border-bottom:2px solid ${_manualCatFilter===c?'var(--green)':'transparent'}">${c.replace('트리플와이랩','트리플')} (${catCounts[c]})</button>`).join('')}
+  const catTabs = `<div class="mchips" style="flex-wrap:wrap;margin-bottom:6px">
+    <div class="mchip${!_manualCatFilter?' on':''}" onclick="setManualCatFilter('')" style="${!_manualCatFilter?'border-color:rgba(45,212,122,.4);color:var(--green)':''}">전체 (${manualBrands.length})</div>
+    ${cats.map(c=>`<div class="mchip${_manualCatFilter===c?' on':''}" onclick="setManualCatFilter('${c}')" style="${_manualCatFilter===c?'border-color:rgba(45,212,122,.4);color:var(--green)':''}">${c.replace('트리플와이랩','트리플')} (${catCounts[c]})</div>`).join('')}
   </div>`
 
   // 필터링
