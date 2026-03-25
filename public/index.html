@@ -735,9 +735,16 @@ CTA: 지금 바로 확인해보세요!" style="font-size:11px;line-height:1.6;re
     </div>
     <div class="modal-body" style="max-height:70vh;overflow-y:auto">
 
-      <div class="field">
-        <label>경쟁사 이름</label>
-        <input type="text" id="mc-name" placeholder="예: 올리브영, 닥터지 등">
+      <div class="row2">
+        <div class="field"><label>경쟁사 이름</label><input type="text" id="mc-name" placeholder="예: 올리브영, 닥터지 등"></div>
+        <div class="field"><label>자사 브랜드 분류</label>
+          <select id="mc-category" style="font-size:11px">
+            <option value="">— 미분류 —</option>
+            <option value="바디파인">바디파인</option>
+            <option value="지노큐어">지노큐어</option>
+            <option value="트리플와이랩">트리플와이랩</option>
+          </select>
+        </div>
       </div>
 
       <!-- 대량 텍스트 입력 -->

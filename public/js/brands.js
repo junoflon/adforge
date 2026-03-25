@@ -75,7 +75,7 @@ async function loadManualBrands(){
         try{
           if(r.analysis_data) learnedContext = typeof r.analysis_data === 'string' ? r.analysis_data : JSON.stringify(r.analysis_data)
         }catch(e){}
-        return {id:r.id, name:r.name, ads, urls, learnedContext, pdfs:[]}
+        return {id:r.id, name:r.name, category:r.category||'', ads, urls, learnedContext, pdfs:[]}
       })
       renderManualList()
     }
@@ -88,7 +88,7 @@ async function saveManualToServer(brand){
     name: brand.name,
     raw_text: JSON.stringify(brand.ads||[]),  // ads를 raw_text에 저장
     urls: (brand.urls||[]).join('\n'),
-    category: brand.learnedContext ? '✓학습완료' : ''  // analysis_data는 jsonb라 category에 간략 표시
+    category: brand.category||''
   }
   await fetch('https://nroylubtytcslujylicw.supabase.co/rest/v1/competitors?on_conflict=id',{
     method:'POST',
@@ -110,6 +110,9 @@ function openManualAddModal(id=null){
   _mcPdfData = []
   const b = id ? manualBrands.find(x=>x.id===id) : null
   document.getElementById('mc-name').value = b?.name||''
+  // 카테고리(자사 브랜드 분류) 설정
+  const catSel = document.getElementById('mc-category')
+  if(catSel) catSel.value = b?.category||''
   document.getElementById('mc-bulk').value = b ? (b.ads||[]).map(a=>a.text).join('\n---\n') : ''
   document.getElementById('mc-learned-wrap').style.display = b?.learnedContext?'block':'none'
   document.getElementById('mc-learned').value = b?.learnedContext||''
@@ -176,9 +179,10 @@ async function saveManualBrand(){
   const urls = [...document.querySelectorAll('#mc-urls-wrap input')].map(i=>i.value.trim()).filter(Boolean)
   const learnedCtx = document.getElementById('mc-learned').value.trim()||null
 
+  const category = document.getElementById('mc-category')?.value||''
   const id = editManualId || ('mc_'+Date.now())
   const brand = {
-    id, name,
+    id, name, category,
     ads: adTexts.map((t,i)=>{return {id:'ma_'+Date.now()+'_'+i, text:t}}),
     urls, learnedContext: learnedCtx, pdfs: _mcPdfData
   }
@@ -277,6 +281,14 @@ async function deleteManualBrand(id){
   renderManualList()
 }
 
+// ── 카테고리 필터 ──
+let _manualCatFilter = '' // '' = 전체
+
+function setManualCatFilter(cat){
+  _manualCatFilter = cat
+  renderManualList()
+}
+
 // ── 목록 렌더링 ──
 function renderManualList(){
   const wrap = document.getElementById('manual-list-wrap')
@@ -285,28 +297,48 @@ function renderManualList(){
     wrap.innerHTML = '<div style="font-size:10px;color:var(--text3);padding:8px 0;text-align:center">추가된 경쟁사가 없어요</div>'
     return
   }
+
+  // 카테고리 탭
+  const cats = ['바디파인','지노큐어','트리플와이랩']
+  const catCounts = {}
+  cats.forEach(c=>catCounts[c]=manualBrands.filter(b=>b.category===c).length)
+  const uncatCount = manualBrands.filter(b=>!b.category || !cats.includes(b.category)).length
+
+  const catTabs = `<div style="display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:6px">
+    <button onclick="setManualCatFilter('')" style="flex:1;padding:5px 2px;font-size:9px;font-weight:600;border:none;background:none;cursor:pointer;color:${!_manualCatFilter?'var(--green)':'var(--text3)'};border-bottom:2px solid ${!_manualCatFilter?'var(--green)':'transparent'}">전체 (${manualBrands.length})</button>
+    ${cats.map(c=>`<button onclick="setManualCatFilter('${c}')" style="flex:1;padding:5px 2px;font-size:9px;font-weight:600;border:none;background:none;cursor:pointer;color:${_manualCatFilter===c?'var(--green)':'var(--text3)'};border-bottom:2px solid ${_manualCatFilter===c?'var(--green)':'transparent'}">${c.replace('트리플와이랩','트리플')} (${catCounts[c]})</button>`).join('')}
+  </div>`
+
+  // 필터링
+  const filtered = _manualCatFilter
+    ? manualBrands.filter(b=>b.category===_manualCatFilter)
+    : manualBrands
+
   // 전체 선택/해제
-  const selBtns = manualBrands.length > 1 ? `<div style="display:flex;gap:4px;margin-bottom:4px">
+  const selBtns = filtered.length > 1 ? `<div style="display:flex;gap:4px;margin-bottom:4px">
     <button class="btn sm" onclick="manualSelectAll()" style="flex:1;font-size:9px">전체 선택</button>
     <button class="btn sm" onclick="manualClearAll()" style="flex:1;font-size:9px">전체 해제</button>
   </div>` : ''
 
-  wrap.innerHTML = selBtns + manualBrands.map(b=>{
+  const listHtml = filtered.length ? filtered.map(b=>{
     const adCount = b.ads?.length||0
     const urlCount = b.urls?.length||0
     const selected = b.selected !== false // 기본 선택
+    const catLabel = b.category && !_manualCatFilter ? `<span style="font-size:9px;color:var(--purple);background:var(--purple-dim);padding:1px 5px;border-radius:8px;margin-left:4px">${b.category}</span>` : ''
     return `<div id="mc-${b.id}" onclick="toggleManualBrand('${b.id}')" style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:${selected?'var(--green-dim)':'var(--s2)'};border:1.5px solid ${selected?'rgba(45,212,122,.4)':'var(--border)'};border-radius:var(--r);margin-bottom:4px;cursor:pointer;transition:all .13s">
       <div id="mc-check-${b.id}" style="width:14px;height:14px;border-radius:3px;border:1.5px solid ${selected?'var(--green)':'var(--border2)'};background:${selected?'var(--green)':'var(--s3)'};display:flex;align-items:center;justify-content:center;font-size:8px;color:#fff;flex-shrink:0">${selected?'✓':''}</div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:11px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.name}</div>
+        <div style="font-size:11px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.name}${catLabel}</div>
         <div style="font-size:10px;color:var(--text3);margin-top:1px">
-          ${adCount}개 광고${urlCount?' · URL '+urlCount+'개':''}${b.learnedContext?' · 🧠 분석됨':''}
+          ${adCount}개 광고${urlCount?' · URL '+urlCount+'개':''}${b.learnedContext?' · 🧠':''}
         </div>
       </div>
       <button class="btn sm" onclick="event.stopPropagation();openManualAddModal('${b.id}')" style="font-size:10px;padding:2px 7px">편집</button>
       <button onclick="event.stopPropagation();deleteManualBrand('${b.id}')" style="font-size:11px;background:none;border:none;color:var(--text3);cursor:pointer">✕</button>
     </div>`
-  }).join('')
+  }).join('') : '<div style="font-size:10px;color:var(--text3);padding:8px 0;text-align:center">해당 카테고리에 경쟁사가 없어요</div>'
+
+  wrap.innerHTML = catTabs + selBtns + listHtml
 }
 
 function toggleManualBrand(id){
@@ -317,12 +349,14 @@ function toggleManualBrand(id){
 }
 
 function manualSelectAll(){
-  manualBrands.forEach(b=>b.selected=true)
+  const targets = _manualCatFilter ? manualBrands.filter(b=>b.category===_manualCatFilter) : manualBrands
+  targets.forEach(b=>b.selected=true)
   renderManualList()
 }
 
 function manualClearAll(){
-  manualBrands.forEach(b=>b.selected=false)
+  const targets = _manualCatFilter ? manualBrands.filter(b=>b.category===_manualCatFilter) : manualBrands
+  targets.forEach(b=>b.selected=false)
   renderManualList()
 }
 
