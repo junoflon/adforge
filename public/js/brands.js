@@ -428,7 +428,7 @@ function renderManualList(){
   const listHtml = filtered.length ? filtered.map(b=>{
     const adCount = b.ads?.length||0
     const urlCount = b.urls?.length||0
-    const selected = b.selected !== false // 기본 선택
+    const selected = b.selected === true // 기본 미선택
     const catLabel = b.category && !_manualCatFilter ? `<span style="font-size:9px;color:var(--purple);background:var(--purple-dim);padding:1px 5px;border-radius:8px;margin-left:4px">${b.category}</span>` : ''
     return `<div id="mc-${b.id}" onclick="toggleManualBrand('${b.id}')" style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:${selected?'var(--green-dim)':'var(--s2)'};border:1.5px solid ${selected?'rgba(45,212,122,.4)':'var(--border)'};border-radius:var(--r);margin-bottom:4px;cursor:pointer;transition:all .13s">
       <div id="mc-check-${b.id}" style="width:14px;height:14px;border-radius:3px;border:1.5px solid ${selected?'var(--green)':'var(--border2)'};background:${selected?'var(--green)':'var(--s3)'};display:flex;align-items:center;justify-content:center;font-size:8px;color:#fff;flex-shrink:0">${selected?'✓':''}</div>
@@ -449,7 +449,7 @@ function renderManualList(){
 function toggleManualBrand(id){
   const b = manualBrands.find(x=>x.id===id)
   if(!b) return
-  b.selected = b.selected === false ? true : false
+  b.selected = b.selected === true ? false : true
   renderManualList()
 }
 
@@ -473,7 +473,7 @@ function manualClearAll(){
 function getManualAds(){
   const result = []
   manualBrands.forEach(b=>{
-    if(b.selected === false) return  // 선택 해제된 경쟁사 제외
+    if(b.selected !== true) return  // 선택된 경쟁사만 포함
     if(!b.name || !b.ads?.length) return
     b.ads.forEach(a=>{
       if(!a.text?.trim()) return
