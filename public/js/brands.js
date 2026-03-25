@@ -12,6 +12,45 @@ let manualBrands = []  // Supabase competitors 테이블에서 로드
 let _mcPdfData = []
 let editManualId = null
 
+// ── 자사 브랜드 카테고리 관리 ──
+let _competitorCats = JSON.parse(localStorage.getItem('af_comp_cats')||'["바디파인","지노큐어","트리플와이랩"]')
+
+function _saveCats(){
+  localStorage.setItem('af_comp_cats', JSON.stringify(_competitorCats))
+}
+
+function addCompCat(){
+  const name = prompt('추가할 자사 브랜드 이름')
+  if(!name || !name.trim()) return
+  const trimmed = name.trim()
+  if(_competitorCats.includes(trimmed)){ toast('이미 있는 카테고리예요','err'); return }
+  _competitorCats.push(trimmed)
+  _saveCats()
+  renderManualList()
+  _updateCatDropdown()
+  toast(`"${trimmed}" 카테고리 추가됨`,'ok')
+}
+
+function removeCompCat(cat){
+  if(!confirm(`"${cat}" 카테고리를 삭제할까요?\n해당 경쟁사들은 미분류로 변경됩니다.`)) return
+  _competitorCats = _competitorCats.filter(c=>c!==cat)
+  _saveCats()
+  // 해당 카테고리의 경쟁사들을 미분류로
+  manualBrands.filter(b=>b.category===cat).forEach(b=>{ b.category=''; saveManualToServer(b) })
+  if(_manualCatFilter===cat) _manualCatFilter=''
+  renderManualList()
+  _updateCatDropdown()
+  toast(`"${cat}" 삭제됨`,'ok')
+}
+
+function _updateCatDropdown(){
+  const sel = document.getElementById('mc-category')
+  if(!sel) return
+  const cur = sel.value
+  sel.innerHTML = '<option value="">— 미분류 —</option>' + _competitorCats.map(c=>`<option value="${c}">${c}</option>`).join('')
+  sel.value = cur
+}
+
 // ── 서버 로드/저장 ──
 // ══════════════════════════════════════════════
 // 레퍼런스 (수동 모드)
@@ -111,6 +150,7 @@ function openManualAddModal(id=null){
   const b = id ? manualBrands.find(x=>x.id===id) : null
   document.getElementById('mc-name').value = b?.name||''
   // 카테고리(자사 브랜드 분류) 설정
+  _updateCatDropdown()
   const catSel = document.getElementById('mc-category')
   if(catSel) catSel.value = b?.category||''
   document.getElementById('mc-bulk').value = b ? (b.ads||[]).map(a=>a.text).join('\n---\n') : ''
@@ -299,14 +339,17 @@ function renderManualList(){
   }
 
   // 카테고리 탭
-  const cats = ['바디파인','지노큐어','트리플와이랩']
+  const cats = _competitorCats
   const catCounts = {}
   cats.forEach(c=>catCounts[c]=manualBrands.filter(b=>b.category===c).length)
-  const uncatCount = manualBrands.filter(b=>!b.category || !cats.includes(b.category)).length
 
   const catTabs = `<div class="mchips" style="flex-wrap:wrap;margin-bottom:6px">
     <div class="mchip${!_manualCatFilter?' on':''}" onclick="setManualCatFilter('')" style="${!_manualCatFilter?'border-color:rgba(45,212,122,.4);color:var(--green)':''}">전체 (${manualBrands.length})</div>
-    ${cats.map(c=>`<div class="mchip${_manualCatFilter===c?' on':''}" onclick="setManualCatFilter('${c}')" style="${_manualCatFilter===c?'border-color:rgba(45,212,122,.4);color:var(--green)':''}">${c.replace('트리플와이랩','트리플')} (${catCounts[c]})</div>`).join('')}
+    ${cats.map(c=>{
+      const label = c.length>4 ? c.slice(0,4)+'…' : c
+      return `<div class="mchip${_manualCatFilter===c?' on':''}" onclick="setManualCatFilter('${c}')" style="position:relative;${_manualCatFilter===c?'border-color:rgba(45,212,122,.4);color:var(--green)':''}">${label} (${catCounts[c]||0})${_manualCatFilter===c?`<span onclick="event.stopPropagation();removeCompCat('${c}')" style="margin-left:3px;font-size:9px;opacity:.5;cursor:pointer" title="삭제">✕</span>`:''}</div>`
+    }).join('')}
+    <div class="mchip" onclick="addCompCat()" style="border-style:dashed;opacity:.6" title="카테고리 추가">+</div>
   </div>`
 
   // 필터링
