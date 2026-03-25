@@ -341,9 +341,11 @@ function setManualCatFilter(cat){
   renderManualList()
 }
 
-function setManualCompFilter(idx){
-  const comps = manualBrands.filter(b=>b.category===_manualCatFilter)
-  const name = comps[idx]?.name || ''
+function _getCompName(fullName){
+  return (fullName||'').split('|')[0].trim()
+}
+
+function setManualCompFilter(name){
   _manualCompFilter = _manualCompFilter === name ? '' : name
   renderManualList()
 }
@@ -384,17 +386,27 @@ function renderManualList(){
     ${hasMore?`<div class="mchip" onclick="showMoreCats()" style="border-style:dashed;opacity:.7;gap:2px" title="더보기">더보기 (+${remaining}) ▼</div>`:''}
   </div>`
 
-  // 경쟁사 sub-chip (카테고리 선택 시)
+  // 경쟁사 sub-chip (카테고리 선택 시) — 경쟁사명(| 앞)으로 그룹핑
   let compChips = ''
   if(_manualCatFilter){
     const comps = manualBrands.filter(b=>b.category===_manualCatFilter)
-    if(comps.length){
+    // 경쟁사명별 그룹핑
+    const compGroups = {}
+    comps.forEach(b=>{
+      const cn = _getCompName(b.name)
+      if(!compGroups[cn]) compGroups[cn] = { count: 0, ads: 0 }
+      compGroups[cn].count++
+      compGroups[cn].ads += b.ads?.length||0
+    })
+    const groupNames = Object.keys(compGroups)
+    if(groupNames.length > 1){
       compChips = `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;padding-left:4px;align-items:center">
         <span style="font-size:9px;color:var(--text3);margin-right:2px">└</span>
-        ${comps.map((b,i)=>{
-          const isOn = _manualCompFilter === b.name
-          const adCount = b.ads?.length||0
-          return `<div onclick="setManualCompFilter(${i})" style="font-size:10px;padding:2px 8px;border-radius:10px;cursor:pointer;transition:all .13s;border:1px solid ${isOn?'rgba(155,114,251,.5)':'var(--border)'};background:${isOn?'var(--purple-dim)':'var(--s2)'};color:${isOn?'var(--purple)':'var(--text2)'}">${b.name} <span style="font-size:9px;opacity:.6">${adCount}</span></div>`
+        ${groupNames.map(cn=>{
+          const esc = cn.replace(/'/g,"&#39;")
+          const isOn = _manualCompFilter === cn
+          const g = compGroups[cn]
+          return `<div onclick="setManualCompFilter('${esc}')" style="font-size:10px;padding:2px 8px;border-radius:10px;cursor:pointer;transition:all .13s;border:1px solid ${isOn?'rgba(155,114,251,.5)':'var(--border)'};background:${isOn?'var(--purple-dim)':'var(--s2)'};color:${isOn?'var(--purple)':'var(--text2)'}">${cn} <span style="font-size:9px;opacity:.6">${g.count}</span></div>`
         }).join('')}
       </div>`
     }
@@ -404,7 +416,7 @@ function renderManualList(){
   let filtered = _manualCatFilter
     ? manualBrands.filter(b=>b.category===_manualCatFilter)
     : manualBrands
-  if(_manualCompFilter) filtered = filtered.filter(b=>b.name===_manualCompFilter)
+  if(_manualCompFilter) filtered = filtered.filter(b=>_getCompName(b.name)===_manualCompFilter)
   if(_manualSearch) filtered = filtered.filter(b=>b.name.toLowerCase().includes(_manualSearch))
 
   // 전체 선택/해제
@@ -443,7 +455,7 @@ function toggleManualBrand(id){
 
 function _getFilteredTargets(){
   let t = _manualCatFilter ? manualBrands.filter(b=>b.category===_manualCatFilter) : manualBrands
-  if(_manualCompFilter) t = t.filter(b=>b.name===_manualCompFilter)
+  if(_manualCompFilter) t = t.filter(b=>_getCompName(b.name)===_manualCompFilter)
   return t
 }
 
