@@ -14,9 +14,15 @@ let editManualId = null
 
 // ── 자사 브랜드 카테고리 관리 ──
 let _competitorCats = JSON.parse(localStorage.getItem('af_comp_cats')||'["바디파인","지노큐어","트리플와이랩"]')
+let _catVisibleCount = 10  // 카테고리 chip 보이는 개수 (10개씩 증가)
 
 function _saveCats(){
   localStorage.setItem('af_comp_cats', JSON.stringify(_competitorCats))
+}
+
+function showMoreCats(){
+  _catVisibleCount += 10
+  renderManualList()
 }
 
 function addCompCat(){
@@ -323,9 +329,27 @@ async function deleteManualBrand(id){
 
 // ── 카테고리 필터 ──
 let _manualCatFilter = '' // '' = 전체
+let _manualCompFilter = '' // '' = 카테고리 내 전체, 값 있으면 특정 경쟁사
+let _manualSearch = '' // 검색어
 
 function setManualCatFilter(cat){
-  _manualCatFilter = cat
+  // "전체" 클릭 시 무조건 리셋
+  if(!cat){ _manualCatFilter = ''; _manualCompFilter = ''; renderManualList(); return }
+  // 같은 카테고리 다시 클릭 → 토글 해제
+  if(_manualCatFilter === cat){ _manualCatFilter = ''; _manualCompFilter = '' }
+  else { _manualCatFilter = cat; _manualCompFilter = '' }
+  renderManualList()
+}
+
+function setManualCompFilter(idx){
+  const comps = manualBrands.filter(b=>b.category===_manualCatFilter)
+  const name = comps[idx]?.name || ''
+  _manualCompFilter = _manualCompFilter === name ? '' : name
+  renderManualList()
+}
+
+function onManualSearch(el){
+  _manualSearch = el.value.trim().toLowerCase()
   renderManualList()
 }
 
@@ -338,24 +362,50 @@ function renderManualList(){
     return
   }
 
+  // 검색바
+  const searchBar = `<input type="text" placeholder="경쟁사 검색..." value="${_manualSearch}" oninput="onManualSearch(this)" style="width:100%;font-size:11px;margin-bottom:6px;padding:5px 8px;border:1px solid var(--border);border-radius:var(--r);background:var(--s2);color:var(--text);outline:none">`
+
   // 카테고리 탭
   const cats = _competitorCats
   const catCounts = {}
   cats.forEach(c=>catCounts[c]=manualBrands.filter(b=>b.category===c).length)
 
+  const visibleCats = cats.slice(0, _catVisibleCount)
+  const hasMore = cats.length > _catVisibleCount
+  const remaining = cats.length - _catVisibleCount
+
   const catTabs = `<div class="mchips" style="flex-wrap:wrap;margin-bottom:6px">
     <div class="mchip${!_manualCatFilter?' on':''}" onclick="setManualCatFilter('')" style="${!_manualCatFilter?'border-color:rgba(45,212,122,.4);color:var(--green)':''}">전체 (${manualBrands.length})</div>
-    ${cats.map(c=>{
-      const label = c
-      return `<div class="mchip${_manualCatFilter===c?' on':''}" onclick="setManualCatFilter('${c}')" style="position:relative;${_manualCatFilter===c?'border-color:rgba(45,212,122,.4);color:var(--green)':''}">${label} (${catCounts[c]||0})${_manualCatFilter===c?`<span onclick="event.stopPropagation();removeCompCat('${c}')" style="margin-left:3px;font-size:9px;opacity:.5;cursor:pointer" title="삭제">✕</span>`:''}</div>`
+    ${visibleCats.map(c=>{
+      const esc = c.replace(/'/g,"&#39;")
+      return `<div class="mchip${_manualCatFilter===c?' on':''}" onclick="setManualCatFilter('${esc}')" style="position:relative;${_manualCatFilter===c?'border-color:rgba(45,212,122,.4);color:var(--green)':''}">${c} (${catCounts[c]||0})${_manualCatFilter===c?`<span onclick="event.stopPropagation();removeCompCat('${esc}')" style="margin-left:3px;font-size:9px;opacity:.5;cursor:pointer" title="삭제">✕</span>`:''}</div>`
     }).join('')}
     <div class="mchip" onclick="addCompCat()" style="border-style:dashed;opacity:.6" title="카테고리 추가">+</div>
+    ${hasMore?`<div class="mchip" onclick="showMoreCats()" style="border-style:dashed;opacity:.7;gap:2px" title="더보기">더보기 (+${remaining}) ▼</div>`:''}
   </div>`
 
+  // 경쟁사 sub-chip (카테고리 선택 시)
+  let compChips = ''
+  if(_manualCatFilter){
+    const comps = manualBrands.filter(b=>b.category===_manualCatFilter)
+    if(comps.length){
+      compChips = `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;padding-left:4px;align-items:center">
+        <span style="font-size:9px;color:var(--text3);margin-right:2px">└</span>
+        ${comps.map((b,i)=>{
+          const isOn = _manualCompFilter === b.name
+          const adCount = b.ads?.length||0
+          return `<div onclick="setManualCompFilter(${i})" style="font-size:10px;padding:2px 8px;border-radius:10px;cursor:pointer;transition:all .13s;border:1px solid ${isOn?'rgba(155,114,251,.5)':'var(--border)'};background:${isOn?'var(--purple-dim)':'var(--s2)'};color:${isOn?'var(--purple)':'var(--text2)'}">${b.name} <span style="font-size:9px;opacity:.6">${adCount}</span></div>`
+        }).join('')}
+      </div>`
+    }
+  }
+
   // 필터링
-  const filtered = _manualCatFilter
+  let filtered = _manualCatFilter
     ? manualBrands.filter(b=>b.category===_manualCatFilter)
     : manualBrands
+  if(_manualCompFilter) filtered = filtered.filter(b=>b.name===_manualCompFilter)
+  if(_manualSearch) filtered = filtered.filter(b=>b.name.toLowerCase().includes(_manualSearch))
 
   // 전체 선택/해제
   const selBtns = filtered.length > 1 ? `<div style="display:flex;gap:4px;margin-bottom:4px">
@@ -379,9 +429,9 @@ function renderManualList(){
       <button class="btn sm" onclick="event.stopPropagation();openManualAddModal('${b.id}')" style="font-size:10px;padding:2px 7px">편집</button>
       <button onclick="event.stopPropagation();deleteManualBrand('${b.id}')" style="font-size:11px;background:none;border:none;color:var(--text3);cursor:pointer">✕</button>
     </div>`
-  }).join('') : '<div style="font-size:10px;color:var(--text3);padding:8px 0;text-align:center">해당 카테고리에 경쟁사가 없어요</div>'
+  }).join('') : `<div style="font-size:10px;color:var(--text3);padding:8px 0;text-align:center">${_manualSearch?'검색 결과가 없어요':'해당 카테고리에 경쟁사가 없어요'}</div>`
 
-  wrap.innerHTML = catTabs + selBtns + listHtml
+  wrap.innerHTML = searchBar + catTabs + compChips + selBtns + listHtml
 }
 
 function toggleManualBrand(id){
@@ -391,15 +441,19 @@ function toggleManualBrand(id){
   renderManualList()
 }
 
+function _getFilteredTargets(){
+  let t = _manualCatFilter ? manualBrands.filter(b=>b.category===_manualCatFilter) : manualBrands
+  if(_manualCompFilter) t = t.filter(b=>b.name===_manualCompFilter)
+  return t
+}
+
 function manualSelectAll(){
-  const targets = _manualCatFilter ? manualBrands.filter(b=>b.category===_manualCatFilter) : manualBrands
-  targets.forEach(b=>b.selected=true)
+  _getFilteredTargets().forEach(b=>b.selected=true)
   renderManualList()
 }
 
 function manualClearAll(){
-  const targets = _manualCatFilter ? manualBrands.filter(b=>b.category===_manualCatFilter) : manualBrands
-  targets.forEach(b=>b.selected=false)
+  _getFilteredTargets().forEach(b=>b.selected=false)
   renderManualList()
 }
 
