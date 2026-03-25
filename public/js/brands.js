@@ -346,7 +346,7 @@ function renderManualList(){
   const catTabs = `<div class="mchips" style="flex-wrap:wrap;margin-bottom:6px">
     <div class="mchip${!_manualCatFilter?' on':''}" onclick="setManualCatFilter('')" style="${!_manualCatFilter?'border-color:rgba(45,212,122,.4);color:var(--green)':''}">전체 (${manualBrands.length})</div>
     ${cats.map(c=>{
-      const label = c.length>4 ? c.slice(0,4)+'…' : c
+      const label = c
       return `<div class="mchip${_manualCatFilter===c?' on':''}" onclick="setManualCatFilter('${c}')" style="position:relative;${_manualCatFilter===c?'border-color:rgba(45,212,122,.4);color:var(--green)':''}">${label} (${catCounts[c]||0})${_manualCatFilter===c?`<span onclick="event.stopPropagation();removeCompCat('${c}')" style="margin-left:3px;font-size:9px;opacity:.5;cursor:pointer" title="삭제">✕</span>`:''}</div>`
     }).join('')}
     <div class="mchip" onclick="addCompCat()" style="border-style:dashed;opacity:.6" title="카테고리 추가">+</div>
