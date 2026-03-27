@@ -1053,5 +1053,8 @@ function addUspFromInput(){
 
 // 선택된 USP/페인포인트 텍스트 반환 (generation에서 사용)
 function getSelectedUsps(){
-  return _selectedUsps.map(t=>t.text)
+  return _selectedUsps.filter(t=>t.type==='usp'||t.type==='custom').map(t=>t.text)
+}
+function getSelectedPainpoints(){
+  return _selectedUsps.filter(t=>t.type==='pain').map(t=>t.text)
 }

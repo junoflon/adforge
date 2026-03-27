@@ -8,6 +8,7 @@ let _selectedHooks = []
 // ── STEP 3a: 후킹 아이디어만 생성 ──
 async function doGenHooks(brand, anal){
   const selUsps = (typeof getSelectedUsps==='function') ? getSelectedUsps() : []
+  const selPains = (typeof getSelectedPainpoints==='function') ? getSelectedPainpoints() : []
   const topH=(anal.topHooks||[]).map((h,i)=>`${i+1}."${h.hook||h}"`).join('\n')
 
   // 레퍼런스 컨텍스트 구성
@@ -23,7 +24,7 @@ async function doGenHooks(brand, anal){
   const hookPrompt=fillTemplate(getPrompts().hooking.template, {
     brandName: brand.name,
     category: brand.category||'미설정',
-    painpoint: brand.painpoint||'미설정',
+    painpoint: selPains.length ? selPains.join(', ') : (brand.painpoint||'미설정'),
     usp: selUsps.length ? selUsps.join(', ') : (brand.usp||'미설정'),
     topHooks: topH,
     learnedHint: brand.learnedContext&&brand.learnedContext.includes('고객이 실제로')?'⚡ 학습된 고객 언어/리뷰 표현을 최대한 활용해서 공감형 후킹을 만드세요.':'',
@@ -66,7 +67,9 @@ async function doGenScripts(brand, anal, selectedHooks){
   const insights=(anal.strategicInsight||[]).join('\n')
 
   const selUsps = (typeof getSelectedUsps==='function') ? getSelectedUsps() : []
+  const selPains = (typeof getSelectedPainpoints==='function') ? getSelectedPainpoints() : []
   const usedUsp = selUsps.length ? selUsps.join(', ') : (brand.usp||'미설정')
+  const usedPain = selPains.length ? selPains.join(', ') : (brand.painpoint||'미설정')
 
   // 선택된 훅을 프롬프트에 포함
   const hooksCtx = selectedHooks.length
@@ -76,7 +79,7 @@ async function doGenScripts(brand, anal, selectedHooks){
   const prompt=fillTemplate(getPrompts().script.template, {
     brandName: brand.name,
     category: brand.category||'미설정',
-    painpoint: brand.painpoint||'미설정',
+    painpoint: usedPain,
     usp: usedUsp,
     brandTone: brand.tone||'미설정',
     prohibitRule: brand.prohibit?`|금지:${brand.prohibit}`:'',
