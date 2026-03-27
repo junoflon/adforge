@@ -253,10 +253,16 @@ async function makeTTS(idx){
   out.style.display='flex'
   stageSet(4,'run')
   scrollTo(4)
-  const lid='tl'+Date.now()
-  const loader=document.createElement('div'); loader.id=lid; loader.className='tts-card'
-  loader.innerHTML=`<div class="tts-body" style="color:var(--text3);font-family:'JetBrains Mono',monospace;font-size:11px"><span class="spin">◌</span> TTS 생성 중 (${_ttsSettings.voiceName||'기본 목소리'})...</div>`
-  out.prepend(loader)
+  const lid='tts-card-'+idx
+  // 기존 카드가 있으면 교체, 없으면 새로 추가
+  let existing = document.getElementById(lid)
+  if(existing){
+    existing.innerHTML=`<div class="tts-body" style="color:var(--text3);font-family:'JetBrains Mono',monospace;font-size:11px"><span class="spin">◌</span> TTS 다시 생성 중 (${_ttsSettings.voiceName||'기본 목소리'})...</div>`
+  } else {
+    const loader=document.createElement('div'); loader.id=lid; loader.className='tts-card'
+    loader.innerHTML=`<div class="tts-body" style="color:var(--text3);font-family:'JetBrains Mono',monospace;font-size:11px"><span class="spin">◌</span> TTS 생성 중 (${_ttsSettings.voiceName||'기본 목소리'})...</div>`
+    out.prepend(loader)
+  }
   try {
     const r=await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${_ttsSettings.voiceId}`,{
       method:'POST',
@@ -276,7 +282,7 @@ async function makeTTS(idx){
     if(!r.ok) throw new Error('ElevenLabs 오류 ('+r.status+')')
     const blob=await r.blob(); const url=URL.createObjectURL(blob)
     document.getElementById(lid).outerHTML=`
-      <div class="tts-card">
+      <div class="tts-card" id="${lid}">
         <div class="tts-hdr">
           <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3)">TTS ${String(s.id).padStart(2,'0')} · ${_ttsSettings.voiceName||''}</span>
           <span style="font-size:11px;color:var(--green)">✓ 완료</span>
@@ -286,6 +292,7 @@ async function makeTTS(idx){
           <audio controls src="${url}"></audio>
           <div style="display:flex;gap:6px;margin-top:8px">
             <a href="${url}" download="tts_${s.id}.mp3" class="btn grn sm">⬇ 다운로드</a>
+            <button class="btn sm pur" onclick="makeTTS(${idx})" style="font-size:10px">🔄 다시 뽑기</button>
             <button class="btn sm" onclick="openTTSModal()" style="font-size:10px">⚙ 목소리 변경</button>
           </div>
         </div>
